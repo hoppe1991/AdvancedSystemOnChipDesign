@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="mips_testbench_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="casts" />
+            <top_module name="mips_pkg" />
+            <top_module name="mips_testbench" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="70000000fs"></ZoomStartTime>
+      <ZoomEndTime time="147700001fs"></ZoomEndTime>
+      <Cursor1Time time="10000000000fs"></Cursor1Time>
+   </zoom_setting>
+   <WVObjectSize size="24" />
+   <wvobject type="array" fp_name="/mips_testbench/writedata">
+      <obj_property name="ElementShortName">writedata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">writedata[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/mips_testbench/dataadr">
+      <obj_property name="ElementShortName">dataadr[31:0]</obj_property>
+      <obj_property name="ObjectShortName">dataadr[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/mips_testbench/dut/rf/clk">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject type="group" fp_name="group5262">
+      <obj_property name="label">RF</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="array" fp_name="/mips_testbench/dut/rf/reg">
+         <obj_property name="ElementShortName">reg[31:0][31:0]</obj_property>
+         <obj_property name="ObjectShortName">reg[31:0][31:0]</obj_property>
+         <obj_property name="isExpanded"></obj_property>
+      </wvobject>
+      <wvobject type="group" fp_name="group2122">
+         <obj_property name="label">RF Port</obj_property>
+         <obj_property name="DisplayName">label</obj_property>
+         <wvobject type="logic" fp_name="/mips_testbench/dut/rf/we3">
+            <obj_property name="ElementShortName">we3</obj_property>
+            <obj_property name="ObjectShortName">we3</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/mips_testbench/dut/rf/ra1">
+            <obj_property name="ElementShortName">ra1[4:0]</obj_property>
+            <obj_property name="ObjectShortName">ra1[4:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/mips_testbench/dut/rf/ra2">
+            <obj_property name="ElementShortName">ra2[4:0]</obj_property>
+            <obj_property name="ObjectShortName">ra2[4:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/mips_testbench/dut/rf/wa3">
+            <obj_property name="ElementShortName">wa3[4:0]</obj_property>
+            <obj_property name="ObjectShortName">wa3[4:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/mips_testbench/dut/rf/wd3">
+            <obj_property name="ElementShortName">wd3[31:0]</obj_property>
+            <obj_property name="ObjectShortName">wd3[31:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/mips_testbench/dut/rf/rd1">
+            <obj_property name="ElementShortName">rd1[31:0]</obj_property>
+            <obj_property name="ObjectShortName">rd1[31:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/mips_testbench/dut/rf/rd2">
+            <obj_property name="ElementShortName">rd2[31:0]</obj_property>
+            <obj_property name="ObjectShortName">rd2[31:0]</obj_property>
+         </wvobject>
+      </wvobject>
+   </wvobject>
+   <wvobject type="logic" fp_name="/mips_testbench/clk">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/mips_testbench/reset">
+      <obj_property name="ElementShortName">reset</obj_property>
+      <obj_property name="ObjectShortName">reset</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/mips_testbench/memwrite">
+      <obj_property name="ElementShortName">memwrite</obj_property>
+      <obj_property name="ObjectShortName">memwrite</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/mips_testbench/dut/pc">
+      <obj_property name="ElementShortName">pc[31:0]</obj_property>
+      <obj_property name="ObjectShortName">pc[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/mips_testbench/dut/branch">
+      <obj_property name="ElementShortName">branch</obj_property>
+      <obj_property name="ObjectShortName">branch</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/mips_testbench/dut/pcbranch">
+      <obj_property name="ElementShortName">pcbranch[31:0]</obj_property>
+      <obj_property name="ObjectShortName">pcbranch[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/mips_testbench/dut/rd2imm">
+      <obj_property name="ElementShortName">rd2imm[31:0]</obj_property>
+      <obj_property name="ObjectShortName">rd2imm[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="group" fp_name="group5338">
+      <obj_property name="label">Instruction</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="other" fp_name="/mips_testbench/dut/i.Mnem">
+         <obj_property name="ElementShortName">.Mnem</obj_property>
+         <obj_property name="ObjectShortName">.Mnem</obj_property>
+         <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/mips_testbench/dut/i.Rd">
+         <obj_property name="ElementShortName">.Rd[4:0]</obj_property>
+         <obj_property name="ObjectShortName">.Rd[4:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/mips_testbench/dut/i.Rt">
+         <obj_property name="ElementShortName">.Rt[4:0]</obj_property>
+         <obj_property name="ObjectShortName">.Rt[4:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/mips_testbench/dut/i.Rs">
+         <obj_property name="ElementShortName">.Rs[4:0]</obj_property>
+         <obj_property name="ObjectShortName">.Rs[4:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/mips_testbench/dut/i.Imm">
+         <obj_property name="ElementShortName">.Imm[15:0]</obj_property>
+         <obj_property name="ObjectShortName">.Imm[15:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/mips_testbench/dut/i.BrTarget">
+         <obj_property name="ElementShortName">.BrTarget[25:0]</obj_property>
+         <obj_property name="ObjectShortName">.BrTarget[25:0]</obj_property>
+         <obj_property name="CustomSignalColor">#FAAFBE</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="logic" fp_name="/mips_testbench/dut/c.alusrc">
+      <obj_property name="ElementShortName">.alusrc</obj_property>
+      <obj_property name="ObjectShortName">.alusrc</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/mips_testbench/dut/rd2">
+      <obj_property name="ElementShortName">rd2[31:0]</obj_property>
+      <obj_property name="ObjectShortName">rd2[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/mips_testbench/dut/EX.rd2">
+      <obj_property name="ElementShortName">.rd2[31:0]</obj_property>
+      <obj_property name="ObjectShortName">.rd2[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="group" fp_name="group2297">
+      <obj_property name="label">ALU</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="array" fp_name="/mips_testbench/dut/alu_inst/a">
+         <obj_property name="ElementShortName">a[31:0]</obj_property>
+         <obj_property name="ObjectShortName">a[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/mips_testbench/dut/alu_inst/b">
+         <obj_property name="ElementShortName">b[31:0]</obj_property>
+         <obj_property name="ObjectShortName">b[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/mips_testbench/dut/alu_inst/result">
+         <obj_property name="ElementShortName">result[31:0]</obj_property>
+         <obj_property name="ObjectShortName">result[31:0]</obj_property>
+         <obj_property name="CustomSignalColor">#00FFFF</obj_property>
+         <obj_property name="UseCustomSignalColor">true</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="array" fp_name="/mips_testbench/dut/dmem/a">
+      <obj_property name="ElementShortName">a[10:0]</obj_property>
+      <obj_property name="ObjectShortName">a[10:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/mips_testbench/dut/dmem/do">
+      <obj_property name="ElementShortName">do[31:0]</obj_property>
+      <obj_property name="ObjectShortName">do[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/mips_testbench/dut/dmem/byte0/we">
+      <obj_property name="ElementShortName">we</obj_property>
+      <obj_property name="ObjectShortName">we</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/mips_testbench/dut/dmem/byte0/adr">
+      <obj_property name="ElementShortName">adr[10:0]</obj_property>
+      <obj_property name="ObjectShortName">adr[10:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/mips_testbench/dut/wd">
+      <obj_property name="ElementShortName">wd[31:0]</obj_property>
+      <obj_property name="ObjectShortName">wd[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/mips_testbench/dut/dmem/byte0/din">
+      <obj_property name="ElementShortName">din[7:0]</obj_property>
+      <obj_property name="ObjectShortName">din[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/mips_testbench/dut/dmem/byte0/dout">
+      <obj_property name="ElementShortName">dout[7:0]</obj_property>
+      <obj_property name="ObjectShortName">dout[7:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/mips_testbench/dut/dmem/byte0/mem">
+      <obj_property name="ElementShortName">mem[0:2047][7:0]</obj_property>
+      <obj_property name="ObjectShortName">mem[0:2047][7:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+</wave_config>

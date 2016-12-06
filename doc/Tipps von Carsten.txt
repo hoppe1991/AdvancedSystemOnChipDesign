@@ -1,0 +1,9 @@
+### Tipps von Wolfgang ###
+
+1. Schritt kleines Programm auswählen und mit Nops füllen um Data Hazards zu überbrücken
+
+2. Die Mips mit Pipelining einsetzen (4 when rising edge Kommentare löschen)
+
+3. Nach finden der wenigsten nötigsten Nops sind die Datenhazards getilgt. 
+
+4. Durch Stalling und Forwarding die Control Hazards beseitigen.

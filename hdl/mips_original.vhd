@@ -81,7 +81,7 @@ begin
               
 -------------------- IF/ID Pipeline Register -----------------------------------
 
-  ID        <= (IF_ir, pc4) when rising_edge(clk); 
+  ID        <= (IF_ir, pc4); -- when rising_edge(clk); 
   
 -------------------- Instruction Decode and register fetch (ID) ----------------
 
@@ -110,7 +110,7 @@ begin
               
 -------------------- ID/EX Pipeline Register -----------------------------------
 
-  EX        <= (c, i, wa, a, b, signext, ID.pc4, rd2) when rising_edge(clk);
+  EX        <= (c, i, wa, a, b, signext, ID.pc4, rd2); -- when rising_edge(clk);
 
 -------------------- Execution Phase (EX) --------------------------------------
 
@@ -129,7 +129,8 @@ begin
 -------------------- EX/MA Pipeline Register -----------------------------------
  
   MA       <= (EX.c, EX.i, EX.wa, EX.a, EX.imm, EX.pc4, EX.rd2, 
-               pcbranch, pcjump, aluout, zero, lez, ltz, gtz) when rising_edge(clk);
+               pcbranch, pcjump, aluout, zero, lez, ltz, gtz);     
+               --when rising_edge(clk);
                
 -------------------- Memory Access Phase (MA) ----------------------------------
   
@@ -149,7 +150,7 @@ begin
                         
 -------------------- MA/WB Pipeline Register -----------------------------------
   
-  WB        <= (MA.c, MA.wa, MA.pc4, aout) when rising_edge(clk);
+  WB        <= (MA.c, MA.wa, MA.pc4, aout); -- when rising_edge(clk);
   
 -------------------- Write back Phase (WB) -------------------------------------
 

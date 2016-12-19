@@ -96,7 +96,7 @@ begin
                "11111";                                            -- JAL            
                      
   rf:          entity work.regfile 
-               generic map (EDGE => FALLING)
+               generic map (EDGE => RISING)
                port map ( clk, WB.c.regwr, i.Rs, i.Rt, WB.wa, WB_wd, rd1, rd2); 
                
   signext   <= X"ffff" & i.Imm  when (i.Imm(15) = '1' and c.signext = '1') else 
@@ -149,7 +149,7 @@ begin
                         
 -------------------- MA/WB Pipeline Register -----------------------------------
   
-  WB        <= (MA.c, MA.wa, MA.pc4, aout) when rising_edge(clk);
+  WB        <= (MA.c, MA.wa, MA.pc4, aout)  when falling_edge(clk);
   
 -------------------- Write back Phase (WB) -------------------------------------
 

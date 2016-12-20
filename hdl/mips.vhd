@@ -74,7 +74,7 @@ begin
   nextpc    <= MA.pcjump   when MA.c.jump  = '1' else -- j / jal jump addr
                MA.pcbranch when branch     = '1' else -- branch (bne, beq) addr
                MA.a        when MA.c.jr    = '1' else -- jr addr
-               pc4;                                   -- pc + 4;        
+               pc4;                                   -- pc + 4;
 
   imem:        entity work.bram  generic map ( INIT =>  (IFileName & ".imem"))
                port map (clk, '0', pc(11 downto 2), (others=>'0'), IF_ir);
@@ -96,17 +96,39 @@ begin
                "11111";                                            -- JAL
 
   rf:          entity work.regfile
-               generic map (EDGE => FALLING)
+               generic map (EDGE => RISING)
                port map ( clk, WB.c.regwr, i.Rs, i.Rt, WB.wa, WB_wd, rd1, rd2);
 
   signext   <= X"ffff" & i.Imm  when (i.Imm(15) = '1' and c.signext = '1') else
                X"0000" & i.Imm;
 
-  a         <= rd1; -- ALU A input multiplexer
+  -- a         <= rd1; -- ALU A input multiplexer
+
+  -- b         <= rd2; -- ALU B input multiplexer
 
 
-  b         <= rd2; -- ALU B input multiplexer
+-------------------- Multiplexers regarding Forwarding -------------------------
+  a <=  rd1 when (ForwardA = fromReg) else
+        aluout when (ForwardA = fromALUe) else
+        WB_wd when (ForwardA = fromALUm) else
+        wd  when (ForwardA = fromMEM);
 
+  b <=  rd2 when (ForwardB = fromReg) else
+        aluout when (ForwardB = fromALUe) else
+        WB_wd when (ForwardB = fromALUm) else
+        wd  when (ForwardB = fromMEM);
+
+-------------------- Hazard Detection and Forward Logic ------------------------
+
+ForwardA <= fromALUe when ( i.Rs /= "00000" and i.Rs = EX.wa and EX.c.regwr = '1' ) else
+            fromALUm when ( i.Rs /= "00000" and i.Rs = MA.wa and MA.c.regwr = '1' ) else
+            fromMEM  when ( i.Rs /= "00000" and i.Rs = WB.wa and WB.c.regwr = '1' ) else
+            fromReg;
+
+ForwardB <= fromALUe when ( i.Rt /= "00000" and i.Rt = EX.wa and EX.c.regwr = '1' ) else
+            fromALUm when ( i.Rt /= "00000" and i.Rt = MA.wa and MA.c.regwr = '1' ) else
+            fromMEM  when ( i.Rt /= "00000" and i.Rt = WB.wa and WB.c.regwr = '1' ) else
+            fromReg;
 
 -------------------- ID/EX Pipeline Register -----------------------------------
 
@@ -125,6 +147,8 @@ begin
   pcbranch  <= to_slv(signed(EX.pc4) + signed(EX.imm(29 downto 0) & "00"));
 
   pcjump    <= EX.pc4(31 downto 28) & EX.i.BrTarget & "00";
+
+
 
 -------------------- EX/MA Pipeline Register -----------------------------------
 
@@ -150,7 +174,7 @@ begin
 
 -------------------- MA/WB Pipeline Register -----------------------------------
 
-  WB        <= (MA.c, MA.wa, MA.pc4, aout) when rising_edge(clk);
+  WB        <= (MA.c, MA.wa, MA.pc4, aout) when falling_edge(clk);
 
 -------------------- Write back Phase (WB) -------------------------------------
 

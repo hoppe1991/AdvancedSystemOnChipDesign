@@ -16,7 +16,7 @@ ghdl -r -g -O3 --ieee=synopsys --workdir=work convertMemFiles -gDFileName="../dm
 ghdl -i -g -O3 --ieee=synopsys --workdir=work *.vhd
 # analyze automatically outdated files and creates an executable
 ghdl -m -g -O3 --ieee=synopsys --workdir=work mips_testbench
-# runs the executable for 15us and saves all waveforms
+# runs the executable for 60us and saves all waveforms
 ghdl -r -g -O3 --ieee=synopsys --workdir=work mips_testbench --stop-time=60us  --wave=../sim/$1.ghw -gDFileName="../dmem/$1" -gIFileName="../imem/$1"
 else echo "usage: ghdl.sh path/asm-file-without-extension"
 fi

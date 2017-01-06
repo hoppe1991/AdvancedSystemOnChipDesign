@@ -63,15 +63,32 @@ architecture struct of mips is
   signal forwardA,
          forwardB : ForwardType := FromREG;
 
+  signal Stall_disablePC     : STD_LOGIC := '0';
+
+  signal Bubble     : EXType := (
+                  ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
+                   '0', "0000",WORD),
+                  --Opcode,    opc       rd       rt       rs
+                  (NOP, "000000", "00000", "00000", "00000",
+                  --Funct    Shamt     Imm     BrTarget
+                  "000000", "00000", x"0000", "00" & x"000000"),
+                  --wa          a         imm         pc4         rd2        rd2imm
+                  "00000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
+
 begin
 
 -------------------- Instruction Fetch Phase (IF) -----------------------------
 
+-- if DisablePC == 0
   pc        <= nextpc when rising_edge(clk);
+-- else
+--  pc <= pc;
+-- endif
 
   pc4       <= to_slv(unsigned(pc) + 4);
 
-  nextpc    <= MA.pcjump   when MA.c.jump  = '1' else -- j / jal jump addr
+  nextpc    <= pc          when Stall_disablePC  = '1' else --
+               MA.pcjump   when MA.c.jump  = '1' else -- j / jal jump addr
                MA.pcbranch when branch     = '1' else -- branch (bne, beq) addr
                MA.a        when MA.c.jr    = '1' else -- jr addr
                pc4;                                   -- pc + 4;
@@ -129,9 +146,25 @@ ForwardB <= fromALUe when ( i.Rt /= "00000" and i.Rt = EX.wa and EX.c.regwr = '1
             fromMEM  when ( i.Rt /= "00000" and i.Rt = WB.wa and WB.c.regwr = '1' ) else
             fromReg;
 
+
+--if ( (EX.MemRead == 1) // Detect Load in EX stage
+--and (ForwardA==1 or ForwardB==1)) then Stall // RAW Hazard
+--DisablePC
+
+-- EX.MemRead is equal to EX.c.mem2reg ?
+Stall_disablePC <= '1' when ( (EX.c.mem2reg = '1') and (ForwardA = fromALUe or ForwardB = fromALUe) ) else
+                   '0';
+
+-------------------- Multiplexer Stalling ------------- ------------------------
+-- bubble = '0'
+
+  EX  <= Bubble when Stall_disablePC = '1' and rising_edge(clk) else
+         (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
+
+
 -------------------- ID/EX Pipeline Register -----------------------------------
 
-  EX        <= (c, i, wa, a, b, signext, ID.pc4, rd2) when rising_edge(clk);
+--  EX        <= (c, i, wa, a, b, signext, ID.pc4, rd2) when rising_edge(clk);
 
 -------------------- Execution Phase (EX) --------------------------------------
 

@@ -81,10 +81,11 @@ begin
 
   pc        <= nextpc when rising_edge(clk);
 
-  pc4       <= to_slv(unsigned(pc) + 4);
+  pc4       <= 	to_slv(unsigned(pc) + 0) when Stall_disablePC  = '1' else
+	            to_slv(unsigned(pc) + 4) ;
 
-  nextpc    <= pc          when Stall_disablePC  = '1' else --
-               MA.pcjump   when MA.c.jump  = '1' else -- j / jal jump addr
+  nextpc    <=         
+	           MA.pcjump   when MA.c.jump  = '1' else -- j / jal jump addr
                MA.pcbranch when branch     = '1' else -- branch (bne, beq) addr
                MA.a        when MA.c.jr    = '1' else -- jr addr
                pc4;                                   -- pc + 4;

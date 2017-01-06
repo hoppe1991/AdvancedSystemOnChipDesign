@@ -79,11 +79,7 @@ begin
 
 -------------------- Instruction Fetch Phase (IF) -----------------------------
 
--- if DisablePC == 0
   pc        <= nextpc when rising_edge(clk);
--- else
---  pc <= pc;
--- endif
 
   pc4       <= to_slv(unsigned(pc) + 4);
 

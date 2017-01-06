@@ -95,7 +95,7 @@ begin
 
 -------------------- IF/ID Pipeline Register -----------------------------------
 
-  ID        <= (IF_ir, pc4) when rising_edge(clk);
+  ID        <= (IF_ir, pc4) when rising_edge(clk) and Stall_disablePC  = '0';
 
 -------------------- Instruction Decode and register fetch (ID) ----------------
 

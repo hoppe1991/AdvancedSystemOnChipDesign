@@ -17,6 +17,11 @@ java -jar /home/hendrik/Downloads/Mars4_5.jar a dump .data HexText ../dmem/$1.dm
 # analyze automatically outdated files and creates an executable
 /home/hendrik/Downloads/ghdl-033/bin/ghdl -m -g -O3 --ieee=synopsys --workdir=work mips_testbench
 # runs the executable for 15us and saves all waveforms
-/home/hendrik/Downloads/ghdl-033/bin/ghdl -r -g -O3 --ieee=synopsys --workdir=work mips_testbench --stop-time=15us  --wave=../sim/$1.ghw -gDFileName="../dmem/$1" -gIFileName="../imem/$1"
+/home/hendrik/Downloads/ghdl-033/bin/ghdl -r -g -O3 --ieee=synopsys --workdir=work mips_testbench --stop-time=60us  --wave=../sim/$1.ghw -gDFileName="../dmem/$1" -gIFileName="../imem/$1"
+
+# opens gtkwave
+gtkwave ../sim/$1.ghw ../sim/isort.gtkw
+
+gIFileName="../imem/$1"
 else echo "usage: ghdl.sh path/asm-file-without-extension"
 fi

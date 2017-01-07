@@ -64,6 +64,7 @@ architecture struct of mips is
          forwardB : ForwardType := FromREG;
 
   signal Stall_disablePC     : STD_LOGIC := '0';
+  signal JumpCommandOccuredKeepStalling     : STD_LOGIC_VECTOR(1 downto 0) := "00";
 
   signal Bubble     : EXType := (
                   ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
@@ -148,9 +149,32 @@ ForwardB <= fromALUe when ( i.Rt /= "00000" and i.Rt = EX.wa and EX.c.regwr = '1
 --and (ForwardA==1 or ForwardB==1)) then Stall // RAW Hazard
 --DisablePC
 
+
+
+
+-- The following logic looks for all kinds of jump comands and orders 3 stalls.
 -- EX.MemRead is equal to EX.c.mem2reg ?
-Stall_disablePC <= '1' when ( (EX.c.mem2reg = '1') and (ForwardA = fromALUe or ForwardB = fromALUe) ) else
-                   '0';
+Stall_disablePC <= '1' when ( (EX.c.mem2reg = '1') and (ForwardA = fromALUe or ForwardB = fromALUe) ) 
+			   --  or (c.jump = "beq" ) or (ID.c.mnem = "jal" ) or (ID.i.mnem = "jar" )
+			   --  or (c.jump = "j" )   or (ID.c.mnem = "bne" ) or (ID.i.mnem = "bgtz" )
+			   --  or (c.jump = "blez" ) or (ID.c.mnem = "bltz" )
+				or (c.jump = '1') or (c.jr = '1')
+				or (JumpCommandOccuredKeepStalling /= "00")
+			 else  '0';
+
+JumpCommandOccuredKeepStalling <= "10" when 
+			--	(ID.i.mnem = "beq" )  or (ID.i.mnem = "jal" ) or (ID.i.mnem = "jar" )
+			--     or (ID.i.mnem = "j" )    or (ID.i.mnem = "bne" ) or (ID.i.mnem = "bgtz" )
+			--     or (ID.i.mnem = "blez" ) or (ID.i.mnem = "bltz" )
+					 			
+				((c.jump = '1') or (c.jr = '1')) and ((  JumpCommandOccuredKeepStalling /= "10") or (JumpCommandOccuredKeepStalling /= "01"))
+			else
+				"01" when (JumpCommandOccuredKeepStalling = "10") and ((  JumpCommandOccuredKeepStalling /= "01") or
+			else 	
+				"00" when (JumpCommandOccuredKeepStalling = "01") ;
+
+-- TODO MAKE UPPER STUFF CLEAN!!!
+
 
 -------------------- Multiplexer Stalling ------------- ------------------------
 -- bubble = '0'

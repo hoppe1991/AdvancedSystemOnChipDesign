@@ -160,7 +160,7 @@ Stall_disablePC <= '1' when ( (EX.c.mem2reg = '1') and (ForwardA = fromALUe or F
 			   --  or (c.jump = "blez" ) or (ID.c.mnem = "bltz" )
 				--or (c.jump = '1') or (c.jr = '1')
 --				or (JumpCommandOccuredKeepStalling /= "00")
-      or  ( ( (EX.i.Opc = I_BEQ.OPC) or (MA.i.Opc = I_BEQ.OPC)) ) --and (rising_edge(clk))) -- or ()
+      or  ( (  ((branch = '1') and (rising_edge(clk))) or (EX.i.Opc = I_BEQ.OPC) or (MA.i.Opc = I_BEQ.OPC)) ) --and (rising_edge(clk))) -- or ()
 --(i.Opc = I_BEQ.Opc) or (IF_ir(31 downto 26) = I_BEQ.Opc) or
 
 

@@ -13,5 +13,7 @@ L1:	addi $t2, $zero, 5	# b = 5
 	beq $t1, $t2, L2	# if ( a == b ) then goto L2
 	addi $t1, $zero, 4	# a = 4
 	addi $t2, $zero, 5	# b = 5
+	sub $t6, $t6, $zero	# y = y - 0
+	sub $t7, $t7, $zero	# x = x - 0
 L2:	addi $t1, $zero, 1	# a = 1
 	addi $t2, $zero, 1	# b = 1

@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.78 (w)1999-2016 BSI
-[*] Mon Jan 16 21:37:46 2017
+[*] Tue Jan 17 07:53:13 2017
 [*]
 [dumpfile] "C:\Users\carst\Documents\AdvancedSystemOnChipDesign\Workspace\AdvancedSystemOnChipDesign\sim\branchTestWithNop.ghw"
-[dumpfile_mtime] "Mon Jan 16 21:35:49 2017"
-[dumpfile_size] 637342
+[dumpfile_mtime] "Tue Jan 17 07:48:50 2017"
+[dumpfile_size] 636675
 [savefile] "C:\Users\carst\Documents\AdvancedSystemOnChipDesign\Workspace\AdvancedSystemOnChipDesign\sim\branchTestWithNop.gtkw"
 [timestart] 0
 [size] 1536 801
-[pos] -191 -191
-*-26.000000 45600000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -1 -1
+*-26.000000 92600000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.mips_testbench.
 [treeopen] top.mips_testbench.dut.
@@ -21,6 +21,7 @@
 [treeopen] top.mips_testbench.dut.i.
 [treeopen] top.mips_testbench.dut.ma.
 [treeopen] top.mips_testbench.dut.ma.c.
+[treeopen] top.mips_testbench.dut.ma.i.
 [treeopen] top.mips_testbench.dut.rf.reg.
 [treeopen] top.mips_testbench.dut.wb.
 [sst_width] 211
@@ -42,14 +43,15 @@ top.mips_testbench.dut.i.mnem
 #{top.mips_testbench.dut.wb.wa[4:0]} top.mips_testbench.dut.wb.wa[4] top.mips_testbench.dut.wb.wa[3] top.mips_testbench.dut.wb.wa[2] top.mips_testbench.dut.wb.wa[1] top.mips_testbench.dut.wb.wa[0]
 @28
 top.mips_testbench.dut.wb.c.regwr
-@200
+@201
 -
 @28
 #{top.mips_testbench.dut.jumpcommandoccuredkeepstalling[1:0]} top.mips_testbench.dut.jumpcommandoccuredkeepstalling[1] top.mips_testbench.dut.jumpcommandoccuredkeepstalling[0]
-@29
 top.mips_testbench.dut.stall_disablepc
-@28
 top.mips_testbench.dut.clk
+@200
+-
+@28
 top.mips_testbench.dut.i.mnem
 @24
 #{top.mips_testbench.dut.i.rs[4:0]} top.mips_testbench.dut.i.rs[4] top.mips_testbench.dut.i.rs[3] top.mips_testbench.dut.i.rs[2] top.mips_testbench.dut.i.rs[1] top.mips_testbench.dut.i.rs[0]
@@ -58,6 +60,7 @@ top.mips_testbench.dut.i.mnem
 #{top.mips_testbench.dut.i.imm[15:0]} top.mips_testbench.dut.i.imm[15] top.mips_testbench.dut.i.imm[14] top.mips_testbench.dut.i.imm[13] top.mips_testbench.dut.i.imm[12] top.mips_testbench.dut.i.imm[11] top.mips_testbench.dut.i.imm[10] top.mips_testbench.dut.i.imm[9] top.mips_testbench.dut.i.imm[8] top.mips_testbench.dut.i.imm[7] top.mips_testbench.dut.i.imm[6] top.mips_testbench.dut.i.imm[5] top.mips_testbench.dut.i.imm[4] top.mips_testbench.dut.i.imm[3] top.mips_testbench.dut.i.imm[2] top.mips_testbench.dut.i.imm[1] top.mips_testbench.dut.i.imm[0]
 @200
 -
+-EX
 @28
 top.mips_testbench.dut.ex.i.mnem
 @24
@@ -67,8 +70,15 @@ top.mips_testbench.dut.ex.i.mnem
 #{top.mips_testbench.dut.ex.i.rd[4:0]} top.mips_testbench.dut.ex.i.rd[4] top.mips_testbench.dut.ex.i.rd[3] top.mips_testbench.dut.ex.i.rd[2] top.mips_testbench.dut.ex.i.rd[1] top.mips_testbench.dut.ex.i.rd[0]
 @200
 -
+-MA
 @28
 top.mips_testbench.dut.ma.i.mnem
+@24
+#{top.mips_testbench.dut.ma.i.rs[4:0]} top.mips_testbench.dut.ma.i.rs[4] top.mips_testbench.dut.ma.i.rs[3] top.mips_testbench.dut.ma.i.rs[2] top.mips_testbench.dut.ma.i.rs[1] top.mips_testbench.dut.ma.i.rs[0]
+#{top.mips_testbench.dut.ma.i.rt[4:0]} top.mips_testbench.dut.ma.i.rt[4] top.mips_testbench.dut.ma.i.rt[3] top.mips_testbench.dut.ma.i.rt[2] top.mips_testbench.dut.ma.i.rt[1] top.mips_testbench.dut.ma.i.rt[0]
+#{top.mips_testbench.dut.ma.i.rd[4:0]} top.mips_testbench.dut.ma.i.rd[4] top.mips_testbench.dut.ma.i.rd[3] top.mips_testbench.dut.ma.i.rd[2] top.mips_testbench.dut.ma.i.rd[1] top.mips_testbench.dut.ma.i.rd[0]
+#{top.mips_testbench.dut.ma.i.imm[15:0]} top.mips_testbench.dut.ma.i.imm[15] top.mips_testbench.dut.ma.i.imm[14] top.mips_testbench.dut.ma.i.imm[13] top.mips_testbench.dut.ma.i.imm[12] top.mips_testbench.dut.ma.i.imm[11] top.mips_testbench.dut.ma.i.imm[10] top.mips_testbench.dut.ma.i.imm[9] top.mips_testbench.dut.ma.i.imm[8] top.mips_testbench.dut.ma.i.imm[7] top.mips_testbench.dut.ma.i.imm[6] top.mips_testbench.dut.ma.i.imm[5] top.mips_testbench.dut.ma.i.imm[4] top.mips_testbench.dut.ma.i.imm[3] top.mips_testbench.dut.ma.i.imm[2] top.mips_testbench.dut.ma.i.imm[1] top.mips_testbench.dut.ma.i.imm[0]
+@28
 #{top.mips_testbench.dut.jumpcommandoccuredkeepstalling[1:0]} top.mips_testbench.dut.jumpcommandoccuredkeepstalling[1] top.mips_testbench.dut.jumpcommandoccuredkeepstalling[0]
 @200
 -

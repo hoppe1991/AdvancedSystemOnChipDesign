@@ -1,0 +1,149 @@
+\documentclass[11pt,a4paper]{article}
+
+% -----------------------------------------------------
+%	Use packages.
+% -----------------------------------------------------
+\usepackage[german,ngerman]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{csquotes}
+\usepackage[left=2.5cm,right=3cm,top=3cm,bottom=3cm]{geometry}
+\usepackage{subfiles}
+\usepackage{helvet}
+\usepackage{graphicx}
+\usepackage{titling}
+\usepackage{blindtext} % Used to generate blindtext.
+\usepackage{mathptmx}	% Used for Times New Roman.
+\usepackage{bibgerm}
+\usepackage[backend=bibtex,style=numeric]{biblatex}  %backend=biber is 'better'  
+% backend = {biber, bibtex}
+\usepackage{hyperref}
+
+% -----------------------------------------------------
+%	Define attributes.
+% -----------------------------------------------------
+\title{Advanced System-on-Chip Design}
+\author{author}
+
+
+
+\newcommand{\cacheResultFigure}[3]{
+\begin{figure}
+	\centering
+	\includegraphics[scale=.8]{#1}
+	\caption{#2}
+	\label{#3}
+\end{figure}
+}
+
+
+
+% -----------------------------------------------------
+%	Add bibliography resources.
+% -----------------------------------------------------
+%\addbibresource{references.bib}
+
+% =====================================================
+\begin{document}
+
+% Include the titelpage.
+\input{titlepage}
+
+% Table of contents.
+\tableofcontents
+\newpage
+
+% Include introduction.
+\section{Cache Simulation - Results}
+
+\subsection{Column Major}
+\begin{tabular}{lllll}
+\hline %\toprule
+Placement (Policy) & Cache Block Size (Words) & Cache Hit Count & Cache Miss Count & Cache Hit Rate \\
+\hline %\midrule
+Direct Mapping & 2 & 0 & 256 & 0  \\
+Direct Mapping & 4 & 0 & 256 & 0  \\
+Direct Mapping & 8 & 0 & 256 & 0  \\
+Direct Mapping & 16 & 0 & 256 & 0  \\
+2-Way Set Associative & 2 & 0 & 256 & 0 \\
+2-Way Set Associative & 4 & 0 & 256 & 0 \\
+2-Way Set Associative & 8 & 0 & 512 & 0 \\
+2-Way Set Associative & 16 & 0 & 256 & 0 \\
+4-Way Set Associative & 2 & 0 & 256 & 0 \\
+4-Way Set Associative & 4 & 0 & 256 & 0 \\
+4-Way Set Associative & 8 & 0 & 256 & 0 \\
+4-Way Set Associative & 16 & 0 & 256 & 0 \\
+\hline %\bottomrule
+\end{tabular} 
+
+\subsection{Row Major}
+\begin{tabular}{lllll}
+\hline %\toprule
+Placement (Policy) & Cache Block Size (Words) & Cache Hit Count & Cache Miss Count & Cache Hit Rate \\
+\hline %\midrule
+Direct Mapping & 2 & 128 & 128 & 50  \\
+Direct Mapping & 4 & 192 & 64 & 75  \\
+Direct Mapping & 8 & 224 & 32 & 88  \\
+Direct Mapping & 16 & 240 & 16 & 94  \\
+2-Way Set Associative & 2 & 128 & 128 & 50 \\
+2-Way Set Associative & 4 & 192 & 64 & 75 \\
+2-Way Set Associative & 8 & 224 & 32 & 88 \\
+2-Way Set Associative & 16 & 240 & 16 & 94 \\
+4-Way Set Associative & 2 & 128 & 128 & 50 \\
+4-Way Set Associative & 4 & 192 & 64 & 75 \\
+4-Way Set Associative & 8 & 224 & 16 & 88 \\
+4-Way Set Associative & 16 & 240 & 16 & 94 \\
+\hline %\bottomrule
+\end{tabular} 
+
+
+
+
+\newpage
+\section{Appendix}
+\cacheResultFigure{pictures/task4_columnMajor_directMapping2}{Column Major, Direct Mapping, Cache Block Size 2}{fig:pic}
+\cacheResultFigure{pictures/task4_columnMajor_directMapping4}{Column Major, Direct Mapping, Cache Block Size 4}{fig:pic}
+\cacheResultFigure{pictures/task4_columnMajor_directMapping8}{Column Major, Direct Mapping, Cache Block Size 8}{fig:pic}
+\cacheResultFigure{pictures/task4_columnMajor_directMapping16}{Column Major, Direct Mapping, Cache Block Size 16}{fig:pic}
+
+\cacheResultFigure{pictures/task4_columnMajor_2waySetAssociative2}{Column Major, 2-Way Associative, Cache Block Size 2}{fig:pic}
+\cacheResultFigure{pictures/task4_columnMajor_2waySetAssociative4}{Column Major, 2-Way Associative, Cache Block Size 4}{fig:pic}
+\cacheResultFigure{pictures/task4_columnMajor_2waySetAssociative8}{Column Major, 2-Way Associative, Cache Block Size 8}{fig:pic}
+\cacheResultFigure{pictures/task4_columnMajor_2waySetAssociative16}{Column Major, 2-Way Associative, Cache Block Size 16}{fig:pic}
+
+\cacheResultFigure{pictures/task4_columnMajor_4waySetAssociative2}{Column Major, 4-Way Associative, Cache Block Size 2}{fig:pic}
+\cacheResultFigure{pictures/task4_columnMajor_4waySetAssociative4}{Column Major, 4-Way Associative, Cache Block Size 4}{fig:pic}
+\cacheResultFigure{pictures/task4_columnMajor_4waySetAssociative8}{Column Major, 4-Way Associative, Cache Block Size 8}{fig:pic}
+\cacheResultFigure{pictures/task4_columnMajor_4waySetAssociative16}{Column Major, 4-Way Associative, Cache Block Size 16}{fig:pic}
+
+
+\cacheResultFigure{pictures/task4_rowMajor_directMapping2}{Row Major, Direct Mapping, Cache Block Size 2}{fig:pic}
+\cacheResultFigure{pictures/task4_rowMajor_directMapping4}{Row Major, Direct Mapping, Cache Block Size 4}{fig:pic}
+\cacheResultFigure{pictures/task4_rowMajor_directMapping8}{Row Major, Direct Mapping, Cache Block Size 8}{fig:pic}
+\cacheResultFigure{pictures/task4_rowMajor_directMapping16}{Row Major, Direct Mapping, Cache Block Size 16}{fig:pic}
+
+\cacheResultFigure{pictures/task4_rowMajor_2waySetAssociative2}{Row Major, 2-Way Associative, Cache Block Size 2}{fig:pic}
+\cacheResultFigure{pictures/task4_rowMajor_2waySetAssociative4}{Row Major, 2-Way Associative, Cache Block Size 4}{fig:pic}
+\cacheResultFigure{pictures/task4_rowMajor_2waySetAssociative8}{Row Major, 2-Way Associative, Cache Block Size 8}{fig:pic}
+\cacheResultFigure{pictures/task4_rowMajor_2waySetAssociative16}{Row Major, 2-Way Associative, Cache Block Size 16}{fig:pic}
+
+\cacheResultFigure{pictures/task4_rowMajor_4waySetAssociative2}{Row Major, 4-Way Associative, Cache Block Size 2}{fig:pic}
+\cacheResultFigure{pictures/task4_rowMajor_4waySetAssociative4}{Row Major, 4-Way Associative, Cache Block Size 4}{fig:pic}
+\cacheResultFigure{pictures/task4_rowMajor_4waySetAssociative8}{Row Major, 4-Way Associative, Cache Block Size 8}{fig:pic}
+\cacheResultFigure{pictures/task4_rowMajor_4waySetAssociative16}{Row Major, 4-Way Associative, Cache Block Size 16}{fig:pic}
+
+
+
+
+
+% Abbildungsverzeichnis
+% Abkürzungsverzeichnis
+% Verzeichnis der Anhänge
+% Anhänge und Materialien
+
+% Include bibliography.
+\newpage
+\nocite{*}
+\printbibliography
+
+% =====================================================
+\end{document}

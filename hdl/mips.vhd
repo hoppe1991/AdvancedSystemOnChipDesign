@@ -64,6 +64,7 @@ architecture struct of mips is
          forwardB : ForwardType := FromREG;
 
   signal Stall_disablePC     : STD_LOGIC := '0';
+  signal Stall_disablePC2     : STD_LOGIC := '0';
   signal JumpCommandOccuredKeepStalling     : STD_LOGIC_VECTOR(1 downto 0) := "00";
 
   signal Bubble     : EXType := (
@@ -83,9 +84,10 @@ begin
   pc        <= nextpc when rising_edge(clk);
 
   pc4       <= 	to_slv(unsigned(pc) + 0) when Stall_disablePC  = '1' else
+	  			to_slv(unsigned(pc) + 0) when Stall_disablePC  = '1'													else
 	            to_slv(unsigned(pc) + 4) ;
 
-  nextpc    <=         
+  nextpc    <=
 	           MA.pcjump   when MA.c.jump  = '1' else -- j / jal jump addr
                MA.pcbranch when branch     = '1' else -- branch (bne, beq) addr
                MA.a        when MA.c.jr    = '1' else -- jr addr
@@ -96,7 +98,9 @@ begin
 
 -------------------- IF/ID Pipeline Register -----------------------------------
 
-  ID        <= (IF_ir, pc4) when rising_edge(clk) and Stall_disablePC  = '0';
+  ID        <= (IF_ir, pc4) when rising_edge(clk) and Stall_disablePC  = '0'
+  else		   (IF_ir, pc4) when rising_edge(clk) and Stall_disablePC  = '1' and (MA.i.Opc = I_BEQ.OPC) ;
+				   
 
 -------------------- Instruction Decode and register fetch (ID) ----------------
 
@@ -154,24 +158,42 @@ ForwardB <= fromALUe when ( i.Rt /= "00000" and i.Rt = EX.wa and EX.c.regwr = '1
 
 -- The following logic looks for all kinds of jump comands and orders 3 stalls.
 -- EX.MemRead is equal to EX.c.mem2reg ?
-Stall_disablePC <= '1' when ( (EX.c.mem2reg = '1') and (ForwardA = fromALUe or ForwardB = fromALUe) ) 
-			   --  or (c.jump = "beq" ) or (ID.c.mnem = "jal" ) or (ID.i.mnem = "jar" )
-			   --  or (c.jump = "j" )   or (ID.c.mnem = "bne" ) or (ID.i.mnem = "bgtz" )
-			   --  or (c.jump = "blez" ) or (ID.c.mnem = "bltz" )
-				or (c.jump = '1') or (c.jr = '1')
-				or (JumpCommandOccuredKeepStalling /= "00")
-			 else  '0';
+				
+Stall_disablePC <= 
+				
+				'1' when  		((EX.c.mem2reg = '1') 	
+						   	and (ForwardA = fromALUe or ForwardB = fromALUe)) 
+							or ((EX.i.Opc = I_BEQ.OPC)  
+							or (MA.i.Opc = I_BEQ.OPC))  -- or ()
 
-JumpCommandOccuredKeepStalling <= "10" when 
+		else	'0' when   		(ForwardA /= fromALUe) 
+							and (ForwardB /= fromALUe) 
+							and (EX.i.Opc /= I_BEQ.OPC) 
+							and (MA.i.Opc /= I_BEQ.OPC) and rising_edge(clk)
+				;
+
+-------------------- TODO SIGNAL JumpCommandOccuredKeepStalling  ---------------
+			--	JumpCommandOccuredKeepStalling <= "11" when
+			--						(	(IF_ir(31 downto 26) = I_BEQ.Opc) or
+			--							(IF_ir(31 downto 26) = I_BNE.Opc) or -- getting it from raw data
+			--							(IF_ir(31 downto 26) = I_BLEZ.Opc) or
+			--							(IF_ir(31 downto 26) = I_BLTZ.Opc) or
+			--							(IF_ir(31 downto 26) = I_BGTZ.Opc) or
+			--							( (c.jump = '1') or (c.jr = '1') ) 		) and ( JumpCommandOccuredKeepStalling = "00") and ( rising_edge(clk) )
+	--		else
+
 			--	(ID.i.mnem = "beq" )  or (ID.i.mnem = "jal" ) or (ID.i.mnem = "jar" )
 			--     or (ID.i.mnem = "j" )    or (ID.i.mnem = "bne" ) or (ID.i.mnem = "bgtz" )
 			--     or (ID.i.mnem = "blez" ) or (ID.i.mnem = "bltz" )
-					 			
-				((c.jump = '1') or (c.jr = '1')) and ((  JumpCommandOccuredKeepStalling /= "10") or (JumpCommandOccuredKeepStalling /= "01"))
-			else
-				"01" when (JumpCommandOccuredKeepStalling = "10") and ((  JumpCommandOccuredKeepStalling /= "01") or
-			else 	
-				"00" when (JumpCommandOccuredKeepStalling = "01") ;
+	--				( (c.jump = '1') or (c.jr = '1') ) and ( JumpCommandOccuredKeepStalling /= "11" )
+
+	--								"10" when ( JumpCommandOccuredKeepStalling = "11" ) and ( rising_edge(clk) )
+	--		else
+	--								"01" when ( JumpCommandOccuredKeepStalling = "10" ) and ( rising_edge(clk) )
+	--		else
+	--								"00" when ( JumpCommandOccuredKeepStalling = "01" ) and ( rising_edge(clk) ) ;
+
+
 
 -- TODO MAKE UPPER STUFF CLEAN!!!
 
@@ -228,6 +250,8 @@ JumpCommandOccuredKeepStalling <= "10" when
 -------------------- MA/WB Pipeline Register -----------------------------------
 
   WB        <= (MA.c, MA.wa, MA.pc4, aout) when falling_edge(clk);
+	  
+   Stall_disablePC2     <=  Stall_disablePC when rising_edge(clk);
 
 -------------------- Write back Phase (WB) -------------------------------------
 

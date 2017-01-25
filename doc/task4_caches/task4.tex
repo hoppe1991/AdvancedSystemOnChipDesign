@@ -54,8 +54,15 @@
 
 % Include introduction.
 \section{Cache Simulation - Results}
+The two assembler programs \textit{row-major.asm} and \textit{column-major.asm} has been used for the cache simulation. \ref{tab:tableColumnMajor} contains the results regarding the file \textit{column-major.asm} and  \ref{tab:tableRowMajor} illustrates the results of \textit{row-major.asm}.\\
+TODO Interpretation
 
-\subsection{Column Major}
+
+
+\begin{table}
+\centering
+\caption{Cache Simulation of Column Major}
+\label{tab:tableColumnMajor}
 \begin{tabular}{lllll}
 \hline %\toprule
 Placement (Policy) & Cache Block Size (Words) & Cache Hit Count & Cache Miss Count & Cache Hit Rate \\
@@ -74,8 +81,11 @@ Direct Mapping & 16 & 0 & 256 & 0  \\
 4-Way Set Associative & 16 & 0 & 256 & 0 \\
 \hline %\bottomrule
 \end{tabular} 
+\end{table}
 
-\subsection{Row Major}
+\begin{table}
+\caption{Cache Simulation of Row Major}
+\label{tab:tableRowMajor}
 \begin{tabular}{lllll}
 \hline %\toprule
 Placement (Policy) & Cache Block Size (Words) & Cache Hit Count & Cache Miss Count & Cache Hit Rate \\
@@ -94,6 +104,7 @@ Direct Mapping & 16 & 240 & 16 & 94  \\
 4-Way Set Associative & 16 & 240 & 16 & 94 \\
 \hline %\bottomrule
 \end{tabular} 
+\end{table}
 
 
 

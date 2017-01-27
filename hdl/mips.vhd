@@ -66,6 +66,7 @@ architecture struct of mips is
   signal Stall_disablePC     : STD_LOGIC := '0';
   signal Stall_disablePC2     : STD_LOGIC := '0';
   signal JumpCommandOccuredKeepStalling     : STD_LOGIC_VECTOR(1 downto 0) := "00";
+
   signal Bubble     : EXType := (
                   ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
                    '0', "0000",WORD),
@@ -153,9 +154,10 @@ ForwardB <= fromALUe when ( i.Rt /= "00000" and i.Rt = EX.wa and EX.c.regwr = '1
 --DisablePC
 
 
+
+
 -- The following logic looks for all kinds of jump comands and orders 3 stalls.
 -- EX.MemRead is equal to EX.c.mem2reg ?
-<<<<<<< HEAD
 				
 Stall_disablePC <= 
 				
@@ -169,16 +171,6 @@ Stall_disablePC <=
 							and (EX.i.Opc /= I_BEQ.OPC) 
 							and (MA.i.Opc /= I_BEQ.OPC) and rising_edge(clk)
 				;
-=======
-Stall_disablePC <= '1' when ( (EX.c.mem2reg = '1') and (ForwardA = fromALUe or ForwardB = fromALUe) )
-      or  ( (  ((branch = '1') and (rising_edge(clk))) or (EX.i.Opc = I_BEQ.OPC) or (MA.i.Opc = I_BEQ.OPC)) ) --and (rising_edge(clk))) -- or ()
-			 else  '0';
-
-
-
-	-- Setting a counter 3.. 2.. 1.. 0.. for stalling 3 times in a row if jump (jal, jr, j) or branches (bne, beq, ... etc.) occur
-  	-- IF_ir(31 downto 26) means ID.opcode but it is not decoded yet,
->>>>>>> 1bd376941f722c9f53881af648a9208bce3dd282
 
 -------------------- TODO SIGNAL JumpCommandOccuredKeepStalling  ---------------
 			--	JumpCommandOccuredKeepStalling <= "11" when

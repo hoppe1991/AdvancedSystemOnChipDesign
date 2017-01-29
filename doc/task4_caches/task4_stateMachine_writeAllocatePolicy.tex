@@ -37,13 +37,13 @@
 	\path (A) [edge, midway, above, sloped] edge node {CPU Write Request/-} (B)
 		  (B) [edge, midway, above, sloped] edge node {Cache Miss/Stall Processor} (C)
 		  (C) [edge, midway, above, sloped] edge node {Replaced Block Is Dirty/Write Replaced Block To Memory} (D)
-		  (D) edge node [midway, above, sloped] {0,1,L} (E)
+		  (D) edge node [midway, above, sloped] {Write-Back Is Resolved/Read Cache Block Into Cache From Mem} (E)
 		  (E) [edge, midway, above, sloped] edge node {readyMEM=1/Write Data Into Cache, Set Dirty Bit (Modified) Bit} (A);
 		  
 	\path (A) [edge, midway, above, sloped] edge node {CPU Read Request/-} (F)
 		  (F) [edge, midway, above, sloped] edge node {Cache Miss/Stally Processor} (G)
 		  (G) [edge, midway, above, sloped] edge node {Replaced Block Is Dirty/Write Replaced Block To Memory} (H)
-		  (H) [edge, midway, above, sloped] edge node {0,1,L} (I)
+		  (H) [edge, midway, above, sloped] edge node {Write-Back Is Resolved/Read Cache Block Into Cache From Mem} (I)
 		  (I) [edge, midway, above, sloped] edge node {readyMEM=1/Read Data Into CPU} (A);
 
 		

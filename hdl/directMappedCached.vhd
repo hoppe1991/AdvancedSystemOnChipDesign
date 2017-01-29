@@ -14,8 +14,8 @@ use IEEE.STD_LOGIC_TEXTIO.ALL;
 
 entity directMappedCache is
   generic ( DATAWIDTH     : integer := 32;  -- Length of instruction/data words.
-            BLOCKSIZE     : integer := 32;  -- Number of words that a block contains.
-            ADDRESSWIDTH  : integer := 32;   -- Number of cache blocks.
+            BLOCKSIZE     : integer := 4;  -- Number of words that a block contains.
+            ADDRESSWIDTH  : integer := 256;   -- Number of cache blocks.
             OFFSET        : integer := 2    -- Number of bits that can be selected in the cache.
           );
 

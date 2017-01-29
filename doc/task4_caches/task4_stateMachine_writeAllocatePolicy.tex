@@ -25,7 +25,7 @@ Besides the state machine inputs are listed in table \ref{tab:tableFSMInputs} an
     % Definition of tikz styles.       
 	% ------------------------------------------------------------------------------
 	\tikzstyle{vertex}=[state,fill=mycolor,text=white,minimum width=1cm]
-	\tikzstyle{edge}  =[draw,thick,->]
+	\tikzstyle{edge}  =[draw,thick,->, midway, above, sloped]
 	
 	% ------------------------------------------------------------------------------
 	% Definition of nodes.
@@ -44,19 +44,27 @@ Besides the state machine inputs are listed in table \ref{tab:tableFSMInputs} an
 	% ------------------------------------------------------------------------------
 	% Definition of paths.
 	% ------------------------------------------------------------------------------
-	\path (A) [edge, midway, above, sloped] edge [bend right] node {wrCPU='1'/-} (B)
-		  (B) [edge, midway, above, sloped] edge node {cacheMiss='1'/stallCPU='1'} (C)
-		  (B) [edge, midway, above, sloped] edge [bend right] node {cacheHit='1'/dataCPU2Cache, setDirty='1'} (A)
-		  (C) [edge, midway, above, sloped] edge node {isDirty='1'/wrMEM='1'} (D)
-		  (D) [edge, midway, above, sloped] edge node {readyMEM='1'/rdMEM='1'} (E)
-		  (E) [edge, midway, above, sloped] edge node {readyMEM='1'/dataCPU2Cache, setDirty='1'} (A);
+	\path (A) [edge] 			  	edge [bend right] node 	{wrCPU='1'/-} 								(B)
+		  (B) [edge] 				edge node 				{cacheMiss='1'/stallCPU='1'} 				(C)
+		  (B) [edge] 				edge [bend right] node 	{cacheHit='1'/dataCPU2Cache, setDirty='1'} 	(A)
+		  (C) [edge] 				edge node 				{isDirty='1'/wrMEM='1'} 					(D)
+		  (C) [edge] 				edge node 				{isDirty='0'/rdMEM='1'} 					(E)
+		  (D) [edge] 				edge node 				{readyMEM='1'/rdMEM='1'} 					(E)
+		  %(D) [edge, loop below] 	edge node 				{readyMEM='0'} 								(D) 
+		  (E) [edge] 				edge node 				{readyMEM='1'/dataCPU2Cache, setDirty='1'} 	(A)
+		  %(E) [edge, loop below]	edge node 				{readyMEM='0'} 								(E)
+		  ;
 		  
-	\path (A) [edge, midway, above, sloped] edge [bend left] node {rdCPU='1'/-} (F)
-		  (F) [edge, midway, above, sloped] edge node {cacheMiss='1'/stallCPU='1'} (G)
-		  (F) [edge, midway, above, sloped] edge [bend left] node {cacheHit='1'/dataCPU} (A)
-		  (G) [edge, midway, above, sloped] edge node {isDirty='1'/wrMEM='1'} (H)
-		  (H) [edge, midway, above, sloped] edge node {readyMEM='1'/rdMEM='1'} (I)
-		  (I) [edge, midway, above, sloped] edge node {readyMEM='1'/dataCPU} (A);
+	\path (A) [edge] 				edge [bend left] node 	{rdCPU='1'/-} 								(F)
+		  (F) [edge] 				edge node 				{cacheMiss='1'/stallCPU='1'} 				(G)
+		  (F) [edge] 				edge [bend left] node 	{cacheHit='1'/dataCPU} 						(A)
+		  (G) [edge] 				edge node 				{isDirty='1'/wrMEM='1'} 					(H)
+		  (G) [edge] 				edge node 				{isDirty='0'/rdMEM='1'} 					(I)
+		  (H) [edge] 				edge node 				{readyMEM='1'/rdMEM='1'} 					(I)
+		  %(H) [edge, loop below] 	edge node 				{readyMEM='0'} 								(H)
+		  (I) [edge] 				edge node 				{readyMEM='1'/dataCPU} 						(A)
+		  %(I) [edge, loop below]	edge [bend left] node 	{readyMEM='0'}								(I)
+		  ;
 
 		
 \end{tikzpicture}

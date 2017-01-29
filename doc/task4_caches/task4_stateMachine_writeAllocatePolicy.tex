@@ -8,8 +8,18 @@
 % -----------------------------------------------------------------
 %\tikzstyle{every state}=[fill=mycolor,text=white,minimum width=2cm]
 
+In figure \ref{tik:FSM} the state diagram of the cache controller is illustrated. The state diagram represents a Mealy automaton. The state space of the state machine is given in table \ref{tab:tableFSMStates}.
+Besides the state machine inputs are listed in table \ref{tab:tableFSMInputs} and the state machine outputs are shown in table \ref{tab:tableFSMOutputs}. A sketch of the state diagram is printed in figure \ref{fig:sketchMealyAutomata}.
+
+
+
+\begin{figure}
+	\centering
+	\caption{State diagram of the cache controller.}
+    \label{tik:FSM}
 \begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,
                     semithick,/tikz/initial text=Reset]
+                    
     
 	% ------------------------------------------------------------------------------
     % Definition of tikz styles.       
@@ -22,37 +32,40 @@
 	% ------------------------------------------------------------------------------
 	[align=center,xscale=1,node distance=2cm and 4cm]
 	\node[initial,vertex]	(A)                    		{\tiny $IDLE$};
-  	\node[vertex]         	(B) [below left=4cm of A] 	{\tiny $CW$};
-  	\node[vertex]         	(C) [below=4cm of B] 		{\tiny $CMW$};
+  	\node[vertex]         	(B) [below left=6cm of A] 	{\tiny $CW$};
+  	\node[vertex]         	(C) [below=6cm of B] 		{\tiny $CMW$};
   	\node[vertex]         	(D) [below left=4cm of C] 	{\tiny $WBW$};
-  	\node[vertex]         	(E) [below right=4cm of D] 	{\tiny $WCW$};
-  	\node[vertex]		    (F) [below right=4cm of A] 	{\tiny $CR$};
-  	\node[vertex]		    (G) [below =4cm of F] 		{\tiny $CMR$};
+  	\node[vertex]         	(E) [below right=5cm of D] 	{\tiny $WCW$};
+  	\node[vertex]		    (F) [below right=6cm of A] 	{\tiny $CR$};
+  	\node[vertex]		    (G) [below =6cm of F] 		{\tiny $CMR$};
   	\node[vertex]		    (H) [below right=4cm of G] 	{\tiny $WBR$};
-  	\node[vertex]		    (I) [below left=4cm of H] 	{\tiny $WCR$};
+  	\node[vertex]		    (I) [below left=5cm of H] 	{\tiny $WCR$};
 
 	% ------------------------------------------------------------------------------
 	% Definition of paths.
 	% ------------------------------------------------------------------------------
-	\path (A) [edge, midway, above, sloped] edge node {CPU Write Request/-} (B)
-		  (B) [edge, midway, above, sloped] edge node {Cache Miss/Stall Processor} (C)
-		  (C) [edge, midway, above, sloped] edge node {Replaced Block Is Dirty/Write Replaced Block To Memory} (D)
-		  (D) edge node [midway, above, sloped] {Write-Back Is Resolved/Read Cache Block Into Cache From Mem} (E)
-		  (E) [edge, midway, above, sloped] edge node {readyMEM=1/Write Data Into Cache, Set Dirty Bit (Modified) Bit} (A);
+	\path (A) [edge, midway, above, sloped] edge [bend right] node {wrCPU='1'/-} (B)
+		  (B) [edge, midway, above, sloped] edge node {cacheMiss='1'/stallCPU='1'} (C)
+		  (B) [edge, midway, above, sloped] edge [bend right] node {cacheHit='1'/dataCPU2Cache, setDirty='1'} (A)
+		  (C) [edge, midway, above, sloped] edge node {isDirty='1'/wrMEM='1'} (D)
+		  (D) [edge, midway, above, sloped] edge node {readyMEM='1'/rdMEM='1'} (E)
+		  (E) [edge, midway, above, sloped] edge node {readyMEM='1'/dataCPU2Cache, setDirty='1'} (A);
 		  
-	\path (A) [edge, midway, above, sloped] edge node {CPU Read Request/-} (F)
-		  (F) [edge, midway, above, sloped] edge node {Cache Miss/Stally Processor} (G)
-		  (G) [edge, midway, above, sloped] edge node {Replaced Block Is Dirty/Write Replaced Block To Memory} (H)
-		  (H) [edge, midway, above, sloped] edge node {Write-Back Is Resolved/Read Cache Block Into Cache From Mem} (I)
-		  (I) [edge, midway, above, sloped] edge node {readyMEM=1/Read Data Into CPU} (A);
+	\path (A) [edge, midway, above, sloped] edge [bend left] node {rdCPU='1'/-} (F)
+		  (F) [edge, midway, above, sloped] edge node {cacheMiss='1'/stallCPU='1'} (G)
+		  (F) [edge, midway, above, sloped] edge [bend left] node {cacheHit='1'/dataCPU} (A)
+		  (G) [edge, midway, above, sloped] edge node {isDirty='1'/wrMEM='1'} (H)
+		  (H) [edge, midway, above, sloped] edge node {readyMEM='1'/rdMEM='1'} (I)
+		  (I) [edge, midway, above, sloped] edge node {readyMEM='1'/dataCPU} (A);
 
 		
 \end{tikzpicture}
+\end{figure}
 
 
 \begin{table}
 \caption{Overview - FSM States}
-\label{tab:tableFSM}
+\label{tab:tableFSMStates}
 \begin{tabular}{llll}
 \hline %\toprule
 Abbreviation & Name & CPU Request Mode & Description \\
@@ -68,6 +81,40 @@ WBR		& WRITE BACK READ	& Read Request 	& - \\
 WCR		& WRITE CACHE READ	& Read Request 	& - \\
 \hline %\bottomrule
 \end{tabular} 
+\end{table}
+
+\begin{table}
+	\caption{Overview - FSM Inputs}
+	\label{tab:tableFSMInputs}
+	\begin{tabular}{lll}
+	\hline % \topline
+	Abbreviation & Name & Description \\
+	\hline % \midrule
+	rdCPU 		& CPU Read Request			& - \\
+	wrCPU 		& CPU Write Request 		& - \\
+	cacheMiss 	& Cache Miss 				& - \\
+	cacheHit	& Cache Hit					& - \\
+	readyMEM 	& Write-Back is resolved 	& - \\
+	isDirty		& Cache Block is dirty		& - \\
+	\hline % \bottomrule
+	\end{tabular}
+\end{table}
+	
+\begin{table}
+	\caption{Overview - FSM Outputs}
+	\label{tab:tableFSMOutputs}
+	\begin{tabular}{lll}
+	\hline % \topline
+	Abbreviation & Name & Description \\
+	\hline % \midrule
+	stallCPU		& Stall Processor				& - \\
+	setDirty		& Set Dirty Bit (Modified) Bit 	& - \\
+	wrMEM			& Write To Memory				& Write Replaced Block To Memory \\
+	dataCPU			& Read Data Into CPU			& - \\
+	rdMEM			& Read Cache Block Into Cache From Memory & - \\
+	dataCPU2Cache	& Write Data Into Cache			& - \\
+	\hline % \bottolrule
+	\end{tabular}
 \end{table}
 
 

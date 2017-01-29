@@ -16,6 +16,9 @@
 \usepackage{bibgerm}
 \usepackage[backend=bibtex,style=numeric]{biblatex}  %backend=biber is 'better'  
 % backend = {biber, bibtex}
+\usepackage{pgf}
+\usepackage{tikz}
+\usetikzlibrary{arrows,automata}
 \usepackage{hyperref}
 
 % -----------------------------------------------------
@@ -24,7 +27,7 @@
 \title{Advanced System-on-Chip Design}
 \author{author}
 
-
+\definecolor{mycolor}{RGB}{0,65,128}
 
 \newcommand{\cacheResultFigure}[3]{
 \begin{figure}
@@ -105,6 +108,21 @@ Direct Mapping & 16 & 240 & 16 & 94  \\
 \hline %\bottomrule
 \end{tabular} 
 \end{table}
+
+\newpage
+\section{Design a Finite State Machine for the Cache}
+
+\subsection{Finite State Machine - Write Allocate Policy}
+\include{task4_stateMachine_writeAllocatePolicy}
+
+\subsection{Finite State Machine - Example}
+\include{example_stateMachine}
+
+
+
+
+
+
 
 
 

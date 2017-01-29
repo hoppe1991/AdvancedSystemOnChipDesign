@@ -1,0 +1,60 @@
+% !TEX root = task4.tex
+% -----------------------------------------------------------------
+% Filename  :	task4_stateMachine_writeAllocatePolicy.tex
+% Author    :	Carsten Hoppe
+% Date		:	28. Januar 2017
+% Reference	:	http://www.texample.net/tikz/examples/state-machine/
+%				https://martin-thoma.com/how-to-draw-a-finite-state-machine/
+% -----------------------------------------------------------------
+%\tikzstyle{every state}=[fill=mycolor,text=white,minimum width=2cm]
+
+\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,node distance=2.8cm,
+                    semithick,/tikz/initial text=Reset]
+    
+	% ------------------------------------------------------------------------------
+    % Definition of tikz styles.       
+	% ------------------------------------------------------------------------------
+	\tikzstyle{vertex}=[state,fill=mycolor,text=white,minimum width=2cm]
+	
+	% ------------------------------------------------------------------------------
+	% Definition of nodes.
+	% ------------------------------------------------------------------------------
+	\node[initial,vertex]	(A)                    	{$IDLE$};
+  	\node[vertex]         	(B) [below left of=A] 	{$CW$};
+  	\node[vertex]         	(C) [below of=B] 		{$CMW$};
+  	\node[vertex]         	(D) [below right of=C] 	{$WBW$};
+  	\node[vertex]         	(E) [below left of=D] 	{$WCW$};
+  	\node[vertex]		    (F) [below right of=A] 	{$CR$};
+  	\node[vertex]		    (G) [below right of=F] 	{$AMR$};
+  	\node[vertex]		    (H) [below right of=G] 	{$WBR$};
+  	\node[vertex]		    (I) [below right of=H] 	{$WCR$};
+
+	% ------------------------------------------------------------------------------
+	% Definition of paths.
+	% ------------------------------------------------------------------------------
+	\path (C) edge node {0,1,L} (D)
+		  (D) edge node {0,1,L} (E);
+
+		
+\end{tikzpicture}
+
+
+\begin{table}
+\caption{Overview - FSM States}
+\label{tab:tableFSM}
+\begin{tabular}{llll}
+\hline %\toprule
+Abbreviation & Name & CPU Request Mode & Description \\
+\hline %\midrule
+IDLE 	& -					& - 			& - \\
+CW		& COMPARE WRITE		& Write Request & - \\
+CMW		& CACHE MISS WRITE	& Write Request & - \\
+WBW		& WRITE BACK WRITE	& Write Request & - \\
+WCW		& WRITE CACHE WRITE	& Write Request & - \\
+CR		& COMPARE READ		& Read Request 	& - \\
+CMR		& CACHE MISS READ	& Read Request 	& - \\
+WBR		& WRITE BACK READ	& Read Request 	& - \\
+WCR		& WRITE CACHE READ	& Read Request 	& - \\
+\hline %\bottomrule
+\end{tabular} 
+\end{table}

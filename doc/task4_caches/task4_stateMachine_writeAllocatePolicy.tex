@@ -50,10 +50,9 @@ Besides the state machine inputs are listed in table \ref{tab:tableFSMInputs} an
 		  (C) [edge] 				edge node 				{isDirty='1'/wrMEM='1'} 					(D)
 		  (C) [edge] 				edge node 				{isDirty='0'/rdMEM='1'} 					(E)
 		  (D) [edge] 				edge node 				{readyMEM='1'/rdMEM='1'} 					(E)
-		  %(D) [edge, loop below] 	edge node 				{readyMEM='0'} 								(D) 
-		  (E) [edge] 				edge node 				{readyMEM='1'/dataCPU2Cache, setDirty='1'} 	(A)
-		  %(E) [edge, loop below]	edge node 				{readyMEM='0'} 								(E)
-		  ;
+		  (E) [edge] 				edge node 				{readyMEM='1'/dataCPU2Cache, setDirty='1'} 	(A);
+	\path (D) [edge,loop below]		edge node				{readyMEM='0'/-}							(D);
+	\path (E) [edge,loop below]		edge node 				{readyMEM='0'/-} 							(E);
 		  
 	\path (A) [edge] 				edge [bend left] node 	{rdCPU='1'/-} 								(F)
 		  (F) [edge] 				edge node 				{cacheMiss='1'/stallCPU='1'} 				(G)
@@ -61,10 +60,9 @@ Besides the state machine inputs are listed in table \ref{tab:tableFSMInputs} an
 		  (G) [edge] 				edge node 				{isDirty='1'/wrMEM='1'} 					(H)
 		  (G) [edge] 				edge node 				{isDirty='0'/rdMEM='1'} 					(I)
 		  (H) [edge] 				edge node 				{readyMEM='1'/rdMEM='1'} 					(I)
-		  %(H) [edge, loop below] 	edge node 				{readyMEM='0'} 								(H)
-		  (I) [edge] 				edge node 				{readyMEM='1'/dataCPU} 						(A)
-		  %(I) [edge, loop below]	edge [bend left] node 	{readyMEM='0'}								(I)
-		  ;
+		  (I) [edge] 				edge node 				{readyMEM='1'/dataCPU} 						(A);
+	\path (H) [edge,loop below] 	edge node 				{readyMEM='0'/-} 							(H);
+	\path (I) [edge,loop below]		edge node 				{readyMEM='0'/-}							(I);
 
 		
 \end{tikzpicture}

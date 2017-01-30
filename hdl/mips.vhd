@@ -28,7 +28,8 @@ architecture struct of mips is
          lez,
          ltz,
          gtz,
-         branch : STD_LOGIC       := '0';
+         branch, 
+		     WB_branch : STD_LOGIC       := '0';
   signal c      : ControlType     := ('0','0','0','0','0','0','0','0','0','0',
                                       '0','0','0','0','0','0',"0000",WORD);
   signal i      : InstructionType := (UNKNOWN, "000000", "00000", "00000", "00000",  --i
@@ -80,13 +81,19 @@ architecture struct of mips is
 begin
 
 -------------------- Instruction Fetch Phase (IF) -----------------------------
-
+WB_branch <= branch when rising_edge(clk);
   pc        <= nextpc when rising_edge(clk);
 
-  pc4       <= 	to_slv(unsigned(pc) + 0) when Stall_disablePC  = '1' else
-	  			to_slv(unsigned(pc) + 0) when Stall_disablePC  = '1'													else
-	            to_slv(unsigned(pc) + 4) ;
+  pc4       <= 	to_slv(unsigned(pc) + 0) when Stall_disablePC  = '1' and WB_branch = '0' else
+	              to_slv(unsigned(pc) + 4) ;
 
+    --  CODE FOR ACHIEVING BNE TAKEN CORRECTLY
+    --  pc4       <= 	to_slv(unsigned(pc) + 4) when (Stall_disablePC  = '1' and (EX.i.Opc = I_NOP.OPC) and (branch = '0')) else
+    --                to_slv(unsigned(pc) + 0) when Stall_disablePC  = '1' else
+	  --                to_slv(unsigned(pc) + 4) ;
+
+    
+    
   nextpc    <=
 	           MA.pcjump   when MA.c.jump  = '1' else -- j / jal jump addr
                MA.pcbranch when branch     = '1' else -- branch (bne, beq) addr
@@ -97,11 +104,12 @@ begin
                port map (clk, '0', pc(11 downto 2), (others=>'0'), IF_ir);
 
 -------------------- IF/ID Pipeline Register -----------------------------------
-
-  ID        <= (IF_ir, pc4) when rising_edge(clk) and Stall_disablePC  = '0'
-  else		   (IF_ir, pc4) when rising_edge(clk) and Stall_disablePC  = '1' and (MA.i.Opc = I_BEQ.OPC) ;
-				   
-
+                                                  -- comment below out for BNE TAKEN CORRECTLY!
+  ID        <=  (IF_ir, pc4) when rising_edge(clk) and (Stall_disablePC  = '0' or WB_branch = '1')
+ ;-- else		      (IF_ir, nextpc) when rising_edge(clk) and Stall_disablePC  = '1' and (MA.i.Opc = I_BEQ.OPC) and (branch = '1') ;
+-- The second line in the code above make the code delete the command that was read in right after the bne command if a branch shall be taken.				   
+-- idea: if branch command arrived in MA phase 2 cock cycles later and a branch signal is set (branch will be taken) forget the instruction following the bne command.
+    
 -------------------- Instruction Decode and register fetch (ID) ----------------
 
   dec:         entity work.decoder

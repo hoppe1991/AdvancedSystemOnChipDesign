@@ -20,7 +20,7 @@ java -jar /home/hendrik/Downloads/Mars4_5.jar a dump .data HexText ../dmem/$1.dm
 /home/hendrik/Downloads/ghdl-033/bin/ghdl -r -g -O3 --ieee=synopsys --workdir=work mips_testbench --stop-time=60us  --wave=../sim/$1.ghw -gDFileName="../dmem/$1" -gIFileName="../imem/$1"
 
 # opens gtkwave
-gtkwave ../sim/$1.ghw ../sim/isort.gtkw
+gtkwave ../sim/$1.ghw ../sim/HendriksSaveFile.gtkw
 
 gIFileName="../imem/$1"
 else echo "usage: ghdl.sh path/asm-file-without-extension"

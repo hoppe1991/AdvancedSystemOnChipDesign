@@ -1,65 +1,16 @@
-\documentclass[11pt,a4paper]{article}
-
-% -----------------------------------------------------
-%	Use packages.
-% -----------------------------------------------------
-\usepackage[german,ngerman,english]{babel}
-\usepackage[utf8]{inputenc}
-\usepackage{csquotes}
-\usepackage[left=2.5cm,right=3cm,top=3cm,bottom=3cm]{geometry}
-\usepackage{subfiles}
-\usepackage{helvet}
-\usepackage{graphicx}
-\usepackage{titling}
-\usepackage{blindtext} % Used to generate blindtext.
-\usepackage{mathptmx}	% Used for Times New Roman.
-\usepackage{bibgerm}
-\usepackage[backend=bibtex,style=numeric]{biblatex}  %backend=biber is 'better'  
-% backend = {biber, bibtex}
-\usepackage{pgf}
-\usepackage{tikz}
-\usetikzlibrary{arrows,automata,positioning}
-\usepackage{hyperref}
-
-% -----------------------------------------------------
-%	Define attributes.
-% -----------------------------------------------------
-\title{Advanced System-on-Chip Design}
-\author{author}
-
-\definecolor{mycolor}{RGB}{0,65,128}
-
-\newcommand{\cacheResultFigure}[3]{
-\begin{figure}
-	\centering
-	\includegraphics[scale=.8]{#1}
-	\caption{#2}
-	\label{#3}
-\end{figure}
-}
-
-
-
-% -----------------------------------------------------
-%	Add bibliography resources.
-% -----------------------------------------------------
-%\addbibresource{references.bib}
-
-% =====================================================
-\begin{document}
-
-% Include the titelpage.
-\input{titlepage}
-
-% Table of contents.
-\tableofcontents
-\newpage
+% !TEX root = fce.tex
+% -----------------------------------------------------------------
+% Filename  :	task4.tex
+% Author    :	Carsten Hoppe
+% Date		:	30. January 2017
+% Reference	:	http://www.texample.net/tikz/examples/state-machine/
+%				https://martin-thoma.com/how-to-draw-a-finite-state-machine/
+% -----------------------------------------------------------------
 
 % Include introduction.
-\section{Cache Simulation - Results}
+\subsection{Cache Simulation - Results}
 The two assembler programs \textit{row-major.asm} and \textit{column-major.asm} has been used for the cache simulation. \ref{tab:tableColumnMajor} contains the results regarding the file \textit{column-major.asm} and \ref{tab:tableRowMajor} illustrates the results of \textit{row-major.asm}.\\
 TODO Interpretation
-
 
 
 \begin{table}
@@ -109,70 +60,7 @@ Direct Mapping & 16 & 240 & 16 & 94  \\
 \end{tabular} 
 \end{table}
 
-\newpage
-\section{Design a Finite State Machine for the Cache}
 
-\subsection{Finite State Machine - Write Allocate Policy}
+\newpage
+\subsection{Design a Finite State Machine for the Cache}
 \include{task4_stateMachine_writeAllocatePolicy}
-
-\subsection{Finite State Machine - Example}
-\include{example_stateMachine}
-
-
-
-
-
-
-
-
-
-
-\newpage
-\section{Appendix}
-\cacheResultFigure{pictures/task4_columnMajor_directMapping2}{Column Major, Direct Mapping, Cache Block Size 2}{fig:pic1}
-\cacheResultFigure{pictures/task4_columnMajor_directMapping4}{Column Major, Direct Mapping, Cache Block Size 4}{fig:pic2}
-\cacheResultFigure{pictures/task4_columnMajor_directMapping8}{Column Major, Direct Mapping, Cache Block Size 8}{fig:pic3}
-\cacheResultFigure{pictures/task4_columnMajor_directMapping16}{Column Major, Direct Mapping, Cache Block Size 16}{fig:pic4}
-
-\cacheResultFigure{pictures/task4_columnMajor_2waySetAssociative2}{Column Major, 2-Way Associative, Cache Block Size 2}{fig:pic5}
-\cacheResultFigure{pictures/task4_columnMajor_2waySetAssociative4}{Column Major, 2-Way Associative, Cache Block Size 4}{fig:pic6}
-\cacheResultFigure{pictures/task4_columnMajor_2waySetAssociative8}{Column Major, 2-Way Associative, Cache Block Size 8}{fig:pic7}
-\cacheResultFigure{pictures/task4_columnMajor_2waySetAssociative16}{Column Major, 2-Way Associative, Cache Block Size 16}{fig:pic8}
-
-\cacheResultFigure{pictures/task4_columnMajor_4waySetAssociative2}{Column Major, 4-Way Associative, Cache Block Size 2}{fig:pic9}
-\cacheResultFigure{pictures/task4_columnMajor_4waySetAssociative4}{Column Major, 4-Way Associative, Cache Block Size 4}{fig:pic10}
-\cacheResultFigure{pictures/task4_columnMajor_4waySetAssociative8}{Column Major, 4-Way Associative, Cache Block Size 8}{fig:pic11}
-\cacheResultFigure{pictures/task4_columnMajor_4waySetAssociative16}{Column Major, 4-Way Associative, Cache Block Size 16}{fig:pic12}
-
-
-\cacheResultFigure{pictures/task4_rowMajor_directMapping2}{Row Major, Direct Mapping, Cache Block Size 2}{fig:pic13}
-\cacheResultFigure{pictures/task4_rowMajor_directMapping4}{Row Major, Direct Mapping, Cache Block Size 4}{fig:pic14}
-\cacheResultFigure{pictures/task4_rowMajor_directMapping8}{Row Major, Direct Mapping, Cache Block Size 8}{fig:pic15}
-\cacheResultFigure{pictures/task4_rowMajor_directMapping16}{Row Major, Direct Mapping, Cache Block Size 16}{fig:pic16}
-
-\cacheResultFigure{pictures/task4_rowMajor_2waySetAssociative2}{Row Major, 2-Way Associative, Cache Block Size 2}{fig:pic17}
-\cacheResultFigure{pictures/task4_rowMajor_2waySetAssociative4}{Row Major, 2-Way Associative, Cache Block Size 4}{fig:pic18}
-\cacheResultFigure{pictures/task4_rowMajor_2waySetAssociative8}{Row Major, 2-Way Associative, Cache Block Size 8}{fig:pic19}
-\cacheResultFigure{pictures/task4_rowMajor_2waySetAssociative16}{Row Major, 2-Way Associative, Cache Block Size 16}{fig:pic20}
-
-\cacheResultFigure{pictures/task4_rowMajor_4waySetAssociative2}{Row Major, 4-Way Associative, Cache Block Size 2}{fig:pic21}
-\cacheResultFigure{pictures/task4_rowMajor_4waySetAssociative4}{Row Major, 4-Way Associative, Cache Block Size 4}{fig:pic22}
-\cacheResultFigure{pictures/task4_rowMajor_4waySetAssociative8}{Row Major, 4-Way Associative, Cache Block Size 8}{fig:pic23}
-\cacheResultFigure{pictures/task4_rowMajor_4waySetAssociative16}{Row Major, 4-Way Associative, Cache Block Size 16}{fig:pic24}
-
-
-
-
-
-% Abbildungsverzeichnis
-% Abkürzungsverzeichnis
-% Verzeichnis der Anhänge
-% Anhänge und Materialien
-
-% Include bibliography.
-\newpage
-\nocite{*}
-\printbibliography
-
-% =====================================================
-\end{document}

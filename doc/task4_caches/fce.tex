@@ -1,0 +1,86 @@
+\documentclass[11pt,a4paper]{article}
+
+% -----------------------------------------------------
+%	Use packages.
+% -----------------------------------------------------
+\usepackage[german,ngerman,english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{csquotes}
+\usepackage[left=2.5cm,right=3cm,top=3cm,bottom=3cm]{geometry}
+\usepackage{subfiles}
+\usepackage{helvet}
+\usepackage{graphicx}
+\usepackage{titling}
+\usepackage{blindtext} % Used to generate blindtext.
+\usepackage{mathptmx}	% Used for Times New Roman.
+\usepackage{bibgerm}
+\usepackage[backend=bibtex,style=numeric]{biblatex}  %backend=biber is 'better'  
+% backend = {biber, bibtex}
+\usepackage{pgf}
+\usepackage{tikz}
+\usetikzlibrary{arrows,automata,positioning}
+\usepackage{hyperref}
+
+% -----------------------------------------------------
+%	Define attributes.
+% -----------------------------------------------------
+\title{Advanced System-on-Chip Design}
+\author{author}
+
+\definecolor{mycolor}{RGB}{0,65,128}
+
+\newcommand{\cacheResultFigure}[3]{
+\begin{figure}
+	\centering
+	\includegraphics[scale=.8]{#1}
+	\caption{#2}
+	\label{#3}
+\end{figure}
+}
+
+
+% -----------------------------------------------------
+%	Add bibliography resources.
+% -----------------------------------------------------
+%\addbibresource{references.bib}
+
+% =====================================================
+\begin{document}
+
+% Include the titelpage.
+\input{titlepage}
+
+% Table of contents, list of figures, list of tables.
+\tableofcontents
+\newpage
+\listoffigures
+\newpage
+\listoftables
+
+% Documentation regarding task 3.
+\newpage
+\section{Task 3 - MIPS Extension}
+\input{task3}
+
+% Documentation regarding task 4.
+\newpage
+\section{Task 4 - Caches}
+\input{task4}
+
+% Appendix of documentation.
+\newpage
+\section{Appendix}
+\input{appendix}
+
+
+% Abkürzungsverzeichnis
+% Verzeichnis der Anhänge
+% Anhänge und Materialien
+
+% Include bibliography.
+\newpage
+\nocite{*}
+\printbibliography
+
+% =====================================================
+\end{document}

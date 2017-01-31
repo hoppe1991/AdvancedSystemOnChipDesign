@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.66 (w)1999-2015 BSI
-[*] Fri Jan 27 15:41:12 2017
+[*] Tue Jan 31 04:50:41 2017
 [*]
 [dumpfile] "/home/hendrik/Software/AdvancedSystemOnChipDesign/sim/branchTestWithNop.ghw"
-[dumpfile_mtime] "Fri Jan 27 15:10:48 2017"
-[dumpfile_size] 771100
+[dumpfile_mtime] "Tue Jan 31 04:46:07 2017"
+[dumpfile_size] 1217477
 [savefile] "/home/hendrik/Software/AdvancedSystemOnChipDesign/sim/HendriksSaveFile.gtkw"
-[timestart] 0
-[size] 1920 1056
+[timestart] 1324100000
+[size] 1852 1056
 [pos] 11315 0
-*-26.000000 70700000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-26.000000 1910000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.mips_testbench.
 [treeopen] top.mips_testbench.dut.
@@ -27,10 +27,11 @@
 [treeopen] top.mips_testbench.dut.ex.i.
 [treeopen] top.mips_testbench.dut.i.
 [treeopen] top.mips_testbench.dut.id.
+[treeopen] top.mips_testbench.dut.ma.
 [treeopen] top.mips_testbench.dut.ma.c.
 [treeopen] top.mips_testbench.dut.ma.i.
 [treeopen] top.mips_testbench.dut.rf.reg.
-[treeopen] top.mips_testbench.dut.wb.c.
+[treeopen] top.mips_testbench.dut.wb.
 [sst_width] 211
 [signals_width] 365
 [sst_expanded] 1
@@ -97,7 +98,7 @@ top.mips_testbench.dut.stall_disablepc
 @22
 #{top.mips_testbench.dut.i.shamt[4:0]} top.mips_testbench.dut.i.shamt[4] top.mips_testbench.dut.i.shamt[3] top.mips_testbench.dut.i.shamt[2] top.mips_testbench.dut.i.shamt[1] top.mips_testbench.dut.i.shamt[0]
 #{top.mips_testbench.dut.i.funct[5:0]} top.mips_testbench.dut.i.funct[5] top.mips_testbench.dut.i.funct[4] top.mips_testbench.dut.i.funct[3] top.mips_testbench.dut.i.funct[2] top.mips_testbench.dut.i.funct[1] top.mips_testbench.dut.i.funct[0]
-@25
+@24
 [color] 3
 #{top.mips_testbench.dut.i.imm[15:0]} top.mips_testbench.dut.i.imm[15] top.mips_testbench.dut.i.imm[14] top.mips_testbench.dut.i.imm[13] top.mips_testbench.dut.i.imm[12] top.mips_testbench.dut.i.imm[11] top.mips_testbench.dut.i.imm[10] top.mips_testbench.dut.i.imm[9] top.mips_testbench.dut.i.imm[8] top.mips_testbench.dut.i.imm[7] top.mips_testbench.dut.i.imm[6] top.mips_testbench.dut.i.imm[5] top.mips_testbench.dut.i.imm[4] top.mips_testbench.dut.i.imm[3] top.mips_testbench.dut.i.imm[2] top.mips_testbench.dut.i.imm[1] top.mips_testbench.dut.i.imm[0]
 @22
@@ -110,9 +111,22 @@ top.mips_testbench.dut.i.mnem
 #{top.mips_testbench.dut.pcjump[31:0]} top.mips_testbench.dut.pcjump[31] top.mips_testbench.dut.pcjump[30] top.mips_testbench.dut.pcjump[29] top.mips_testbench.dut.pcjump[28] top.mips_testbench.dut.pcjump[27] top.mips_testbench.dut.pcjump[26] top.mips_testbench.dut.pcjump[25] top.mips_testbench.dut.pcjump[24] top.mips_testbench.dut.pcjump[23] top.mips_testbench.dut.pcjump[22] top.mips_testbench.dut.pcjump[21] top.mips_testbench.dut.pcjump[20] top.mips_testbench.dut.pcjump[19] top.mips_testbench.dut.pcjump[18] top.mips_testbench.dut.pcjump[17] top.mips_testbench.dut.pcjump[16] top.mips_testbench.dut.pcjump[15] top.mips_testbench.dut.pcjump[14] top.mips_testbench.dut.pcjump[13] top.mips_testbench.dut.pcjump[12] top.mips_testbench.dut.pcjump[11] top.mips_testbench.dut.pcjump[10] top.mips_testbench.dut.pcjump[9] top.mips_testbench.dut.pcjump[8] top.mips_testbench.dut.pcjump[7] top.mips_testbench.dut.pcjump[6] top.mips_testbench.dut.pcjump[5] top.mips_testbench.dut.pcjump[4] top.mips_testbench.dut.pcjump[3] top.mips_testbench.dut.pcjump[2] top.mips_testbench.dut.pcjump[1] top.mips_testbench.dut.pcjump[0]
 @28
 top.mips_testbench.dut.c.jr
+@29
+[color] 7
 top.mips_testbench.dut.c.jump
-top.mips_testbench.dut.ctrl.c.jr
-top.mips_testbench.dut.ctrl.c.jump
+[color] 7
+top.mips_testbench.dut.ex.c.jump
+[color] 7
+top.mips_testbench.dut.ma.c.jump
+[color] 7
+top.mips_testbench.dut.wb.c.jump
+[color] 7
+top.mips_testbench.dut.wb_jump
+[color] 7
+top.mips_testbench.dut.branch
+[color] 7
+top.mips_testbench.dut.wb_branch
+@28
 top.mips_testbench.dut.c.se
 @1000200
 -Instruction

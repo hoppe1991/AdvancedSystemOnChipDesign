@@ -45,7 +45,8 @@ cache : entity work.directMappedCache
             BLOCKSIZE => BLOCKSIZE,
             ADDRESSWIDTH => ADDRESSWIDTH,
             OFFSET => OFFSET,
-            IFilename => TagFileName
+            TagFileName => TagFileName,
+            DataFileName => DataFileName
         )
         port map( clk => clk,
                   dataIn => dataIn,

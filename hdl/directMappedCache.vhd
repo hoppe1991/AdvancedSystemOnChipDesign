@@ -15,15 +15,14 @@ USE ieee.math_real.log2;
 USE ieee.math_real.ceil;
 
 entity directMappedCache is
-  generic ( DATAWIDTH     : integer := 32;  -- Length of instruction/data words.
+  generic (
+            DATAWIDTH     : integer := 32;  -- Length of instruction/data words.
             BLOCKSIZE     : integer := 4;   -- Number of words that a block contains.
             ADDRESSWIDTH  : integer := 256; -- Number of cache blocks.
             OFFSET        : integer := 2;    -- Number of bits that can be selected in the cache.
 
-
             TagFileName  : STRING := "../imem/tagFileName";
-            DataFileName : STRING := "../imem/dataFileName";
-            IFileName : STRING := "../imem/my_cache"
+            DataFileName : STRING := "../imem/dataFileName"
           );
 
   port ( clk : in STD_LOGIC;
@@ -45,7 +44,8 @@ architecture synth of directMappedCache is
 
 signal writeToCache : STD_LOGIC := '0';
 signal instruction  : STD_LOGIC_VECTOR(31 downto 0) := (others=>'0');
-signal validVector  : STD_LOGIC_VECTOR(2**ADDRESSWIDTH-1 downto 0) := (others => 'U'); -- TODO Update the size.
+--signal validVector  : STD_LOGIC_VECTOR(2**ADDRESSWIDTH-1 downto 0) := (others => 'U'); -- TODO Update the size.
+signal validVector  : STD_LOGIC_VECTOR(2**8-1 downto 0) := (others => 'U'); -- TODO Update the size.
 signal index        : STD_LOGIC_VECTOR(ADDRESSWIDTH-1 downto 0) := (others => '0'); -- TODO Update the size.
 signal offsetV       : STD_LOGIC_VECTOR(ADDRESSWIDTH-1 downto 0) := (others => '0'); -- TODO Update the size.
 signal tag          : STD_LOGIC_VECTOR(ADDRESSWIDTH-1 downto 0) := (others => '0'); -- TODO Update the size.

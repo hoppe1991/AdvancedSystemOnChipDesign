@@ -29,7 +29,6 @@ architecture tests of cache_tb is
 
   signal clk, reset, memwrite: STD_LOGIC := '0';
 
-
   signal stallCPU : STD_LOGIC := '0';
   signal rdCPU : STD_LOGIC := '0';
   signal wrCPU : STD_LOGIC := '0';
@@ -40,7 +39,6 @@ architecture tests of cache_tb is
   signal wrMEM : STD_LOGIC := '0';
   signal addrMEM : STD_LOGIC_VECTOR( DATAWIDTH-1 downto 0 );
   signal dataMEM : STD_LOGIC_VECTOR( OFFSET-1 downto 0 );
-
 
 begin
 
@@ -73,6 +71,7 @@ cache : entity work.cacheController
     wait for 5 ns;
     clk <= '0';
     wait for 5 ns;
+    rdCPU <= '1' after 10 ns;
   end process;
 
   -- Generate reset for first two clock cycles

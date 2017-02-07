@@ -178,7 +178,7 @@ vTag    <= addrCPU( tagIndexH    downto tagIndexL );
 -- Determine the valid bit.
 -- -----------------------------------------------------------------------------
 valid <= '1' when rd='1' AND wr='0' AND validBits( iIndex )='1' else
-         '0' when rd='1' AND wr='0' AND validBits( iIndex )='0';
+         '0' when rd='1' AND wr='0' AND ( validBits( iIndex )='0' or validBits( iIndex )='U' );
 
 -- -----------------------------------------------------------------------------
 -- Set the valid bit.

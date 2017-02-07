@@ -34,6 +34,7 @@ signal dirty   : STD_LOGIC := '0';
 signal hit     : STD_LOGIC := '0';
 signal dataMemIn : STD_LOGIC_VECTOR( 8-1 downto 0 ) := (others => '0' );
 signal dataMemOut : STD_LOGIC_VECTOR( 8-1 downto 0 ) := (others => '0' );
+signal wrCacheBlockLine : STD_LOGIC := '0';
 
 begin
 
@@ -59,7 +60,8 @@ cache : entity work.directMappedCache
                   wr => wr,
                   valid => valid,
                   dirty => dirty,
-                  hit => hit
+                  hit => hit,
+                  wrCacheBlockLine => wrCacheBlockLine
                   );
 
         -- Generate clock with 10 ns period
@@ -68,6 +70,8 @@ cache : entity work.directMappedCache
           wait for 5 ns;
           clk <= '0';
           wait for 5 ns;
+          dataCPUIn <= "11111111" after 5 ns;
+          wr <= '1' after 7 ns;
         end process;
 
         -- Generate reset for first two clock cycles

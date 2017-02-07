@@ -19,21 +19,26 @@ use IEEE.STD_LOGIC_TEXTIO.ALL;
 USE ieee.math_real.log2;
 USE ieee.math_real.ceil;
 
+
+-- =============================================================================
+-- Define the generics and ports of the entity.
+-- =============================================================================
 entity directMappedCache is
   generic (
-      -- Instruction and data words of the MIPS are 32-bit wide, but other CPUs have quite different instruction word widths.
+      -- Instruction and data words of the MIPS are 32-bit wide, but other CPUs
+      -- have quite different instruction word widths.
       DATA_WIDTH     : integer := 32;
 
       -- Is the depth of the cache, i.e. the number of cache blocks / lines.
       ADDRESSWIDTH  : integer := 256;
 
-      -- Number of words that a block contains and which are simulatenously loaded from the main memory into cache.
+      -- Number of words that a block contains and which are simulatenously
+      -- loaded from the main memory into cache.
       BLOCKSIZE     : integer := 4;               -- What is the purpose of this generic variale?
 
-      -- The number of bits specifies the smallest unit that can be selected in the cache.
+      -- The number of bits specifies the smallest unit that can be selected
+      -- in the cache.
       OFFSET        : integer := 8; -- Byte (8 Bits) access possible.
-
-
 
       -- Filename for tag BRAM.
       TagFileName  : STRING := "../imem/tagFileName";
@@ -41,10 +46,6 @@ entity directMappedCache is
       -- Filename for data BRAM.
       DataFileName : STRING := "../imem/dataFileName"
     );
-
--- +-----------------------+-----------------------+------------------+
--- | Tag                   | Index                 | Offset           |
--- +-----------------------+-----------------------+------------------+
 
   port (
          -- Clock signal is used for BRAM.                                      TODO Is this clock signal neccassary?
@@ -66,7 +67,7 @@ entity directMappedCache is
          dataMEMOut : out STD_LOGIC_VECTOR( OFFSET-1 downto 0 ) ;
 
          --
-         cacheBlockLine : inout STD_LOGIC_VECTOR( ) ;
+         cacheBlockLine : inout STD_LOGIC_VECTOR( (BLOCKSIZE*OFFSET)-1 downto 0 ) ;
 
          wrCacheBlockLine : in STD_LOGIC;
 
@@ -88,7 +89,15 @@ entity directMappedCache is
 
 end;
 
+--  31  ...             10   9   ...             2   1  ...         0
+-- +-----------------------+-----------------------+------------------+
+-- | Tag                   | Index                 | Offset           |
+-- +-----------------------+-----------------------+------------------+
 
+
+-- =============================================================================
+-- Definition of architecture.
+-- =============================================================================
 architecture synth of directMappedCache is
 
 constant indexNrOfBits  : INTEGER := INTEGER( CEIL( LOG2( REAL( ADDRESSWIDTH ))));
@@ -117,19 +126,21 @@ signal writeToTagBRAM : STD_LOGIC := '0';
 signal dataBramIn  : STD_LOGIC_VECTOR( cacheLineBits-1 downto 0 ) := (others => '0');
 signal dataBramOut : STD_LOGIC_VECTOR( cacheLineBits-1 downto 0 ) := (others => '0');
 signal writeToDataBRAM : STD_LOGIC := '0';
+signal writeToDataBRAMHelper : STD_LOGIC := '0';
 
 signal validBits : STD_LOGIC_VECTOR( ADDRESSWIDTH-1 downto 0) := (others => 'U');
 signal tagsAreEqual : STD_LOGIC := '0';
 
+signal dataStartIndex : INTEGER := 0;
+signal dataEndIndex : INTEGER := 0;
 
+signal addrDataBram : INTEGER := 0;
+signal dataDataBram : Integer := 0;
+
+
+signal testA : STD_LOGIC_VECTOR( OFFSET-1 downto 0 ) := (others => '0');
+signal testB : STD_LOGIC_VECTOR( cacheLineBits-OFFSET-1 downto 0 ) := (others => '0');
 --------------
-signal writeToCache : STD_LOGIC := '0';
-signal instruction  : STD_LOGIC_VECTOR(31 downto 0) := (others=>'0');
-signal index        : STD_LOGIC_VECTOR(ADDRESSWIDTH-1 downto 0) := (others => '0'); -- TODO Update the size.
-signal offsetV       : STD_LOGIC_VECTOR(ADDRESSWIDTH-1 downto 0) := (others => '0'); -- TODO Update the size.
-signal indexInt     : INTEGER := 0;
-
-signal validBitSet : STD_LOGIC := '0';
 
 begin
 
@@ -181,9 +192,6 @@ validBits( iIndex ) <= '1' when rd='0' AND wr='1' AND valid='1' else
 tagsAreEqual <= '1' when tagBramOut=vTag else
                 '0';
 
-
-
-
 -- -----------------------------------------------------------------------------
 -- Determine whether a cache block line should be read or written.
 -- -----------------------------------------------------------------------------
@@ -205,7 +213,48 @@ writeToTagBRAM <= '1' when wr='1' AND rd='1' else
 
 
 
+dataStartIndex <= cacheLineBits-1 - (OFFSET * iIndex);
+dataEndIndex <= dataStartIndex - OFFSET + 1;
 
+-- -----------------------------------------------------------------------------
+-- Write the correspondent data to data BRAM.
+-- -----------------------------------------------------------------------------
+writeToDataBRAMHelper <= '1' when wr='1' AND rd='0' AND wrCacheBlockLine='0';
+
+process( writeToDataBRAMHelper )
+begin
+  if writeToDataBRAMHelper = '1' then
+
+    -- Read the actual cache block/line.
+    writeToDataBRAM <= '0';
+
+
+
+    -- Modiy the actual cache block/line.
+    if iIndex=0 then
+      dataBramIn( dataStartIndex downto dataEndIndex ) <= dataCPUIn;
+      dataBramIn( dataEndIndex-1 downto 0 ) <= dataBramOut( dataEndIndex-1 downto 0 );
+    elsif iIndex=(BLOCKSIZE-1) then
+      dataBramIn( dataStartIndex downto dataEndIndex ) <= dataCPUIn( dataStartIndex downto dataEndIndex );
+      dataBramIn( cacheLineBits-1 downto dataStartIndex+1 ) <= dataBramOut( cacheLineBits-1 downto dataStartIndex+1 );
+    else
+      dataBramIn( cacheLineBits-1 downto dataStartIndex+1 ) <= dataBramOut( cacheLineBits-1 downto dataStartIndex+1 );
+      dataBramIn( dataStartIndex downto dataEndIndex ) <= dataCPUIn( dataStartIndex downto dataEndIndex );
+      dataBramIn( dataEndIndex-1 downto 0 ) <= dataBramOut( dataEndIndex-1 downto 0 );
+    end if;
+
+    -- Write the actual cache block/line.
+    writeToDataBRAM <= '1';
+    end if;
+
+end process;
+
+
+-- -----------------------------------------------------------------------------
+-- Read the correspondent data area.
+-- -----------------------------------------------------------------------------
+writeToDataBRAM <= '0' when wr='0' AND rd='1' AND wrCacheBlockLine='0';
+dataCPUOut <= dataBramOut( dataStartIndex downto dataEndIndex ) when wr='1' AND rd='1';
 
 -- -----------------------------------------------------------------------------
 -- The hit signal is supposed to be an asynchronous signal.

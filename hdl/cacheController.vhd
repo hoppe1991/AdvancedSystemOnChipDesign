@@ -26,7 +26,7 @@ entity cacheController is
     clk       : in    STD_LOGIC;
     reset     : in    STD_LOGIC;
 
-    stallCPU  : in    STD_LOGIC;
+    stallCPU  : out    STD_LOGIC;
     rdCPU     : in    STD_LOGIC;
     wrCPU     : in    STD_LOGIC;
     addrCPU   : in    STD_LOGIC_VECTOR( DATAWIDTH-1 downto 0 );
@@ -62,7 +62,43 @@ architecture synth of cacheController is
   signal cacheHit : STD_LOGIC := '0';
   signal isDirty : STD_LOGIC := '0';
 
+  signal dataCPUIn : STD_LOGIC_VECTOR( OFFSET-1 downto 0 ) := (others => '0');
+  signal dataCPUOut : STD_LOGIC_VECTOR( OFFSET-1 downto 0 ) := (others => '0');
+  signal dataMEMIn : STD_LOGIC_VECTOR( OFFSET-1 downto 0 ) := (others => '0');
+  signal dataMEMOut : STD_LOGIC_VECTOR( OFFSET-1 downto 0 ) := (others => '0');
+  signal rd : STD_LOGIC := '0';
+  signal wr : STD_LOGIC := '0';
+  signal valid : STD_LOGIC := '0';
+  signal dirty : STD_LOGIC := '0';
+  signal hit : STD_LOGIC := '0';
+  signal wrCacheBlockLine : STD_LOGIC := '0';
+
 begin
+
+cache : entity work.directMappedCache
+        generic map (
+            DATA_WIDTH => DATAWIDTH,
+            BLOCKSIZE => BLOCKSIZE,
+            ADDRESSWIDTH => ADDRESSWIDTH,
+            OFFSET => OFFSET,
+            TagFileName => TagFileName,
+            DataFileName => DataFileName
+        )
+        port map( clk => clk,
+                  dataCPUIn => dataCPUIn,
+                  addrCPU => addrCPU,
+                  dataCPUOut => dataCPUOut,
+                  dataMEMIn => dataMemIn,
+                  dataMEMOut => dataMemOut,
+                  rd => rd,
+                  wr => wr,
+                  valid => valid,
+                  dirty => dirty,
+                  hit => hit,
+                  wrCacheBlockLine => wrCacheBlockLine
+        );
+
+
 
   -- state register
   state <= IDLE when reset='1' else
@@ -121,6 +157,26 @@ begin
   end process;
 
 
+  -- Output logic.
+  dataCPUIn <= dataCPUIn when ( cacheHit='1' and state=CW );
+  wr <= '1' when ( cacheHit='1' and state=CW );
 
+  stallCPU <= '1' when ( cacheHit='0' and state=CW ) else
+              '1' when ( cacheHit='0' and state=CR ) else
+              '0';
+
+  wrMEM <= '1' when ( isDirty='1' and state=CMW ) else
+           '1' when ( isDirty='1' and state=CMR ) else
+           '0';
+
+  rdMEM <= '1' when ( isDirty='1' and state=CMW ) else
+           '1' when ( readyMEM='1' and state=WBW ) else
+           '1' when ( readyMEM='1' and state=CMW ) else
+           '1' when ( isDirty='0' and state=CMR ) else
+           '1' when ( readyMEM='1' and state=WBR ) else
+           '1' when ( readyMEM='1' and state=WCR ) else
+           '0';
+
+  dataCPU <= dataCPUOut when ( cacheHit='1' and state=CR );
 
 end synth;

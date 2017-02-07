@@ -13,25 +13,59 @@ use STD.TEXTIO.ALL;
 use IEEE.STD_LOGIC_TEXTIO.ALL;
 
 entity cache_tb is
-  generic ( DATAWIDTH     : integer := 32;  -- Length of instruction/data words.
-            BLOCKSIZE     : integer := 4;  -- Number of words that a block contains.
-            ADDRESSWIDTH  : integer := 256;   -- Number of cache blocks.
-            OFFSET        : integer := 2    -- Number of bits that can be selected in the cache.
-          );
+  generic (TagFileName  : string := "../imem/tagCache";
+           DataFileName : string := "../imem/dataCache";
+
+           ADDRESSWIDTH : integer := 256;
+           BLOCKSIZE    : integer := 4;
+           DATAWIDTH    : integer := 32;
+           OFFSET       : integer := 8
+      );
+
 end;
 
 
-architecture test of cache_tb is
+architecture tests of cache_tb is
 
-  signal writedata, dataadr   : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
-  signal clk, reset,  memwrite: STD_LOGIC := '0';
+  signal clk, reset, memwrite: STD_LOGIC := '0';
+
+
+  signal stallCPU : STD_LOGIC := '0';
+  signal rdCPU : STD_LOGIC := '0';
+  signal wrCPU : STD_LOGIC := '0';
+  signal addrCPU : STD_LOGIC_VECTOR( DATAWIDTH-1 downto 0 );
+  signal dataCPU : STD_LOGIC_VECTOR( OFFSET-1 downto 0 );
+  signal readyMEM : STD_LOGIC := '0';
+  signal rdMEM : STD_LOGIC := '0';
+  signal wrMEM : STD_LOGIC := '0';
+  signal addrMEM : STD_LOGIC_VECTOR( DATAWIDTH-1 downto 0 );
+  signal dataMEM : STD_LOGIC_VECTOR( OFFSET-1 downto 0 );
+
 
 begin
 
-  -- instantiate device to be tested
-  dut: entity work.mips
-       generic map(DFileName => DFileName, IFileName => IFileName)
-       port map(clk, reset, writedata, dataadr, memwrite);
+cache : entity work.cacheController
+        generic map (
+            DATAWIDTH => DATAWIDTH,
+            BLOCKSIZE => BLOCKSIZE,
+            ADDRESSWIDTH => ADDRESSWIDTH,
+            OFFSET => OFFSET,
+            TagFileName => TagFileName,
+            DataFileName => DataFileName
+        )
+        port map( clk => clk,
+                  reset => reset,
+                  stallCPU => stallCPU,
+                  dataCPU => dataCPU,
+                  addrCPU => addrCPU,
+                  readyMEM => readyMEM,
+                  dataMEM => dataMEM,
+                  rdCPU => rdCPU,
+                  wrCPU => wrCPU
+                  );
+
+
+
 
   -- Generate clock with 10 ns period
   process begin
@@ -51,7 +85,4 @@ begin
     wait;
   end process;
 
-
-
-
-end synth;
+end tests;

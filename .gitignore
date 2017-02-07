@@ -1,0 +1,18 @@
+# Ignore all .imem and .cache files in folder imem.
+imem/*.imem
+imem/*.cache
+
+# Ignore all .dmem files in folder dmem.
+dmem/*.dmem
+
+doc/task4_caches/*.lof
+doc/task4_caches/*.log
+doc/task4_caches/*.lot
+doc/task4_caches/*.aux
+doc/task4_caches/*.bbl
+doc/task4_caches/*.blg
+doc/task4_caches/*.lol
+doc/task4_caches/*.out
+doc/task4_caches/*.xml
+doc/task4_caches/*.gz
+doc/task4_caches/*.toc

@@ -11,28 +11,29 @@ use IEEE.STD_LOGIC_1164.all;
 use IEEE.NUMERIC_STD.all;
 
 entity directMappedCache_tb is
-  generic (TagFileName  : string := "../imem/jumpTest2";
-           DataFileName : string := "../imem/jumpTest2";
+  generic (TagFileName  : string := "../imem/tagCache";
+           DataFileName : string := "../imem/dataCache";
 
            ADDRESSWIDTH : integer := 256;
-           BLOCKSIZE    : integer := 32;
+           BLOCKSIZE    : integer := 4;
            DATAWIDTH    : integer := 32;
-           OFFSET       : integer := 2);
+           OFFSET       : integer := 8);
 end;
 
 architecture test of directMappedCache_tb is
 
 signal reset   : STD_LOGIC := '0';
 signal addrCPU : STD_LOGIC_VECTOR(DATAWIDTH-1 downto 0) := (others => '0');
-signal dataIn  : STD_LOGIC_VECTOR(DATAWIDTH-1 downto 0)    := (others => '0');
-signal dataOut : sTD_LOGIC_VECTOR(DATAWIDTH-1 downto 0)    := (others => '0');
+signal dataCPUIn  : STD_LOGIC_VECTOR( OFFSET-1 downto 0)    := (others => '0');
+signal dataCPUOut : sTD_LOGIC_VECTOR( OFFSET-1 downto 0)    := (others => '0');
 signal clk     : STD_LOGIC := '0';
-signal rw      : STD_LOGIC := '0';
+signal rd      : STD_LOGIC := '0';
 signal wr      : STD_LOGIC := '0';
 signal valid   : STD_LOGIC := '0';
 signal dirty   : STD_LOGIC := '0';
 signal hit     : STD_LOGIC := '0';
-signal miss    : STD_LOGIC := '0';
+signal dataMemIn : STD_LOGIC_VECTOR( 8-1 downto 0 ) := (others => '0' );
+signal dataMemOut : STD_LOGIC_VECTOR( 8-1 downto 0 ) := (others => '0' );
 
 begin
 
@@ -41,7 +42,7 @@ begin
 -- -----------------------------------------------------------------------------
 cache : entity work.directMappedCache
         generic map (
-            DATAWIDTH => DATAWIDTH,
+            DATA_WIDTH => DATAWIDTH,
             BLOCKSIZE => BLOCKSIZE,
             ADDRESSWIDTH => ADDRESSWIDTH,
             OFFSET => OFFSET,
@@ -49,15 +50,17 @@ cache : entity work.directMappedCache
             DataFileName => DataFileName
         )
         port map( clk => clk,
-                  dataIn => dataIn,
+                  dataCPUIn => dataCPUIn,
                   addrCPU => addrCPU,
-                  dataOut => dataOut,
-                  rw => rw,
+                  dataCPUOut => dataCPUOut,
+                  dataMEMIn => dataMemIn,
+                  dataMEMOut => dataMemOut,
+                  rd => rd,
                   wr => wr,
                   valid => valid,
                   dirty => dirty,
-                  hit => hit,
-                  miss => miss );
+                  hit => hit
+                  );
 
         -- Generate clock with 10 ns period
         process begin

@@ -32,8 +32,8 @@ signal wr      : STD_LOGIC := '0';
 signal valid   : STD_LOGIC := '0';
 signal dirty   : STD_LOGIC := '0';
 signal hit     : STD_LOGIC := '0';
-signal dataMemIn : STD_LOGIC_VECTOR( 8-1 downto 0 ) := (others => '0' );
-signal dataMemOut : STD_LOGIC_VECTOR( 8-1 downto 0 ) := (others => '0' );
+signal dataMemIn : STD_LOGIC_VECTOR( OFFSET-1 downto 0 ) := (others => '0' );
+signal dataMemOut : STD_LOGIC_VECTOR( OFFSET-1 downto 0 ) := (others => '0' );
 signal wrCacheBlockLine : STD_LOGIC := '0';
 
 begin

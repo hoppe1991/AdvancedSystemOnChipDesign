@@ -57,7 +57,7 @@ entity directMappedCache is
 		addrCPU          : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0); -- Memory address from CPU is divided into block address and block offset.
 		dataCPU_in       : in    STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
 		dataCPU_out      : out   STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
-		dataMEM          : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from memory to cache or from cache to memory.
+		dataMEM          : inout STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE - 1 downto 0); -- Data from memory to cache or from cache to memory.
 		cacheBlockLine   : inout STD_LOGIC_VECTOR((BLOCKSIZE * DATA_WIDTH) - 1 downto 0); -- Cache block line. 
 
 		wrCacheBlockLine : in    STD_LOGIC; -- Write signal identifies whether a complete cache block should be written into cache.

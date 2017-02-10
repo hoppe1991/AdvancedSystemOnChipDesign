@@ -37,7 +37,7 @@ entity cacheController is
 		rdMEM       : out   STD_LOGIC;
 		wrMEM       : out   STD_LOGIC;
 		addrMEM     : out   STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0);
-		dataMEM     : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)
+		dataMEM     : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE- 1 downto 0)
 	);
 
 end;

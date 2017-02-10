@@ -15,30 +15,29 @@ use IEEE.STD_LOGIC_TEXTIO.ALL;
 entity cacheController is
 	generic(
 		MEMORY_ADDRESS_WIDTH : INTEGER := 32; -- Memory address is 32-bit wide.
-		DATA_WIDTH            : INTEGER := 32; -- Length of instruction/data words.
+		DATA_WIDTH           : INTEGER := 32; -- Length of instruction/data words.
 		BLOCKSIZE            : INTEGER := 4; -- Number of words that a block contains.
 		ADDRESSWIDTH         : INTEGER := 256; -- Number of cache blocks.
 		OFFSET               : INTEGER := 8; -- Number of bits that can be selected in the cache.
-		TAG_FILENAME          : STRING  := "../imem/tagCache";
-		DATA_FILENAME         : STRING  := "../imem/dataCache"
+		TAG_FILENAME         : STRING  := "../imem/tagCache";
+		DATA_FILENAME        : STRING  := "../imem/dataCache"
 	);
 
 	port(
-		hitCounter : out INTEGER;
-		missCounter : out INTEGER;
-		
-		clk      : in    STD_LOGIC;
-		reset    : in    STD_LOGIC;
-		stallCPU : out   STD_LOGIC;
-		rdCPU    : in    STD_LOGIC;
-		wrCPU    : in    STD_LOGIC;
-		addrCPU  : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0);
-		dataCPU  : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
-		readyMEM : in    STD_LOGIC;
-		rdMEM    : out   STD_LOGIC;
-		wrMEM    : out   STD_LOGIC;
-		addrMEM  : out   STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0);
-		dataMEM  : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)
+		hitCounter  : out   INTEGER;
+		missCounter : out   INTEGER;
+		clk         : in    STD_LOGIC;
+		reset       : in    STD_LOGIC;
+		stallCPU    : out   STD_LOGIC;
+		rdCPU       : in    STD_LOGIC;
+		wrCPU       : in    STD_LOGIC;
+		addrCPU     : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0);
+		dataCPU     : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
+		readyMEM    : in    STD_LOGIC;
+		rdMEM       : out   STD_LOGIC;
+		wrMEM       : out   STD_LOGIC;
+		addrMEM     : out   STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0);
+		dataMEM     : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)
 	);
 
 end;
@@ -56,38 +55,37 @@ architecture synth of cacheController is
 		WCR
 	);
 
-	signal state, nextstate : statetype := IDLE;
+	signal state     : statetype := IDLE;
+	signal nextstate : statetype := IDLE;
 
 	signal cacheHit : STD_LOGIC := '0';
 	signal isDirty  : STD_LOGIC := '0';
 
-	signal dataCPUIn        : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0) := (others => '0');
-	signal dataCPUOut       : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0) := (others => '0');
+	signal dataCPUIn        : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)           := (others => '0');
+	signal dataCPUOut       : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)           := (others => '0');
 	signal dataMEMIn        : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0) := (others => '0');
 	signal dataMEMOut       : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0) := (others => '0');
 	--signal dataMEM			: STD_LOGIC_VECTOR(OFFSET -1 downto 0) := (others => '0');
-	signal rd               : STD_LOGIC                             := '0';
-	signal wr               : STD_LOGIC                             := '0';
-	signal valid            : STD_LOGIC                             := '0';
-	signal dirty            : STD_LOGIC                             := '0';
-	signal hit              : STD_LOGIC                             := '0';
-	signal wrCacheBlockLine : STD_LOGIC                             := '0';
-	
+	signal rd               : STD_LOGIC                                           := '0';
+	signal wr               : STD_LOGIC                                           := '0';
+	signal valid            : STD_LOGIC                                           := '0';
+	signal dirty            : STD_LOGIC                                           := '0';
+	signal hit              : STD_LOGIC                                           := '0';
+	signal wrCacheBlockLine : STD_LOGIC                                           := '0';
+
 	signal setValid : STD_LOGIC := '0';
 	signal setDirty : STD_LOGIC := '0';
-	
-	signal rHitCounter : INTEGER := 5;
+
+	signal rHitCounter  : INTEGER := 5;
 	signal rMissCounter : INTEGER := 0;
-	
+
 begin
-	
-	rHitCounter <= 0 when reset='1' and rising_edge(clk);
-	rMissCounter <= 0 when reset='1' and rising_edge(clk);
-	
-	hitCounter <= rHitCounter;
+	rHitCounter  <= 0 when reset = '1' and rising_edge(clk);
+	rMissCounter <= 0 when reset = '1' and rising_edge(clk);
+
+	hitCounter  <= rHitCounter;
 	missCounter <= rMissCounter;
 
-	
 	cache : entity work.directMappedCache
 		generic map(
 			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
@@ -103,21 +101,21 @@ begin
 			     dataCPU_in       => dataCPUIn,
 			     dataCPU_out      => dataCPUOut,
 			     addrCPU          => addrCPU,
-			     dataMEM        => dataMEM,
+			     dataMEM          => dataMEM,
 			     rd               => rd,
 			     wr               => wr,
 			     valid            => valid,
 			     dirty            => dirty,
 			     hit              => hit,
-			     setValid => setValid,
-			     setDirty => setDirty,
+			     setValid         => setValid,
+			     setDirty         => setDirty,
 			     wrCacheBlockLine => wrCacheBlockLine
 		);
 
 	-- state register
 	state <= IDLE when reset = '1' else nextstate when rising_edge(clk);
 
-	transition_logic : process(state)
+	transition_logic : process(clk, state, wrCPU, rdCPU, cacheHit)
 	begin
 		case state is
 			when IDLE =>
@@ -149,9 +147,9 @@ begin
 				end if;
 
 			when WCW =>
-				if readyMEM = '0' then
+				if readyMEM = '0' AND FALSE then -- TODO
 					nextstate <= WCW;
-				elsif readyMEM = '1' then
+				elsif readyMEM = '1' OR TRUE then -- TODO
 					nextstate <= IDLE;
 				end if;
 
@@ -183,7 +181,7 @@ begin
 					nextstate <= IDLE;
 				end if;
 
-			when others => nextstate <= WCR;
+			when others => nextstate <= IDLE;
 		end case;
 	end process;
 
@@ -197,6 +195,9 @@ begin
 
 	rdMEM <= '1' when (isDirty = '1' and state = CMW) else '1' when (readyMEM = '1' and state = WBW) else '1' when (readyMEM = '1' and state = CMW) else '1' when (isDirty = '0' and state = CMR) else '1' when (readyMEM = '1' and state = WBR) else '1' when (readyMEM = '1' and state = WCR)
 		else '0';
+
+	setDirty <= '1' when (state = WCW) else '0';
+	dirty    <= '1' when (state = WCW) else dirty;
 
 	dataCPU <= dataCPUOut when (cacheHit = '1' and state = CR);
 

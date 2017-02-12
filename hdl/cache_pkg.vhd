@@ -42,9 +42,49 @@ package cache_pkg is
 	function TO_STD_LOGIC_VECTOR(ARG : in MEMORY_ADDRESS) return STD_LOGIC_VECTOR;
 
 	function INIT_MEMORY_ADDRESS return MEMORY_ADDRESS;
+
+	type CONFIG_BITS_WIDTH is record
+		indexNrOfBits       : INTEGER;
+		offsetNrOfBits      : INTEGER;
+		offsetBlockNrOfBits : INTEGER;
+		offsetByteNrOfBits  : INTEGER;
+		tagNrOfBits         : INTEGER;
+		cacheLineBits       : INTEGER;
+
+		tagIndexH    : INTEGER;
+		tagIndexL    : INTEGER;
+		indexIndexH  : INTEGER;
+		indexIndexL  : INTEGER;
+		offsetIndexH : INTEGER;
+		offsetIndexL : INTEGER;
+
+	end record;
+
+	function GET_CONFIG_BITS_WIDTH(ADDRESSWIDTH : in INTEGER; BLOCKSIZE : in INTEGER;
+			                       DATA_WIDTH   : in INTEGER; OFFSET : in INTEGER) return CONFIG_BITS_WIDTH;
+
 end cache_pkg;
 
 package body cache_pkg is
+	function GET_CONFIG_BITS_WIDTH(ADDRESSWIDTH : in INTEGER; BLOCKSIZE : in INTEGER;
+			                       DATA_WIDTH   : in INTEGER; OFFSET : in INTEGER) return CONFIG_BITS_WIDTH is
+		variable config : CONFIG_BITS_WIDTH;
+	begin
+		config.indexNrOfBits       := DETERMINE_NR_BITS(ADDRESSWIDTH);
+		config.offsetNrOfBits      := DETERMINE_NR_BITS(BLOCKSIZE * DATA_WIDTH / OFFSET);
+		config.offsetBlockNrOfBits := DETERMINE_NR_BITS(BLOCKSIZE);
+		config.offsetByteNrOfBits  := DETERMINE_NR_BITS(DATA_WIDTH / OFFSET);
+		config.tagNrOfBits         := MEMORY_ADDRESS_WIDTH - config.indexNrOfBits - config.offsetNrOfBits;
+		config.cacheLineBits       := BLOCKSIZE * DATA_WIDTH;
+		config.tagIndexH           := config.offsetNrOfBits + config.indexNrOfBits + config.tagNrOfBits - 1;
+		config.tagIndexL           := config.offsetNrOfBits + config.indexNrOfBits;
+		config.indexIndexH         := config.offsetNrOfBits + config.indexNrOfBits - 1;
+		config.indexIndexL         := config.offsetNrOfBits;
+		config.offsetIndexH        := config.offsetNrOfBits - 1;
+		config.offsetIndexL        := 0;
+		return config;
+	end;
+
 	function INIT_MEMORY_ADDRESS return MEMORY_ADDRESS IS
 		VARIABLE a : MEMORY_ADDRESS;
 	begin

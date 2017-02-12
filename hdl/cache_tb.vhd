@@ -63,6 +63,8 @@ architecture tests of cache_tb is
 
 	signal hitCounter  : INTEGER := 0;
 	signal missCounter : INTEGER := 0;
+
+	signal executionRun : INTEGER := 0;
 begin
 	mainMemoryController : entity work.mainMemoryController
 		generic map(
@@ -80,7 +82,7 @@ begin
 			wrMEM       => wrMEM,
 			dataMEM_in  => dataMEM,
 			dataMEM_out => dataMEM,
-			reset => reset
+			reset       => reset
 		);
 
 	cache : entity work.cacheController
@@ -103,11 +105,14 @@ begin
 			     rdCPU       => rdCPU,
 			     wrCPU       => wrCPU,
 			     hitCounter  => hitCounter,
-			     missCounter => missCounter
+			     missCounter => missCounter,
+			     rdMEM       => rdMEM,
+			     wrMEM       => wrMEM,
+			     addrMEM     => addrMEM
 		);
 
 	-- Generate clock with 10 ns period
-	process
+	clockProcess : process
 	begin
 		clk <= '1';
 		wait for 1 ns;
@@ -132,15 +137,15 @@ begin
 		wait for 10 ns;
 		indexI <= 2;
 		wait for 10 ns;
+		dataCPU <= (others => '0');
+		wait for 10 ns;
+		executionRun <= 1;
+
 	end process;
 
 	-- Generate reset for first two clock cycles
 	process
 	begin
-		reset <= '0';
-		wait for 50 ns;
-		reset <= '1';
-		wait for 20 ns;
 		reset <= '0';
 		wait;
 	end process;

@@ -43,6 +43,8 @@ entity cacheController is
 end;
 
 architecture synth of cacheController is
+	
+	
 	type statetype is (
 		IDLE,
 		CW,
@@ -60,28 +62,32 @@ architecture synth of cacheController is
 
 	signal cacheHit : STD_LOGIC := '0';
 	signal isDirty  : STD_LOGIC := '0';
+	signal newDirty : STD_LOGIC := '1';
 
-	signal dataCPUIn        : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)           := (others => '0');
-	signal dataCPUOut       : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)           := (others => '0');
+	signal dataCPU_in        : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)           := (others => '0');
+	signal dataCPU_out       : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)           := (others => '0');
 	signal dataMEMIn        : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0) := (others => '0');
 	signal dataMEMOut       : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0) := (others => '0');
 	--signal dataMEM			: STD_LOGIC_VECTOR(OFFSET -1 downto 0) := (others => '0');
 	signal rd               : STD_LOGIC                                           := '0';
 	signal wr               : STD_LOGIC                                           := '0';
 	signal valid            : STD_LOGIC                                           := '0';
-	signal dirty            : STD_LOGIC                                           := '0';
-	signal hit              : STD_LOGIC                                           := '0';
+	 signal hit              : STD_LOGIC                                           := '0';
 	signal wrCacheBlockLine : STD_LOGIC                                           := '0';
 
 	signal setValid : STD_LOGIC := '0';
 	signal setDirty : STD_LOGIC := '0';
 
-	signal rHitCounter  : INTEGER := 5;
+	signal rHitCounter  : INTEGER := 0;
 	signal rMissCounter : INTEGER := 0;
 
 begin
-	rHitCounter  <= 0 when reset = '1' and rising_edge(clk);
-	rMissCounter <= 0 when reset = '1' and rising_edge(clk);
+	rHitCounter  <= 0 when reset = '1' and rising_edge(clk) else 
+					rHitCounter+1 when state=CW and cacheHit='1' and rising_edge(clk) else
+					rHitCounter+1 when state=CR and cacheHit='1' and rising_edge(clk) ;
+	rMissCounter <= 0 when reset = '1' and rising_edge(clk) else
+					rMissCounter+1 when state=CW and cacheHit='0' and rising_edge(clk) else
+					rMissCounter+1 when state=CR and cacheHit='0' and rising_edge(clk) ;
 
 	hitCounter  <= rHitCounter;
 	missCounter <= rMissCounter;
@@ -98,14 +104,15 @@ begin
 		)
 		port map(clk              => clk,
 			     reset            => reset,
-			     dataCPU_in       => dataCPUIn,
-			     dataCPU_out      => dataCPUOut,
+			     dataCPU_in       => dataCPU_in,
+			     dataCPU_out      => dataCPU_out,
 			     addrCPU          => addrCPU,
 			     dataMEM          => dataMEM,
 			     rd               => rd,
 			     wr               => wr,
 			     valid            => valid,
-			     dirty            => dirty,
+			     dirty_in		  => newDirty,
+			     dirty_out		  => isDirty,
 			     hit              => hit,
 			     setValid         => setValid,
 			     setDirty         => setDirty,
@@ -128,7 +135,9 @@ begin
 			when CW =>
 				if cacheHit = '1' then
 					nextstate <= IDLE;
-				elsif cacheHit = '0' then
+				elsif cacheHit='0'  and valid='0' then
+					nextstate <= WCW;
+				elsif cacheHit = '0' and valid='1' then
 					nextstate <= CMW;
 				end if;
 
@@ -147,9 +156,9 @@ begin
 				end if;
 
 			when WCW =>
-				if readyMEM = '0' AND FALSE then -- TODO
+				if readyMEM = '0' then
 					nextstate <= WCW;
-				elsif readyMEM = '1' OR TRUE then -- TODO
+				elsif readyMEM = '1' then
 					nextstate <= IDLE;
 				end if;
 
@@ -185,20 +194,31 @@ begin
 		end case;
 	end process;
 
+	
+
+
+
 	-- Output logic.
-	dataCPUIn <= dataCPUIn when (cacheHit = '1' and state = CW);
+	dataCPU_in <= dataCPU_in when (cacheHit = '1' and state = CW);
 	wr        <= '1' when (cacheHit = '1' and state = CW);
 
 	stallCPU <= '1' when (cacheHit = '0' and state = CW) else '1' when (cacheHit = '0' and state = CR) else '0';
 
-	wrMEM <= '1' when (isDirty = '1' and state = CMW) else '1' when (isDirty = '1' and state = CMR) else '0';
+	wrMEM <= '1' when (isDirty = '1' and state = CMW) else 
+		     '1' when (isDirty = '1' and state = CMR) else 
+		     '0';
 
-	rdMEM <= '1' when (isDirty = '1' and state = CMW) else '1' when (readyMEM = '1' and state = WBW) else '1' when (readyMEM = '1' and state = CMW) else '1' when (isDirty = '0' and state = CMR) else '1' when (readyMEM = '1' and state = WBR) else '1' when (readyMEM = '1' and state = WCR)
-		else '0';
+	rdMEM <= '1' when (state=CW and cacheHit='0' and valid='0') else
+			 '1' when (isDirty = '1' and state = CMW) else 
+			 '1' when (readyMEM = '1' and state = WBW) else 
+			 '1' when (readyMEM = '1' and state = CMW) else 
+			 '1' when (isDirty = '0' and state = CMR) else 
+			 '1' when (readyMEM = '1' and state = WBR) else 
+			 '1' when (readyMEM = '1' and state = WCR) else 
+			 '0';
 
 	setDirty <= '1' when (state = WCW) else '0';
-	dirty    <= '1' when (state = WCW) else dirty;
-
-	dataCPU <= dataCPUOut when (cacheHit = '1' and state = CR);
+ 
+	dataCPU <= dataCPU_out when (cacheHit = '1' and state = CR);
 
 end synth;

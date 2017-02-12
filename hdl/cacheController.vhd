@@ -32,7 +32,8 @@ entity cacheController is
 		rdCPU       : in    STD_LOGIC;
 		wrCPU       : in    STD_LOGIC;
 		addrCPU     : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0);
-		dataCPU     : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
+		dataCPU_in : in STD_LOGIC_VECTOR( DATA_WIDTH-1 downto 0 );
+		dataCPU_out : out STD_LOGIC_VECTOR( DATA_WIDTH - 1 downto 0 );
 		readyMEM    : in    STD_LOGIC;
 		rdMEM       : out   STD_LOGIC;
 		wrMEM       : out   STD_LOGIC;
@@ -41,6 +42,8 @@ entity cacheController is
 	);
 
 end;
+
+
 
 architecture synth of cacheController is
 	
@@ -51,6 +54,7 @@ architecture synth of cacheController is
 		CMW,
 		WBW,
 		WCW,
+		WRITE,
 		CR,
 		CMR,
 		WBR,
@@ -61,11 +65,8 @@ architecture synth of cacheController is
 	signal nextstate : statetype := IDLE;
 
 	signal cacheHit : STD_LOGIC := '0';
-	signal isDirty  : STD_LOGIC := '0';
-	signal newDirty : STD_LOGIC := '1';
+	signal isDirty  : STD_LOGIC := '0'; 
 
-	signal dataCPU_in        : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)           := (others => '0');
-	signal dataCPU_out       : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)           := (others => '0');
 	signal dataMEMIn        : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0) := (others => '0');
 	signal dataMEMOut       : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0) := (others => '0');
 	--signal dataMEM			: STD_LOGIC_VECTOR(OFFSET -1 downto 0) := (others => '0');
@@ -81,6 +82,12 @@ architecture synth of cacheController is
 	signal rHitCounter  : INTEGER := 0;
 	signal rMissCounter : INTEGER := 0;
 
+	signal dirty_in : STD_LOGIC := '0';
+	signal dirty_out : STD_LOGIC := '0';
+	signal directMappedCache_data_out : STD_LOGIC_VECTOR( DATA_WIDTH-1 downto 0 ) := (others => '0');
+	
+	signal cacheBlockLine_in : STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE- 1 downto 0) := (others => '0');
+	signal cacheBlockLine_out : STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE- 1 downto 0) := (others => '0');
 begin
 	rHitCounter  <= 0 when reset = '1' and rising_edge(clk) else 
 					rHitCounter+1 when state=CW and cacheHit='1' and rising_edge(clk) else
@@ -89,9 +96,12 @@ begin
 					rMissCounter+1 when state=CW and cacheHit='0' and rising_edge(clk) else
 					rMissCounter+1 when state=CR and cacheHit='0' and rising_edge(clk) ;
 
-	hitCounter  <= rHitCounter;
 	missCounter <= rMissCounter;
+	
+	cacheBlockLine_in <= dataMEM;
 
+	addrMEM <= addrCPU;
+	
 	cache : entity work.directMappedCache
 		generic map(
 			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
@@ -105,17 +115,19 @@ begin
 		port map(clk              => clk,
 			     reset            => reset,
 			     dataCPU_in       => dataCPU_in,
-			     dataCPU_out      => dataCPU_out,
+			     dataCPU_out      => directMappedCache_data_out,
 			     addrCPU          => addrCPU,
 			     dataMEM          => dataMEM,
 			     rd               => rd,
 			     wr               => wr,
 			     valid            => valid,
-			     dirty_in		  => newDirty,
-			     dirty_out		  => isDirty,
+			     dirty_in		  => dirty_in,
+			     dirty_out		  => dirty_out,
 			     hit              => hit,
 			     setValid         => setValid,
 			     setDirty         => setDirty,
+			     cacheBlockLine_in => cacheBlockLine_in,
+			     cacheBlockLine_out => cacheBlockLine_out,
 			     wrCacheBlockLine => wrCacheBlockLine
 		);
 
@@ -159,8 +171,16 @@ begin
 				if readyMEM = '0' then
 					nextstate <= WCW;
 				elsif readyMEM = '1' then
-					nextstate <= IDLE;
+					nextstate <= WRITE;
 				end if;
+				
+				
+			when WRITE => 
+				nextstate <= IDLE;
+				
+				
+				
+				
 
 			when CR =>
 				if cacheHit = '1' then
@@ -195,12 +215,15 @@ begin
 	end process;
 
 	
+	wrCacheBlockLine <= '1' when (state=WCW and readyMEM='1') else
+						'0' when (state=IDLE);
 
+	rd <= '0' when (state=WCW and readyMEM='1');
 
 
 	-- Output logic.
-	dataCPU_in <= dataCPU_in when (cacheHit = '1' and state = CW);
-	wr        <= '1' when (cacheHit = '1' and state = CW);
+	wr        <= '0' when (state=WCW and readyMEM='1') else
+				 '1' when (cacheHit = '1' and state = CW);
 
 	stallCPU <= '1' when (cacheHit = '0' and state = CW) else '1' when (cacheHit = '0' and state = CR) else '0';
 
@@ -217,8 +240,12 @@ begin
 			 '1' when (readyMEM = '1' and state = WCR) else 
 			 '0';
 
-	setDirty <= '1' when (state = WCW) else '0';
+	setDirty <= '1' when (state = WRITE) else '0' when (state = IDLE);
  
-	dataCPU <= dataCPU_out when (cacheHit = '1' and state = CR);
+ 
+ 
+	dataCPU_out <= directMappedCache_data_out when (cacheHit = '1' and state = CR);
+	
+	
 
 end synth;

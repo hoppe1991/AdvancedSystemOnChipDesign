@@ -58,7 +58,8 @@ entity directMappedCache is
 		dataCPU_in       : in    STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
 		dataCPU_out      : out   STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
 		dataMEM          : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0); -- Data from memory to cache or from cache to memory.
-		cacheBlockLine   : inout STD_LOGIC_VECTOR((BLOCKSIZE * DATA_WIDTH) - 1 downto 0); -- Cache block line. 
+		cacheBlockLine_in : in STD_LOGIC_VECTOR( (BLOCKSIZE*DATA_WIDTH)-1 downto 0 );
+		cacheBlockLine_out : out STD_LOGIC_VECTOR( (BLOCKSIZE*DATA_WIDTH)-1 downto 0 );
 
 		wrCacheBlockLine : in    STD_LOGIC; -- Write signal identifies whether a complete cache block should be written into cache.
 		rd               : in    STD_LOGIC; -- Read signal identifies to read data from the cache.
@@ -199,7 +200,7 @@ begin
 	-- -----------------------------------------------------------------------------
 	-- Determine whether a cache block/line should be read or written.
 	-- -----------------------------------------------------------------------------
-	cacheBlockLine <= cbBramOut when rd = '1' AND wr = '0' AND wrCacheBlockLine = '0';
+	cacheBlockLine_out <= cbBramOut when rd = '1' AND wr = '0' AND wrCacheBlockLine = '0';
 
 	-- -----------------------------------------------------------------------------
 	-- Determine whether a tag should be read or written.
@@ -217,7 +218,8 @@ begin
 	-- -----------------------------------------------------------------------------
 	-- Determine the new cache block line.
 	-- -----------------------------------------------------------------------------
-	cbBramIn <= dataCPU_in & cbBramOut(dataEndIndex - 1 downto 0) when writeToDataBRAM = '1' AND offsetI = 0 AND rising_edge(clk) else cbBramOut(config.cacheLineBits - 1 downto dataStartIndex + 1) & dataCPU_in when writeToDataBRAM = '1' AND offsetI = (BLOCKSIZE - 1) AND rising_edge(clk) else
+	cbBramIn <= cacheBlockLine_in when writeToDataBRAM='0' and wr='0' and rd='0' and wrCacheBlockLine='1' and rising_edge(clk) else
+		dataCPU_in & cbBramOut(dataEndIndex - 1 downto 0) when writeToDataBRAM = '1' AND offsetI = 0 AND rising_edge(clk) else cbBramOut(config.cacheLineBits - 1 downto dataStartIndex + 1) & dataCPU_in when writeToDataBRAM = '1' AND offsetI = (BLOCKSIZE - 1) AND rising_edge(clk) else
 		cbBramOut(config.cacheLineBits - 1 downto dataStartIndex + 1) & dataCPU_in & cbBramOut(dataEndIndex - 1 downto 0) when writeToDataBRAM = '1' AND rising_edge(clk);
 
 	-- -----------------------------------------------------------------------------

@@ -42,7 +42,8 @@ architecture tests of cache_tb is
 	signal rdCPU    : STD_LOGIC                                             := '0';
 	signal wrCPU    : STD_LOGIC                                             := '0';
 	signal addrCPU  : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0)   := (others => '0');
-	signal dataCPU  : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)             := (others => '0');
+	signal dataCPU_in  : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)             := (others => '0');
+	signal dataCPU_out  : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)             := (others => '0');
 	signal readyMEM : STD_LOGIC                                             := '0';
 	signal rdMEM    : STD_LOGIC                                             := '0';
 	signal wrMEM    : STD_LOGIC                                             := '0';
@@ -62,9 +63,7 @@ architecture tests of cache_tb is
 	signal offsetByteV  : STD_LOGIC_VECTOR(offsetByteNrOfBits - 1 downto 0)  := (others => '0');
 
 	signal hitCounter  : INTEGER := 0;
-	signal missCounter : INTEGER := 0;
-
-	signal executionRun : INTEGER := 0;
+	signal missCounter : INTEGER := 0; 
 begin
 	mainMemoryController : entity work.mainMemoryController
 		generic map(
@@ -98,7 +97,8 @@ begin
 		port map(clk         => clk,
 			     reset       => reset,
 			     stallCPU    => stallCPU,
-			     dataCPU     => dataCPU,
+			     dataCPU_in     => dataCPU_in,
+			     dataCPU_out => dataCPU_out,
 			     addrCPU     => addrCPU,
 			     readyMEM    => readyMEM,
 			     dataMEM     => dataMEM,
@@ -131,23 +131,21 @@ begin
 		indexI  <= 1;
 		tagI    <= 0;
 		offsetI <= 0;
-		dataCPU <= "11111111111111111111111111111111";
+		dataCPU_in <= "11111111111111111111111111111111";
 		rdCPU   <= '0';
 		wrCPU   <= '1';
 		wait for 10 ns;
 		indexI <= 2;
-		wait for 10 ns;
-		dataCPU <= (others => '0');
-		wait for 10 ns;
-		executionRun <= 1;
-
+		wait for 10 ns; 
+		dataCPU_in <= (others => '0');
+		wait for 10 ns; 
 	end process;
 
 	-- Generate reset for first two clock cycles
 	process
 	begin
 		reset <= '0';
-		wait;
+		wait for 10 ns;
 	end process;
 
 end tests;

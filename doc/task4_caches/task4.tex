@@ -7,7 +7,13 @@
 %				https://martin-thoma.com/how-to-draw-a-finite-state-machine/
 % -----------------------------------------------------------------
 
-% Include introduction.
+\subsection{Memories}
+
+Why are there so many different storage types?
+What are the advantages and disadvantages of different cache organizsation forms?
+
+
+
 \subsection{Cache Simulation - Results}
 The two assembler programs \textit{row-major.asm} and \textit{column-major.asm} has been used for the cache simulation. \ref{tab:tableColumnMajor} contains the results regarding the file \textit{column-major.asm} and \ref{tab:tableRowMajor} illustrates the results of \textit{row-major.asm}.\\
 TODO Interpretation
@@ -64,3 +70,13 @@ Direct Mapping & 16 & 240 & 16 & 94  \\
 \newpage
 \subsection{Design a Finite State Machine for the Cache}
 \include{task4_stateMachine_writeAllocatePolicy}
+
+\newpage
+\subsubsection{Design a Finite State Machine for the Main Memory Controller}
+The main memory controller has the purpose to either write a given cache block/line to the main memory or to read multiple words from the main memory and return these words as a cache block/line. This main memory controller will be connected with the cache controller. Thus, the main memory controller will send a read cache block/line from the main memory to the cache controller. Also the main memory will get a cache block/line from the cache controller, which should be written into the main memory. Consider that a single data word has a certain wide of bits and a whole cache block/line contains several data words. Furthermore, the main memory could be implemented as a BlockRAM (BRAM). At first, the main memory controller is implemented as a finite state machine of type Mealy. The sketch of the finite state machine is given in figure~\ref{fig:sketchMealyAutomataMainMemoryController}.
+\begin{figure}
+	\centering
+	\includegraphics[scale=.5,angle=270]{pictures/sketch_mealyAutomata_mainMemoryController}
+	\caption{Sketch of Mealy Automata - Main Memory Controller}
+	\label{fig:sketchMealyAutomataMainMemoryController}
+\end{figure}

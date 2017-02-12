@@ -39,7 +39,8 @@ entity mainMemoryController is
 		wrMEM       : in  STD_LOGIC;
 		addrMEM     : in  STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0);
 		dataMEM_in  : in  STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
-		dataMEM_out : out STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0)
+		dataMEM_out : out STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
+		reset : in STD_LOGIC
 	);
 end;
 
@@ -63,7 +64,20 @@ architecture synth of mainMemoryController is
 	signal ready : STD_LOGIC := '0';
 
 	TYPE BLOCK_LINE IS ARRAY (BLOCKSIZE - 1 downto 0) of STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
-	signal cacheBlockLine : BLOCK_LINE;
+	signal cacheBlockLine    : BLOCK_LINE;
+	signal cacheBlockLine_in : BLOCK_LINE;
+
+	function STD_LOGIC_VECTOR_TO_BLOCK_LINE(ARG : in STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0)) return BLOCK_LINE is
+		variable v : BLOCK_LINE;
+		variable a : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
+	begin
+		a := ARG;
+		for I in 0 to BLOCKSIZE - 1 loop
+			v(I) := a(DATA_WIDTH - 1 downto DATA_WIDTH - DATA_WIDTH);
+			a    := std_logic_vector(unsigned(a) sll DATA_WIDTH);
+		end loop;
+		return v;
+	end;
 
 	function BLOCK_LINE_TO_STD_LOGIC_VECTOR(ARG : in BLOCK_LINE) return STD_LOGIC_VECTOR is
 		variable v : STD_LOGIC_VECTOR(cacheLineBits - 1 downto 0);
@@ -84,17 +98,26 @@ architecture synth of mainMemoryController is
 	signal bram_out_tmp    : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0) := (others => '0');
 	signal ii              : integer                                   := 0;
 
-	signal counter : integer   := BLOCKSIZE+BLOCKSIZE;
+	signal counter : integer   := BLOCKSIZE + BLOCKSIZE;
 	signal ifCase  : STD_LOGIC := '0';
 
 	TYPE INT_ARRAY IS ARRAY (BLOCKSIZE - 1 downto 0) of INTEGER;
 	signal startIndexArray : INT_ARRAY;
 	signal endIndexArray   : INT_ARRAY;
 
-	signal getRequest : STD_LOGIC := '0'; 
+	signal getRequest : STD_LOGIC := '0';
 
-begin 
+	type statetype is (
+		IDLE,
+		READ,
+		WRITE
+	); 
 
+	signal state     : statetype  := IDLE;
+	signal nextstate : statetype := IDLE;
+	
+	signal addrMEM_tmp : STD_LOGIC_VECTOR( MEMORY_ADDRESS_WIDTH-1 downto 0 ) := (others=>'0');
+begin
 	bramMainMemory : entity work.bram   -- data memory
 		generic map(INIT => (DATA_FILENAME & FILE_EXTENSION),
 			        ADDR => 10,
@@ -102,20 +125,62 @@ begin
 		)
 		port map(clk, writeToBRAM, addr(11 downto 2), bram_in, bram_out);
 
-	readyMEM <= '0' when rdMEM='1' and counter < BLOCKSIZE else 
-				'1' when getRequest='1' and counter>=BLOCKSIZE;
-	getRequest              <= '1' when rdMEM='1' and rising_edge(clk) else 
-	                           '0' when counter >= BLOCKSIZE-1 and rising_edge(clk);
-	counter                 <= 0 when rising_edge(getRequest) else 
-	                           counter + 1 when getRequest = '1' and rising_edge(clk) and counter <= BLOCKSIZE ;
-	cacheBlockLine(counter-1) <= bram_out when counter > 0 and counter <= BLOCKSIZE;
-	--cacheBlockLine(0) <= bram_out when counter = 0;
-	addr                    <= STD_LOGIC_VECTOR(unsigned(addrMEM) + 4 * counter);
---	readyMEM <= '0' when getRequest='0' and rising_edge(rdMEM) and rising_edge(clk) else
---				'1' when getRequest='1' and rising_edge(clk) and counter >= BLOCKSIZE;
-	dataMEM_out <= BLOCK_LINE_TO_STD_LOGIC_VECTOR(cacheBlockLine);
---	counter <= 0 when rising_edge(getRequest) else
---				counter + 1 when counter < BLOCKSIZE and rising_edge(clk);
+	-- state register
+	state <= IDLE when reset = '1' else nextstate when rising_edge(clk);
 
+	transition_logic : process(clk)
+	begin
+		case state is
+			when IDLE =>
+				if rdMEM = '0' and wrMEM = '1' then
+					nextstate <= WRITE;
+				elsif rdMEM = '1' and wrMEM = '0' then
+					nextstate <= READ;
+				end if;
+
+			when READ =>
+				if counter < BLOCKSIZE then
+					nextstate <= READ;
+				else
+					nextstate <= IDLE;
+				end if;
+
+			when WRITE =>
+				if counter < BLOCKSIZE then
+					nextstate <= WRITE;
+				else
+					nextstate <= IDLE;
+				end if;
+
+			when others => nextstate <= IDLE;
+		end case;
+	end process;
+	
+	-- Output logic.
+	readyMEM <= '0' when (state=READ and counter < BLOCKSIZE) else
+				 '0' when (state=WRITE and counter < BLOCKSIZE) else
+			    '1' when (state=READ and counter >= BLOCKSIZE) else
+			    '1' when (state=WRITE and counter >= BLOCKSIZE);
+			    
+	counter <= 0 when (state=IDLE and rdMEM='0' and wrMEM='1') else
+				0 when (state=IDLE and rdMEM='1' and wrMEM='0') else
+				counter+1 when (state=READ and counter <BLOCKSIZE and rising_edge(clk)) else
+				counter+1 when (state=WRITE and counter <BLOCKSIZE and rising_edge(clk));
+	
+	-- Store the read word.
+	addrMEM_tmp <= addrMEM( MEMORY_ADDRESS_WIDTH-1 downto 4) & "0000" when state=IDLE;
+	cacheBlockLine(counter-1) <= bram_out when counter > 0 and counter <= BLOCKSIZE and state=READ;
+	addr                        <= STD_LOGIC_VECTOR(unsigned(addrMEM_tmp) + 4 * counter);
+
+	-- Determine the output.
+	dataMEM_out <= BLOCK_LINE_TO_STD_LOGIC_VECTOR(cacheBlockLine);
+
+	-- -------------------------------------------------------------------------------------------------------------------------
+	-- Control logic regarding writing to main memory.
+	-- -------------------------------------------------------------------------------------------------------------------------
+
+--	cacheBlockLine_in <= STD_LOGIC_VECTOR_TO_BLOCK_LINE(dataMEM_in);
+
+--	bram_in <= cacheBlockLine_in(counter - 1) when counter > 0 and counter <= BLOCKSIZE;
 
 end synth;

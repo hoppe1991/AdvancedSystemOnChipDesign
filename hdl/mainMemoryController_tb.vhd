@@ -38,6 +38,7 @@ architecture mainMemory_testbench of mainMemoryController_tb is
 	signal addrMEM     : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0)   := (others => '0');
 	signal dataMEM_in  : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0) := (others => '0');
 	signal dataMEM_out : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0) := (others => '0');
+	signal reset : STD_LOGIC := '0';
 begin
 	mainMemory : entity work.mainMemoryController
 		generic map(MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
@@ -46,7 +47,7 @@ begin
 			        FILE_EXTENSION       => FILE_EXTENSION,
 			        DATA_FILENAME        => DATA_FILENAME
 		)
-		port map(clk, readyMEM, rdMEM, wrMEM, addrMEM, dataMEM_in, dataMEM_out);
+		port map(clk, readyMEM, rdMEM, wrMEM, addrMEM, dataMEM_in, dataMEM_out, reset);
 
 	-- Generate clock with 10 ns period
 	process
@@ -61,8 +62,21 @@ begin
 	begin
 		wait for 10 ns;
 		rdMEM   <= '1';
-		wait for 20 ns;
+		addrMEM <= (others => '0');
+		wait until readyMEM='1';
+		assert TRUE report "Value " & integer'image( 2 ) severity WARNING;
 		rdMEM <= '0';
+		wrMEM <= '0';
+		wait for 5 ns;
+		rdMEM <= '0';
+		wrMEM <= '1';
+		wait until readyMEM='1'; 
+		rdMEM   <= '1'; 
+		wrMEM <= '0';
+		addrMEM <= (others => '1');
+		wait until readyMEM='1'; 
+		rdMEM <= '0';
+		wrMEM <= '0';
 		wait for 10 ns;
 	end process;
 

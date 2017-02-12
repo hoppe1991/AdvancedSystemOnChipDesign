@@ -22,7 +22,8 @@ entity cache_tb is
 		OFFSET               : INTEGER := 8; -- Number of bits that can be selected in the cache.
 		TAG_FILENAME         : STRING  := "../imem/tagCache";
 		DATA_FILENAME        : STRING  := "../imem/dataCache";
-		MAIN_MEMORY_FILENAME : STRING  := "../imem/mainMemory"
+		MAIN_MEMORY_FILENAME : STRING  := "../imem/mainMemory";
+		FILE_EXTENSION       : STRING  := ".imem"
 	);
 
 end;
@@ -37,16 +38,16 @@ architecture tests of cache_tb is
 
 	signal clk, reset, memwrite : STD_LOGIC := '0';
 
-	signal stallCPU : STD_LOGIC                                           := '0';
-	signal rdCPU    : STD_LOGIC                                           := '0';
-	signal wrCPU    : STD_LOGIC                                           := '0';
-	signal addrCPU  : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0) := (others => '0');
-	signal dataCPU  : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)           := (others => '0');
-	signal readyMEM : STD_LOGIC                                           := '0';
-	signal rdMEM    : STD_LOGIC                                           := '0';
-	signal wrMEM    : STD_LOGIC                                           := '0';
-	signal addrMEM  : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0) := (others => '0');
-	signal dataMEM  : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH  - 1 downto 0)           := (others => '0');
+	signal stallCPU : STD_LOGIC                                             := '0';
+	signal rdCPU    : STD_LOGIC                                             := '0';
+	signal wrCPU    : STD_LOGIC                                             := '0';
+	signal addrCPU  : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0)   := (others => '0');
+	signal dataCPU  : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)             := (others => '0');
+	signal readyMEM : STD_LOGIC                                             := '0';
+	signal rdMEM    : STD_LOGIC                                             := '0';
+	signal wrMEM    : STD_LOGIC                                             := '0';
+	signal addrMEM  : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0)   := (others => '0');
+	signal dataMEM  : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0) := (others => '0');
 
 	signal tagI         : INTEGER := 0;
 	signal indexI       : INTEGER := 0;
@@ -63,12 +64,13 @@ architecture tests of cache_tb is
 	signal hitCounter  : INTEGER := 0;
 	signal missCounter : INTEGER := 0;
 begin
-	mainMemory : entity work.mainMemory
+	mainMemoryController : entity work.mainMemoryController
 		generic map(
 			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
 			BLOCKSIZE            => BLOCKSIZE,
 			DATA_WIDTH           => DATA_WIDTH,
-			DATA_FILENAME        => MAIN_MEMORY_FILENAME
+			DATA_FILENAME        => MAIN_MEMORY_FILENAME,
+			FILE_EXTENSION       => FILE_EXTENSION
 		)
 		port map(
 			clk         => clk,
@@ -77,7 +79,8 @@ begin
 			rdMEM       => rdMEM,
 			wrMEM       => wrMEM,
 			dataMEM_in  => dataMEM,
-			dataMEM_out => dataMEM
+			dataMEM_out => dataMEM,
+			reset => reset
 		);
 
 	cache : entity work.cacheController

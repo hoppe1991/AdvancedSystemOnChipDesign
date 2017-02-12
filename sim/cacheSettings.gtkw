@@ -1,0 +1,27 @@
+[*]
+[*] GTKWave Analyzer v3.3.78 (w)1999-2016 BSI
+[*] Sun Feb 12 12:09:50 2017
+[*]
+[dumpfile] "C:\Users\carst\Documents\AdvancedSystemOnChipDesign\Workspace\AdvancedSystemOnChipDesign\sim\cacheTest.ghw"
+[dumpfile_mtime] "Sun Feb 12 12:08:37 2017"
+[dumpfile_size] 709098
+[savefile] "C:\Users\carst\Documents\AdvancedSystemOnChipDesign\Workspace\AdvancedSystemOnChipDesign\sim\cacheSettings.gtkw"
+[timestart] 0
+[size] 1536 801
+[pos] -139 -139
+*-24.000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.cache_tb.
+[treeopen] top.cache_tb.cache.
+[sst_width] 258
+[signals_width] 102
+[sst_expanded] 1
+[sst_vpaned_height] 254
+@28
+top.cache_tb.cache.clk
+top.cache_tb.cache.stallcpu
+top.cache_tb.cache.nextstate
+@29
+top.cache_tb.cache.state
+[pattern_trace] 1
+[pattern_trace] 0

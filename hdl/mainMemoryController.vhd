@@ -5,7 +5,6 @@
 -- revision : 0.1
 -- date     : 10/02/17
 --------------------------------------------------------------------------------
-
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
@@ -84,7 +83,7 @@ architecture synth of mainMemoryController is
 	
 	-- Bit string containing the address for the BRAM.
 	signal addrBram : STD_LOGIC_VECTOR( bramAddrWidth-1 downto 0) := (others=>'0');
-	
+	 
 	-- Definition of possible states of the FSM.
 	type statetype is (
 		IDLE,
@@ -135,7 +134,7 @@ begin
 	-- state register
 	state <= IDLE when reset = '1' else nextstate when rising_edge(clk);
 
-	transition_logic : process(clk)
+	transition_logic : process(counter, rdMEM, state, wrMEM)
 	begin
 		case state is
 			when IDLE =>
@@ -146,7 +145,7 @@ begin
 				end if;
 
 			when READ =>
-				if counter < BLOCKSIZE then
+				if counter <= BLOCKSIZE then
 					nextstate <= READ;
 				else
 					nextstate <= IDLE;
@@ -159,36 +158,42 @@ begin
 					nextstate <= IDLE;
 				end if;
 
-			when others => nextstate <= IDLE;
+			--when others => nextstate <= IDLE;
 		end case;
 	end process;
 	
-	writeToBRAM <= '0' when (state=READ and counter >= 0 and counter < BLOCKSIZE) else
-					'1' when (state=WRITE and counter >= 0 and counter < BLOCKSIZE) else
-					'0';
+	-- Write to BRAM.
+	writeToBRAM <= '1' when (state=WRITE and counter < BLOCKSIZE) else
+				   '1' when (state=IDLE and rdMEM='0' and wrMEM='1') else
+				   '0' when (state=WRITE and counter >= BLOCKSIZE) else
+				   '0' when (state=READ and counter >= BLOCKSIZE) else
+				   '0' when (state=IDLE and rdMEM='1' and wrMEM='0') else
+				   '0';
 
 	-- Output logic.
-	readyMEM <= '0' when (state=IDLE and counter < BLOCKSIZE) else
-			    '0' when (state = READ and counter < BLOCKSIZE) else 
-	            '0' when (state = WRITE and counter < BLOCKSIZE) else 
-	            '1' when (state = READ and counter >= BLOCKSIZE) else 
-	            '1' when (state = WRITE and counter >= BLOCKSIZE);
+	readyMEM <= '1' when (state=WRITE and counter >= BLOCKSIZE) else
+				'0' when (state=READ and counter <= BLOCKSIZE) else
+				'1' when (state=READ and counter > BLOCKSIZE) else
+				'0' when (state=IDLE and wrMEM='1' and rdMEM='0') else
+				'0' when (state=IDLE and wrMEM='0' and rdMEM='1');
 
-	counter <= 0 when (state = IDLE and rdMEM = '0' and wrMEM = '1') else 0 when (state = IDLE and rdMEM = '1' and wrMEM = '0') else counter + 1 when (state = READ and counter < BLOCKSIZE and rising_edge(clk)) else counter + 1 when (state = WRITE and counter < BLOCKSIZE and rising_edge(clk)
-		);
+	-- Increment counter.
+	counter <= 0 when (state=IDLE and wrMEM='1' and rdMEM='0') else
+			   0 when (state=IDLE and wrMEM='0' and rdMEM='1') else
+			   counter+1 when (state=WRITE and counter < BLOCKSIZE and rising_edge(clk)) else
+			   counter+1 when (state=READ and counter <= BLOCKSIZE and rising_edge(clk));
 
 	-- Store the read word.
-	addrMEM_mod16                 <= addrMEM(MEMORY_ADDRESS_WIDTH - 1 downto 4) & "0000" when state = IDLE;
-	cacheBlockLine_out(counter - 1) <= bram_out when counter > 0 and counter <= BLOCKSIZE and state = READ;
+	addrMEM_mod16               <= addrMEM(MEMORY_ADDRESS_WIDTH - 1 downto 4) & "0000" when state = IDLE;
+	cacheBlockLine_out(counter-1) <= bram_out when counter>0 and counter<=BLOCKSIZE;
 	addr                        <= STD_LOGIC_VECTOR(unsigned(addrMEM_mod16) + 4 * counter) when state=READ else
-								   STD_LOGIC_VECTOR(unsigned(addrMEM_mod16) + 4 * (counter)) when state=WRITE;
-
+								   STD_LOGIC_VECTOR(unsigned(addrMEM_mod16) + 4 * counter) when state=WRITE;
 	addrBram <= addr( 11 downto 2 );
 
 	-- Determine the output.
 	cacheBlockLine_tmp <= dataMEM_in when state = IDLE;
 	cacheBlockLine_in  <= STD_LOGIC_VECTOR_TO_BLOCK_LINE(cacheBlockLine_tmp) when state = IDLE;
-	bram_in            <= cacheBlockLine_in(counter ) when counter >= 0  and counter < BLOCKSIZE and state=WRITE;
+	bram_in            <= cacheBlockLine_in(counter) when counter >= 0  and counter < BLOCKSIZE;
  
 	-- Determine the output.
 	dataMEM_out <= BLOCK_LINE_TO_STD_LOGIC_VECTOR(cacheBlockLine_out);

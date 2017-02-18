@@ -12,10 +12,10 @@ REM java -jar ./../../../Mars4_5.jar a dump .data HexText ../dmem/%1.dmem ../asm
  
 echo ++++++++++ Create files for cache BRAMs +++++++++++++++++++++++
 echo.
-ghdl -a -g -O3 --ieee=synopsys --workdir=work casts.vhd mips_pkg.vhd bram.vhd mainMemoryController.vhd mainMemoryController_tb.vhd
+ghdl -a -g -O3 --ieee=synopsys --workdir=work casts.vhd mips_pkg.vhd bram.vhd mainMemoryController.vhd mainMemory.vhd mainMemory_tb.vhd
 echo.
 echo ++++++++++ create an executable for the testbench ++++++++++
-ghdl -e -g -O3 --ieee=synopsys --workdir=work mainMemoryController_tb
+ghdl -e -g -O3 --ieee=synopsys --workdir=work mainMemory_tb
 echo.
 echo ++++++++++ run the executable ++++++++++
-ghdl -r -g -O3 --ieee=synopsys --workdir=work mainMemoryController_tb --stop-time=40us --wave=../sim/%1_mainMemoryController.ghw -gData_Filename="../imem/%1" -gFile_Extension=".imem"
+ghdl -r -g -O3 --ieee=synopsys --workdir=work mainMemory_tb --stop-time=40us --wave=../sim/%1_mainMemory.ghw -gData_Filename="../imem/%1" -gFile_Extension=".imem"

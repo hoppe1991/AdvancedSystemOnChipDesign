@@ -75,7 +75,7 @@ entity directMappedCacheController is
 		hit              : out   STD_LOGIC; -- Signal identify whether data are available in the cache ('1') or not ('0').
 		
 		writeToTagBRAM : out STD_LOGIC;
-		indexTagBRAM : out STD_LOGIC_VECTOR(DETERMINE_NR_BITS(ADDRESSWIDTH)-1 downto 0);
+		index : out STD_LOGIC_VECTOR(DETERMINE_NR_BITS(ADDRESSWIDTH)-1 downto 0);
 		tagBRAM : inout STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-DETERMINE_NR_BITS(ADDRESSWIDTH)-DETERMINE_NR_BITS(BLOCKSIZE*DATA_WIDTH/OFFSET)-1 downto 0)
 	);
 
@@ -146,8 +146,9 @@ begin
 	-- -----------------------------------------------------------------------------
 	-- Determine the offset, index and tag of the address signal.
 	-- -----------------------------------------------------------------------------
-	memoryAddress <= TO_MEMORY_ADDRESS( addrCPU );  
-	
+	memoryAddress <= TO_MEMORY_ADDRESS( addrCPU ); 
+	index <= memoryAddress.index;
+
 	-- -----------------------------------------------------------------------------
 	-- Determine the valid bit.
 	-- -----------------------------------------------------------------------------

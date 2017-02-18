@@ -109,7 +109,7 @@ architecture synth of directMappedCache is
 	signal writeToDataBRAM : STD_LOGIC := '0';
  
   
-	signal indexTagBRAM : STD_LOGIC_VECTOR(DETERMINE_NR_BITS(ADDRESSWIDTH)-1 downto 0);
+	signal index : STD_LOGIC_VECTOR(DETERMINE_NR_BITS(ADDRESSWIDTH)-1 downto 0);
 	signal tagBRAM : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-DETERMINE_NR_BITS(ADDRESSWIDTH)-DETERMINE_NR_BITS(BLOCKSIZE*DATA_WIDTH/OFFSET)-1 downto 0);
 --------------
 
@@ -148,7 +148,7 @@ begin
 		setDirty => setDirty,
 		hit => hit,
 		writeToTagBRAM => writeToTagBRAM,
-		indexTagBRAM => indexTagBRAM,
+		index => index,
 		tagBRAM => tagBRAM
 	);
 	 
@@ -160,7 +160,7 @@ begin
 			        ADDR => config.indexNrOfBits,
 			        DATA => config.tagNrOfBits
 		)
-		port map(clk, writeToTagBRAM, memoryAddress.index, tagBRAM, tagBRAM);
+		port map(clk, writeToTagBRAM, index, tagBRAM, tagBRAM);
 
 	-- -----------------------------------------------------------------------------
 	-- The data area should be BRAM blocks.
@@ -171,6 +171,6 @@ begin
 			        DATA => config.cacheLineBits,
 			        MODE => WRITE_FIRST
 		)
-		port map(clk, writeToDataBRAM, memoryAddress.index, cbBramIn, cbBramOut);
+		port map(clk, writeToDataBRAM, index, cbBramIn, cbBramOut);
  
 end synth;

@@ -89,16 +89,6 @@ end;
 architecture synth of directMappedCache is
 	constant config : CONFIG_BITS_WIDTH := GET_CONFIG_BITS_WIDTH(ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET);
 
-	type MEMORY_ADDRESS is record
-		tag    : STD_LOGIC_VECTOR(config.tagNrOfBits - 1 downto 0);
-		index  : STD_LOGIC_VECTOR(config.indexNrOfBits - 1 downto 0);
-		offset : STD_LOGIC_VECTOR(config.offsetNrOfBits - 1 downto 0);
-		indexAsInteger : INTEGER;
-		offsetAsInteger : INTEGER;
-	end record;
- 
-	signal memoryAddress : MEMORY_ADDRESS;
-    
 	-- Signal identifies whether a tag should be written ('1') to BRAM or should be read ('0') from BRAM.
 	signal writeToTagBRAM : STD_LOGIC := '0';
 
@@ -107,12 +97,8 @@ architecture synth of directMappedCache is
 	signal cbBramOut : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
  
 	signal writeToDataBRAM : STD_LOGIC := '0';
- 
-  
 	signal index : STD_LOGIC_VECTOR(DETERMINE_NR_BITS(ADDRESSWIDTH)-1 downto 0);
-	signal tagBRAM : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-DETERMINE_NR_BITS(ADDRESSWIDTH)-DETERMINE_NR_BITS(BLOCKSIZE*DATA_WIDTH/OFFSET)-1 downto 0);
---------------
-
+	signal tagBRAM : STD_LOGIC_VECTOR(config.tagNrOfBits-1 downto 0);
 begin
 	
 	-- -----------------------------------------------------------------------------
@@ -132,6 +118,7 @@ begin
 	port map (
 		clk => clk,
 		reset => reset,
+		
 		addrCPU => addrCPU,
 		dataCPU_in => dataCPU_in,
 		dataCPU_out => dataCPU_out,
@@ -149,7 +136,10 @@ begin
 		hit => hit,
 		writeToTagBRAM => writeToTagBRAM,
 		index => index,
-		tagBRAM => tagBRAM
+		tagBRAM => tagBRAM,
+		cbBramIn => cbBramIn,
+		cbBramOut => cbBramOut,
+		writeToDataBRAM => writeToDataBRAM
 	);
 	 
 	-- -----------------------------------------------------------------------------

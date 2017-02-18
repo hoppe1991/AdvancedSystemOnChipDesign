@@ -76,7 +76,13 @@ entity directMappedCacheController is
 		
 		writeToTagBRAM : out STD_LOGIC;
 		index : out STD_LOGIC_VECTOR(DETERMINE_NR_BITS(ADDRESSWIDTH)-1 downto 0);
-		tagBRAM : inout STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-DETERMINE_NR_BITS(ADDRESSWIDTH)-DETERMINE_NR_BITS(BLOCKSIZE*DATA_WIDTH/OFFSET)-1 downto 0)
+		tagBRAM : inout STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-DETERMINE_NR_BITS(ADDRESSWIDTH)-DETERMINE_NR_BITS(BLOCKSIZE*DATA_WIDTH/OFFSET)-1 downto 0);
+	
+		cbBramIn  : out STD_LOGIC_VECTOR(BLOCKSIZE*DATA_WIDTH-1 downto 0);
+		cbBramOut : in STD_LOGIC_VECTOR(BLOCKSIZE*DATA_WIDTH-1 downto 0);
+		writeToDataBRAM : out STD_LOGIC
+	
+	
 	);
 
 end;
@@ -116,14 +122,8 @@ architecture synth of directMappedCacheController is
    
 	-- Bit string contains a complete cache line.
 	signal cacheLine : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
-  
-	-- Cache block to be written into BRAM or to be read from BRAM.
-	signal cbBramIn  : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
-	signal cbBramOut : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
-
+  	
 	signal myCacheLineBits : INTEGER := config.cacheLineBits;
-
-	signal writeToDataBRAM : STD_LOGIC := '0';
 
 	-- Bit string contains for each cache block the correspondent valid bit.
 	signal validBits : STD_LOGIC_VECTOR(ADDRESSWIDTH - 1 downto 0) := (others => '0');
@@ -140,6 +140,8 @@ architecture synth of directMappedCacheController is
 
 	-- End index of the word in the cache line.
 	signal dataEndIndex : INTEGER := 0;
+	
+	signal writeToDataBRAMs : STD_LOGIC := '0';
 -----------------------------------------------------------------------------------
 begin
 
@@ -189,16 +191,18 @@ begin
 	-- Determine the new cache block line.
 	-- -----------------------------------------------------------------------------
 	cbBramIn <= 
-		cacheBlockLine_in when writeToDataBRAM='0' and wr='0' and rd='0' and wrCacheBlockLine='1' and rising_edge(clk) else
-		dataCPU_in & cbBramOut(dataEndIndex - 1 downto 0) when writeToDataBRAM = '1' AND memoryAddress.offsetAsInteger = 0 AND rising_edge(clk) else 
-		cbBramOut(config.cacheLineBits - 1 downto dataStartIndex + 1) & dataCPU_in when writeToDataBRAM = '1' AND memoryAddress.offsetAsInteger = (BLOCKSIZE - 1) AND rising_edge(clk) else
-		cbBramOut(config.cacheLineBits - 1 downto dataStartIndex + 1) & dataCPU_in & cbBramOut(dataEndIndex - 1 downto 0) when writeToDataBRAM = '1' AND rising_edge(clk);
+		cacheBlockLine_in when writeToDataBRAMs='0' and wr='0' and rd='0' and wrCacheBlockLine='1' and rising_edge(clk) else
+		dataCPU_in & cbBramOut(dataEndIndex - 1 downto 0) when writeToDataBRAMs = '1' AND memoryAddress.offsetAsInteger = 0 AND rising_edge(clk) else 
+		cbBramOut(config.cacheLineBits - 1 downto dataStartIndex + 1) & dataCPU_in when writeToDataBRAMs = '1' AND memoryAddress.offsetAsInteger = (BLOCKSIZE - 1) AND rising_edge(clk) else
+		cbBramOut(config.cacheLineBits - 1 downto dataStartIndex + 1) & dataCPU_in & cbBramOut(dataEndIndex - 1 downto 0) when writeToDataBRAMs = '1' AND rising_edge(clk);
 
 	-- -----------------------------------------------------------------------------
 	-- Check whether to read or write the data BRAM.
 	-- -----------------------------------------------------------------------------
-	writeToDataBRAM <= '0' when wr = '0' AND rd = '1' AND wrCacheBlockLine = '0' else '1' when wr = '1' AND rd = '0' AND wrCacheBlockLine = '0' else wrCacheBlockLine when rd = '0' and wr = '0' else 'U';
-
+	
+	
+	 writeToDataBRAMs <= '0' when wr = '0' AND rd = '1' AND wrCacheBlockLine = '0' else '1' when wr = '1' AND rd = '0' AND wrCacheBlockLine = '0' else wrCacheBlockLine when rd = '0' and wr = '0' else 'U';
+	writeToDataBRAM <= writeToDataBRAMs;
 	-- -----------------------------------------------------------------------------
 	-- Determine the output data signal, which will be sent to CPU.
 	-- -----------------------------------------------------------------------------                   

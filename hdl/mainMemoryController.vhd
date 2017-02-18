@@ -23,6 +23,9 @@ entity mainMemoryController is
 
 		-- Width of bit string containing a data/instruction word.
 		DATA_WIDTH           : INTEGER := 32;
+		
+		-- Width of BRAM address (10 <=> Compare code in file mips.vhd).
+		BRAM_ADDR_WIDTH 	: INTEGER := 10;
 
 		-- File extension regarding BRAM.
 		FILE_EXTENSION       : STRING  := ".imem";
@@ -39,30 +42,22 @@ entity mainMemoryController is
 		addrMEM     : in  STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0);
 		dataMEM_in  : in  STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
 		dataMEM_out : out STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
-		reset       : in  STD_LOGIC
+		reset       : in  STD_LOGIC;	
+		dataBRAM_in : out STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
+		dataBRAM_out : in STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
+		writeToBRAM : out STD_LOGIC;
+		addrBram : out STD_LOGIC_VECTOR(BRAM_ADDR_WIDTH - 1 downto 0)
 	);
 end;
 
 architecture synth of mainMemoryController is
 	
-	-- Width of BRAM address (10 <=> Compare code in file mips.vhd).
-	constant bramAddrWidth : INTEGER := 10;
-	
 	-- Number of bits in a cache line.
 	constant cacheLineBits : INTEGER := BLOCKSIZE * DATA_WIDTH;
-
-	-- Signal identify whether a word should be written to BRAM ('1') or should be read from BRAM ('0').
-	signal writeToBRAM : STD_LOGIC := '0';
-	
+ 
 	-- Signal contains the memory address.
 	signal addr        : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0) := (others => '0');
-	
-	-- Data word should be written to BRAM.
-	signal bram_in     : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)           := (others => '0');
-	
-	-- Data word should be read from BRAM.
-	signal bram_out    : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0)           := (others => '0');
-  
+	  
 	-- Definition of type BLOCK_LINE as an array of STD_LOGIC_VECTORs.
 	TYPE BLOCK_LINE IS ARRAY (BLOCKSIZE - 1 downto 0) of STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
 	
@@ -80,9 +75,6 @@ architecture synth of mainMemoryController is
 	
 	-- Bit string containing the input address modulo 16.
 	signal addrMEM_mod16        : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others => '0');
-	
-	-- Bit string containing the address for the BRAM.
-	signal addrBram : STD_LOGIC_VECTOR( bramAddrWidth-1 downto 0) := (others=>'0');
 	 
 	-- Definition of possible states of the FSM.
 	type statetype is (
@@ -124,13 +116,7 @@ architecture synth of mainMemoryController is
 	end; 
  
 begin
-	bramMainMemory : entity work.bram   -- data memory
-		generic map(INIT => (DATA_FILENAME & FILE_EXTENSION),
-			        ADDR => bramAddrWidth,
-			        DATA => DATA_WIDTH
-		)
-		port map(clk, writeToBRAM, addrBram, bram_in, bram_out);
-
+	 
 	-- state register
 	state <= IDLE when reset = '1' else nextstate when rising_edge(clk);
 
@@ -185,7 +171,7 @@ begin
 
 	-- Store the read word.
 	addrMEM_mod16               <= addrMEM(MEMORY_ADDRESS_WIDTH - 1 downto 4) & "0000" when state = IDLE;
-	cacheBlockLine_out(counter-1) <= bram_out when counter>0 and counter<=BLOCKSIZE;
+	cacheBlockLine_out(counter-1) <= dataBRAM_out when counter>0 and counter<=BLOCKSIZE;
 	addr                        <= STD_LOGIC_VECTOR(unsigned(addrMEM_mod16) + 4 * counter) when state=READ else
 								   STD_LOGIC_VECTOR(unsigned(addrMEM_mod16) + 4 * counter) when state=WRITE;
 	addrBram <= addr( 11 downto 2 );
@@ -193,7 +179,7 @@ begin
 	-- Determine the output.
 	cacheBlockLine_tmp <= dataMEM_in when state = IDLE;
 	cacheBlockLine_in  <= STD_LOGIC_VECTOR_TO_BLOCK_LINE(cacheBlockLine_tmp) when state = IDLE;
-	bram_in            <= cacheBlockLine_in(counter) when counter >= 0  and counter < BLOCKSIZE;
+	dataBRAM_in            <= cacheBlockLine_in(counter) when counter >= 0  and counter < BLOCKSIZE;
  
 	-- Determine the output.
 	dataMEM_out <= BLOCK_LINE_TO_STD_LOGIC_VECTOR(cacheBlockLine_out);

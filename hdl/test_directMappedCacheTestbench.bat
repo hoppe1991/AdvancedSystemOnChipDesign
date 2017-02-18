@@ -1,0 +1,1 @@
+run_ghdl_directMappedCacheTestbench benchmarkDirectMappedCache

@@ -13,6 +13,7 @@ use ieee.math_real.ceil;
 use ieee.math_real.log2;
 
 package cache_pkg is
+ 
 	function DETERMINE_NR_BITS(ARG : in INTEGER) return INTEGER;
 
 	constant DATAWIDTH            : INTEGER := 32;

@@ -15,6 +15,7 @@ use IEEE.NUMERIC_STD.ALL;
 use STD.TEXTIO.ALL;
 use IEEE.STD_LOGIC_TEXTIO.ALL;
 use work.cache_pkg.all;
+use work.mips_pkg.all;
 
 -- =============================================================================
 -- Define the generic variables and ports of the entity.
@@ -95,65 +96,62 @@ architecture synth of directMappedCache is
 		indexAsInteger : INTEGER;
 		offsetAsInteger : INTEGER;
 	end record;
-
-	function TO_MEMORY_ADDRESS(ARG : in STD_LOGIC_VECTOR) return MEMORY_ADDRESS is
-		variable addr : MEMORY_ADDRESS;
-	begin
-		addr.tag    := ARG(config.tagIndexH downto config.tagIndexL);
-		addr.index  := ARG(config.IndexIndexH downto config.IndexIndexL);
-		addr.offset := ARG(config.offsetIndexH downto config.offsetIndexL);
-		addr.indexAsInteger := TO_INTEGER(UNSIGNED(addr.index));
-		addr.offsetAsInteger := TO_INTEGER(UNSIGNED(addr.offset));
-		return addr;
-	end function;
-	
+ 
 	signal memoryAddress : MEMORY_ADDRESS;
-  
-	-- Index as integer value.
-	signal indexI : INTEGER := 0;
- 
-	-- Offset as integer value.
-	signal offsetI : INTEGER := 0;
- 
-	-- Bit string contains a complete cache line.
-	signal cacheLine : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
-
-	-- Bit string contains tag to be written or read from BRAM.
-	signal tagBramIn  : STD_LOGIC_VECTOR(config.tagNrOfBits - 1 downto 0) := (others => '0');
-	signal tagBramOut : STD_LOGIC_VECTOR(config.tagNrOfBits - 1 downto 0) := (others => '0');
-
+    
 	-- Signal identifies whether a tag should be written ('1') to BRAM or should be read ('0') from BRAM.
 	signal writeToTagBRAM : STD_LOGIC := '0';
 
 	-- Cache block to be written into BRAM or to be read from BRAM.
 	signal cbBramIn  : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
 	signal cbBramOut : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
-
+ 
 	signal writeToDataBRAM : STD_LOGIC := '0';
-
-	-- Bit string contains for each cache block the correspondent valid bit.
-	signal validBits : STD_LOGIC_VECTOR(ADDRESSWIDTH - 1 downto 0) := (others => '0');
-
-	-- Bit string contains for each cache block the correspondent dirty bit.
-	-- 1 --> block line is modified, 0 --> block line is unmodified.
-	signal dirtyBits : STD_LOGIC_VECTOR(ADDRESSWIDTH - 1 downto 0) := (others => '0');
-
-	-- Signal identifies whether the tag of a cache block and the tag of the given memory address are equal.
-	signal tagsAreEqual : STD_LOGIC := '0';
-
-	-- Start index of the word in the cache line.
-	signal dataStartIndex : INTEGER := 0;
-
-	-- End index of the word in the cache line.
-	signal dataEndIndex : INTEGER := 0;
-
-	signal addrDataBram : INTEGER := 0;
-	signal dataDataBram : Integer := 0;
-
+ 
+  
+	signal indexTagBRAM : STD_LOGIC_VECTOR(DETERMINE_NR_BITS(ADDRESSWIDTH)-1 downto 0);
+	signal tagBRAM : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-DETERMINE_NR_BITS(ADDRESSWIDTH)-DETERMINE_NR_BITS(BLOCKSIZE*DATA_WIDTH/OFFSET)-1 downto 0);
 --------------
 
 begin
-
+	
+	-- -----------------------------------------------------------------------------
+	-- The tag area should be BRAM blocks.
+	-- -----------------------------------------------------------------------------
+	 DirectMappedCacheCont: entity work.directMappedCacheController
+	 	generic map (
+		MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
+		DATA_WIDTH => DATA_WIDTH,
+		ADDRESSWIDTH => ADDRESSWIDTH,
+		BLOCKSIZE => BLOCKSIZE,
+		OFFSET => OFFSET,
+		TAGFILENAME => TAGFILENAME,
+		DATAFILENAME => DATAFILENAME,
+		FILE_EXTENSION => FILE_EXTENSION
+		)
+	port map (
+		clk => clk,
+		reset => reset,
+		addrCPU => addrCPU,
+		dataCPU_in => dataCPU_in,
+		dataCPU_out => dataCPU_out,
+		dataMEM => dataMEM,
+		cacheBlockLine_in => cacheBlockLine_in,
+		cacheBlockLine_out => cacheBlockLine_out,
+		wrCacheBlockLine => wrCacheBlockLine,
+		rd => rd,
+		wr => wr,
+		valid => valid,
+		dirty_in => dirty_in,
+		dirty_out => dirty_out,
+		setValid => setValid,
+		setDirty => setDirty,
+		hit => hit,
+		writeToTagBRAM => writeToTagBRAM,
+		indexTagBRAM => indexTagBRAM,
+		tagBRAM => tagBRAM
+	);
+	 
 	-- -----------------------------------------------------------------------------
 	-- The tag area should be BRAM blocks.
 	-- -----------------------------------------------------------------------------
@@ -162,7 +160,7 @@ begin
 			        ADDR => config.indexNrOfBits,
 			        DATA => config.tagNrOfBits
 		)
-		port map(clk, writeToTagBRAM, memoryAddress.index, tagBramIn, tagBramOut);
+		port map(clk, writeToTagBRAM, memoryAddress.index, tagBRAM, tagBRAM);
 
 	-- -----------------------------------------------------------------------------
 	-- The data area should be BRAM blocks.
@@ -170,71 +168,9 @@ begin
 	BRAMdata : entity work.bram         -- data memory
 		generic map(INIT => (DATAFILENAME & FILE_EXTENSION),
 			        ADDR => config.indexNrOfBits,
-			        DATA => config.cacheLineBits
+			        DATA => config.cacheLineBits,
+			        MODE => WRITE_FIRST
 		)
 		port map(clk, writeToDataBRAM, memoryAddress.index, cbBramIn, cbBramOut);
-
-	-- -----------------------------------------------------------------------------
-	-- Determine the offset, index and tag of the address signal.
-	-- -----------------------------------------------------------------------------
-	memoryAddress <= TO_MEMORY_ADDRESS( addrCPU ); 
-	
-	-- -----------------------------------------------------------------------------
-	-- Determine the valid bit.
-	-- -----------------------------------------------------------------------------
-	valid     <= validBits(indexI) when setValid = '0' and rising_edge(clk);
-	dirty_out <= dirtyBits(indexI) when setDirty = '0' and rising_edge(clk) and reset = '0';
-
-	-- -----------------------------------------------------------------------------
-	-- Set the valid bit and the dirty bit.
-	-- -----------------------------------------------------------------------------
-	validBits(indexI) <= valid when setValid = '1' and rising_edge(clk) else '0' when reset = '1' and rising_edge(clk);
-
-	dirtyBits(indexI) <= dirty_in when setDirty = '1' and rising_edge(clk) else '0' when reset = '1' and rising_edge(clk);
-
-	-- -----------------------------------------------------------------------------
-	-- Check whether the tags are equal.
-	-- -----------------------------------------------------------------------------
-	tagsAreEqual <= '1' when tagBramOut = memoryAddress.tag else '0';
-
-	-- -----------------------------------------------------------------------------
-	-- Determine whether a cache block/line should be read or written.
-	-- -----------------------------------------------------------------------------
-	cacheBlockLine_out <= cbBramOut when rd = '1' AND wr = '0' AND wrCacheBlockLine = '0';
-
-	-- -----------------------------------------------------------------------------
-	-- Determine whether a tag should be read or written.
-	-- -----------------------------------------------------------------------------
-	writeToTagBRAM <= '1' when wr = '1' AND rd = '0' else '1' when wrCacheBlockLine = '1' AND wr = '0' AND rd = '0' else '0';
-
-	tagBramIn <= memoryAddress.tag when rd = '0' AND wr = '1' AND wrCacheBlockLine = '0' else memoryAddress.tag when rd = '0' AND wr = '0' AND wrCacheBlockLine = '1';
-
-	-- -----------------------------------------------------------------------------
-	-- Determine the start index and end index of the correspondent word in the cache line.
-	-- -----------------------------------------------------------------------------
-	dataStartIndex <= config.cacheLineBits - 1 - DATA_WIDTH * offsetI;
-	dataEndIndex   <= dataStartIndex - DATA_WIDTH + 1;
-
-	-- -----------------------------------------------------------------------------
-	-- Determine the new cache block line.
-	-- -----------------------------------------------------------------------------
-	cbBramIn <= cacheBlockLine_in when writeToDataBRAM='0' and wr='0' and rd='0' and wrCacheBlockLine='1' and rising_edge(clk) else
-		dataCPU_in & cbBramOut(dataEndIndex - 1 downto 0) when writeToDataBRAM = '1' AND offsetI = 0 AND rising_edge(clk) else cbBramOut(config.cacheLineBits - 1 downto dataStartIndex + 1) & dataCPU_in when writeToDataBRAM = '1' AND offsetI = (BLOCKSIZE - 1) AND rising_edge(clk) else
-		cbBramOut(config.cacheLineBits - 1 downto dataStartIndex + 1) & dataCPU_in & cbBramOut(dataEndIndex - 1 downto 0) when writeToDataBRAM = '1' AND rising_edge(clk);
-
-	-- -----------------------------------------------------------------------------
-	-- Check whether to read or write the data BRAM.
-	-- -----------------------------------------------------------------------------
-	writeToDataBRAM <= '0' when wr = '0' AND rd = '1' AND wrCacheBlockLine = '0' else '1' when wr = '1' AND rd = '0' AND wrCacheBlockLine = '0' else wrCacheBlockLine when rd = '0' and wr = '0' else 'U';
-
-	-- -----------------------------------------------------------------------------
-	-- Determine the output data signal, which will be sent to CPU.
-	-- -----------------------------------------------------------------------------                   
-	dataCPU_out <= cbBramOut(dataStartIndex downto dataEndIndex) when wr = '0' and rd = '1' else dataCPU_in when wr = '1' and rd = '0' else dataCPU_in when wr = '0' and rd = '0' else (others => 'U'); --TODO 
-
-	-- -----------------------------------------------------------------------------
-	-- The hit signal is supposed to be an asynchronous signal.
-	-- -----------------------------------------------------------------------------
-	hit <= '1' when valid = '1' AND tagsAreEqual = '1' else '0';
-
+ 
 end synth;

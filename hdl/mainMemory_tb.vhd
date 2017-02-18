@@ -11,7 +11,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 use STD.TEXTIO.ALL;
 
-entity mainMemoryController_tb is
+entity mainMemory_tb is
 	generic(
 
 		-- Width of bit string containing the memory address. 
@@ -25,13 +25,16 @@ entity mainMemoryController_tb is
 
 		-- File extension regarding BRAM.
 		FILE_EXTENSION       : STRING  := ".imem";
+		
+		-- Width of BRAM address (10 <=> Compare code in file mips.vhd).
+		BRAM_ADDR_WIDTH 	: INTEGER := 10;
 
 		-- Filename regarding regarding BRAM.
 		DATA_FILENAME        : STRING  := "../imem/mainMemory"
 	);
 end;
 
-architecture mainMemory_testbench of mainMemoryController_tb is
+architecture mainMemory_testbench of mainMemory_tb is
 	constant blockLineBits : INTEGER                                               := BLOCKSIZE * DATA_WIDTH;
 	signal clk             : STD_LOGIC                                             := '0';
 	signal readyMEM        : STD_LOGIC                                             := '0';
@@ -114,11 +117,12 @@ architecture mainMemory_testbench of mainMemoryController_tb is
 	end;
 
 begin
-	mainMemory : entity work.mainMemoryController
+	mainMemory : entity work.mainMemory
 		generic map(MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
 			        BLOCKSIZE            => BLOCKSIZE,
 			        DATA_WIDTH           => DATA_WIDTH,
 			        FILE_EXTENSION       => FILE_EXTENSION,
+			        BRAM_ADDR_WIDTH 	 => BRAM_ADDR_WIDTH,
 			        DATA_FILENAME        => DATA_FILENAME
 		)
 		port map(clk, readyMEM, rdMEM, wrMEM, addrMEM, dataMEM_in, dataMEM_out, reset);

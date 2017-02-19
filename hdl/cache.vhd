@@ -17,7 +17,8 @@ entity cache is
 		ADDRESSWIDTH         : INTEGER := 256; -- Number of cache blocks.
 		OFFSET               : INTEGER := 8; -- Number of bits that can be selected in the cache.
 		TAG_FILENAME         : STRING  := "../imem/tagCache";
-		DATA_FILENAME        : STRING  := "../imem/dataCache"
+		DATA_FILENAME        : STRING  := "../imem/dataCache";
+		FILE_EXTENSION       : STRING  := ".txt" -- File extension for BRAM.
 	);
 
 	port(
@@ -63,6 +64,16 @@ architecture rtl of cache is
 
 begin
 	myDirectMappedCache : work.directMappedCache
+	generic map (
+		MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
+		DATA_WIDTH => DATA_WIDTH,
+		ADDRESSWIDTH => ADDRESSWIDTH,
+		BLOCKSIZE => BLOCKSIZE,
+		OFFSET => OFFSET,
+		TAG_FILENAME => TAG_FILENAME,
+		DATA_FILENAME => DATA_FILENAME,
+		FILE_EXTENSION => FILE_EXTENSION 
+	)
 		port map(
 			clk                => clk,
 			reset              => reset,
@@ -84,6 +95,13 @@ begin
 		);
 		
 		cacheContr: work.cacheController
+		generic map (
+			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
+			DATA_WIDTH => DATA_WIDTH,
+			ADDRESSWIDTH => ADDRESSWIDTH,
+			BLOCKSIZE => BLOCKSIZE,
+			OFFSET => OFFSET
+		)
 		port map (
 			hitCounter => hitCounter,
 			missCounter => missCounter,

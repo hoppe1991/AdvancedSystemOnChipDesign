@@ -19,9 +19,7 @@ entity cacheController is
 		DATA_WIDTH           : INTEGER := 32; -- Length of instruction/data words.
 		BLOCKSIZE            : INTEGER := 4; -- Number of words that a block contains.
 		ADDRESSWIDTH         : INTEGER := 256; -- Number of cache blocks.
-		OFFSET               : INTEGER := 8; -- Number of bits that can be selected in the cache.
-		TAG_FILENAME         : STRING  := "../imem/tagCache";
-		DATA_FILENAME        : STRING  := "../imem/dataCache"
+		OFFSET               : INTEGER := 8 -- Number of bits that can be selected in the cache.
 	);
 
 	port(

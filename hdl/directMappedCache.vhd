@@ -40,10 +40,10 @@ entity directMappedCache is
 		OFFSET               : integer := 8;
 
 		-- Filename for tag BRAM.
-		TAGFILENAME          : STRING  := "../imem/tagFileName";
+		TAG_FILENAME          : STRING  := "../imem/tagFileName";
 
 		-- Filename for data BRAM.
-		DATAFILENAME         : STRING  := "../imem/dataFileName";
+		DATA_FILENAME         : STRING  := "../imem/dataFileName";
 
 		-- File extension for BRAM.
 		FILE_EXTENSION       : STRING  := ".txt"
@@ -112,8 +112,8 @@ begin
 		ADDRESSWIDTH => ADDRESSWIDTH,
 		BLOCKSIZE => BLOCKSIZE,
 		OFFSET => OFFSET,
-		TAGFILENAME => TAGFILENAME,
-		DATAFILENAME => DATAFILENAME,
+		TAGFILENAME => TAG_FILENAME,
+		DATAFILENAME => DATA_FILENAME,
 		FILE_EXTENSION => FILE_EXTENSION
 		)
 	port map (
@@ -148,7 +148,7 @@ begin
 	-- The tag area should be BRAM blocks.
 	-- -----------------------------------------------------------------------------
 	BRAMtag : entity work.bram          -- data memory
-		generic map(INIT => (TAGFILENAME & FILE_EXTENSION),
+		generic map(INIT => (TAG_FILENAME & FILE_EXTENSION),
 			        ADDR => config.indexNrOfBits,
 			        DATA => config.tagNrOfBits
 		)
@@ -158,7 +158,7 @@ begin
 	-- The data area should be BRAM blocks.
 	-- -----------------------------------------------------------------------------
 	BRAMdata : entity work.bram         -- data memory
-		generic map(INIT => (DATAFILENAME & FILE_EXTENSION),
+		generic map(INIT => (DATA_FILENAME & FILE_EXTENSION),
 			        ADDR => config.indexNrOfBits,
 			        DATA => config.cacheLineBits,
 			        MODE => WRITE_FIRST

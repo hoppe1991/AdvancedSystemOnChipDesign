@@ -14,8 +14,9 @@ use work.cache_pkg.all;
 
 entity directMappedCache_tb is
 	generic(
-		TagFileName     : string  := "../imem/tagCache";
-		DataFileName    : string  := "../imem/dataCache";
+		TAG_FILENAME     : string  := "../imem/tagCache";
+		DATA_FILENAME    : string  := "../imem/dataCache";
+		FILE_EXTENSION   : STRING  := ".txt";
 		MEMADDRESSWIDTH : integer := 32;
 		ADDRESSWIDTH    : integer := 256;
 		BLOCKSIZE       : integer := 4;
@@ -136,8 +137,9 @@ begin
 			BLOCKSIZE            => BLOCKSIZE,
 			ADDRESSWIDTH         => ADDRESSWIDTH,
 			OFFSET               => OFFSET,
-			TAGFILENAME          => TagFileName,
-			DATAFILENAME         => DataFileName
+			TAG_FILENAME         => TAG_FILENAME,
+			DATA_FILENAME        => DATA_FILENAME,
+			FILE_EXTENSION		 => FILE_EXTENSION
 		)
 		port map(
 			clk                => clk,

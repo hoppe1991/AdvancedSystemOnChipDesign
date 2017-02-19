@@ -76,7 +76,8 @@ entity directMappedCacheController is
 		
 		writeToTagBRAM : out STD_LOGIC;
 		index : out STD_LOGIC_VECTOR(DETERMINE_NR_BITS(ADDRESSWIDTH)-1 downto 0);
-		tagBRAM : inout STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-DETERMINE_NR_BITS(ADDRESSWIDTH)-DETERMINE_NR_BITS(BLOCKSIZE*DATA_WIDTH/OFFSET)-1 downto 0);
+		tagBRAM_in : in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-DETERMINE_NR_BITS(ADDRESSWIDTH)-DETERMINE_NR_BITS(BLOCKSIZE*DATA_WIDTH/OFFSET)-1 downto 0);
+		tagBRAM_out : out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-DETERMINE_NR_BITS(ADDRESSWIDTH)-DETERMINE_NR_BITS(BLOCKSIZE*DATA_WIDTH/OFFSET)-1 downto 0);
 	
 		cbBramIn  : out STD_LOGIC_VECTOR(BLOCKSIZE*DATA_WIDTH-1 downto 0);
 		cbBramOut : in STD_LOGIC_VECTOR(BLOCKSIZE*DATA_WIDTH-1 downto 0);
@@ -160,14 +161,21 @@ begin
 	-- -----------------------------------------------------------------------------
 	-- Set the valid bit and the dirty bit.
 	-- -----------------------------------------------------------------------------
-	validBits(memoryAddress.indexAsInteger) <= valid when setValid = '1' and rising_edge(clk) else '0' when reset = '1' and rising_edge(clk);
-
+	process(clk, reset, memoryAddress.indexAsInteger, writeToDataBRAMs)
+	begin
+		if rising_edge(clk) and reset='1' then
+			validBits <= (others=>'0');
+		elsif (writeToDataBRAMs='1') then
+			validBits(memoryAddress.indexAsInteger) <= '1';
+		end if;
+	end process;
+	
 	dirtyBits(memoryAddress.indexAsInteger) <= dirty_in when setDirty = '1' and rising_edge(clk) else '0' when reset = '1' and rising_edge(clk);
 
 	-- -----------------------------------------------------------------------------
 	-- Check whether the tags are equal.
 	-- -----------------------------------------------------------------------------
-	tagsAreEqual <= '1' when tagBRAM = memoryAddress.tag else '0';
+	tagsAreEqual <= '1' when tagBRAM_in = memoryAddress.tag else '0';
 
 	-- -----------------------------------------------------------------------------
 	-- Determine whether a cache block/line should be read or written.
@@ -177,9 +185,8 @@ begin
 	-- -----------------------------------------------------------------------------
 	-- Determine whether a tag should be read or written.
 	-- -----------------------------------------------------------------------------
-	writeToTagBRAM <= '1' when wr = '1' AND rd = '0' else '1' when wrCacheBlockLine = '1' AND wr = '0' AND rd = '0' else '0';
 
-	tagBRAM <= memoryAddress.tag when rd = '0' AND wr = '1' AND wrCacheBlockLine = '0' else memoryAddress.tag when rd = '0' AND wr = '0' AND wrCacheBlockLine = '1';
+	tagBRAM_out <= memoryAddress.tag when rd = '0' AND wr = '1' AND wrCacheBlockLine = '0' else memoryAddress.tag when rd = '0' AND wr = '0' AND wrCacheBlockLine = '1';
 
 	-- -----------------------------------------------------------------------------
 	-- Determine the start index and end index of the correspondent word in the cache line.
@@ -201,8 +208,12 @@ begin
 	-- -----------------------------------------------------------------------------
 	
 	
-	 writeToDataBRAMs <= '0' when wr = '0' AND rd = '1' AND wrCacheBlockLine = '0' else '1' when wr = '1' AND rd = '0' AND wrCacheBlockLine = '0' else wrCacheBlockLine when rd = '0' and wr = '0' else 'U';
-	writeToDataBRAM <= writeToDataBRAMs;
+	 writeToDataBRAMs <= '0' when wr = '0' AND rd = '1' AND wrCacheBlockLine = '0' else 
+	 	                 '1' when wr = '1' AND rd = '0' AND wrCacheBlockLine = '0' else 
+	 	                 wrCacheBlockLine when rd = '0' and wr = '0' else 
+	 	                 'U';
+	 writeToDataBRAM <= writeToDataBRAMs;
+	 writeToTagBRAM <= writeToDataBRAMs;
 	-- -----------------------------------------------------------------------------
 	-- Determine the output data signal, which will be sent to CPU.
 	-- -----------------------------------------------------------------------------                   

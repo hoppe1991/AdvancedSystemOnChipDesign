@@ -39,13 +39,14 @@ architecture test of directMappedCache_tb is
 	signal wrCacheBlockLine : STD_LOGIC                                            := '0';
 	signal setValid         : STD_LOGIC                                            := '0';
 	signal setDirty         : STD_LOGIC                                            := '0';
-
-	signal myMemoryString     : STD_LOGIC_VECTOR(MEMADDRESSWIDTH - 1 downto 0) := (others => '0');
-	signal myMemory           : MEMORY_ADDRESS                                 := INIT_MEMORY_ADDRESS;
 	signal cacheBlockLine_in  : STD_LOGIC_VECTOR((BLOCKSIZE * DATA_WIDTH) - 1 downto 0);
 	signal cacheBlockLine_out : STD_LOGIC_VECTOR((BLOCKSIZE * DATA_WIDTH) - 1 downto 0);
+	
+	constant breakLine : STRING := "----------------------------------------------------------------------------------------------";
 
 	constant config : CONFIG_BITS_WIDTH := GET_CONFIG_BITS_WIDTH(ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET);
+	
+	constant rerunProcess : STD_LOGIC := '0';
 
 	-- Definition of type BLOCK_LINE as an array of STD_LOGIC_VECTORs.
 	TYPE BLOCK_LINE IS ARRAY (BLOCKSIZE - 1 downto 0) of STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
@@ -87,10 +88,42 @@ architecture test of directMappedCache_tb is
 		v(0) := STD_LOGIC_VECTOR(TO_UNSIGNED(ARG4, DATA_WIDTH));
 		return v;
 	end;
-
-	signal myBlockLine : BLOCK_LINE;
 	signal myDataWord  : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0) := (others => '0');
-
+	
+	function GET_RANDOM( rand : in REAL ) return INTEGER is 
+		variable irand        : INTEGER; 
+	begin
+		irand := INTEGER((rand * 100.0 - 0.5) + 50.0); -- Make a random integer between 50 and 150.
+		return irand;
+	end;
+	
+	function GET_TAG( ARG : in INTEGER ) return STD_LOGIC_VECTOR is
+		variable tag : STD_LOGIC_VECTOR(config.tagNrOfBits-1 downto 0) := (others=>'0');
+	begin
+		tag := STD_LOGIC_VECTOR( TO_UNSIGNED( ARG, config.tagNrOfBits ));
+		return tag;
+	end;
+	
+	function GET_INDEX( ARG : in INTEGER ) return STD_LOGIC_VECTOR is
+		variable index : STD_LOGIC_VECTOR(config.indexNrOfBits-1 downto 0) := (others=>'0');
+	begin
+		index := STD_LOGIC_VECTOR( TO_UNSIGNED( ARG, config.indexNrOfBits ));
+		return index;
+	end;
+	
+	function GET_OFFSET( ARG : in INTEGER ) return STD_LOGIC_VECTOR is
+		variable offset : STD_LOGIC_VECTOR(config.offsetNrOfBits-1 downto 0) := (others=>'0');
+	begin
+		offset := STD_LOGIC_VECTOR( TO_UNSIGNED( ARG, config.offsetNrOfBits ));
+		return offset;
+	end;
+	
+	function GET_DATA( ARG : in INTEGER ) return STD_LOGIC_VECTOR is
+		variable data : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0) := (others=>'0');
+	begin
+		data := STD_LOGIC_VECTOR( TO_UNSIGNED( ARG, DATA_WIDTH ));
+		return data;
+	end;
 begin
 
 	-- -----------------------------------------------------------------------------
@@ -126,7 +159,9 @@ begin
 			wrCacheBlockLine   => wrCacheBlockLine
 		);
 
+	-- -----------------------------------------------------------------------------
 	-- Generate clock with 10 ns period process
+	-- -----------------------------------------------------------------------------
 	clockProcess : process
 	begin
 		clk <= '1';
@@ -135,35 +170,54 @@ begin
 		wait for 5 ns;
 	end process;
  
-	process
-		variable tag          : STD_LOGIC_VECTOR(config.tagNrOfBits - 1 downto 0);
+	-- -----------------------------------------------------------------------------
+	-- Process checks the functions of the Direct Mapped Cache.
+	-- -----------------------------------------------------------------------------
+	testProcess: process
+		variable tag1, tag2   : STD_LOGIC_VECTOR(config.tagNrOfBits -1 downto 0);
 		variable index        : STD_LOGIC_VECTOR(config.indexNrOfBits - 1 downto 0);
 		variable offset       : STD_LOGIC_VECTOR(config.offsetNrOfBits - 1 downto 0);
+		variable irand        : INTEGER; 
 		variable seed1, seed2 : POSITIVE;
-		variable rand         : REAL;
-		variable irand        : INTEGER;
 		variable data1, data2, data3 : INTEGER;
 		variable blockLine    : BLOCK_LINE := INIT_BLOCK_LINE(0, 0, 0, 0);
+		variable rand : REAL;
 	begin
-
-		-- 		
-		reset <= '0';
-		wait for 5 ns;
-
+		
+		-- ---------------------------------------------------------------------------------------------------
 		-- Reset the Direct Mapped Cache.
+		-- ---------------------------------------------------------------------------------------------------
+		reset <= '0';
+		wait until rising_edge(clk);
+		wait until falling_edge(clk);
 		reset <= '1';
+		wait until rising_edge(clk);
+		wait until falling_edge(clk);
 		wait for 5 ns;
+		wait until rising_edge(clk);
+		wait until falling_edge(clk);
+		reset <= '0';
+		wait until rising_edge(clk);
+		wait until falling_edge(clk);
+		
 
+		-- ---------------------------------------------------------------------------------------------------
 		-- Check whether all dirty bits and valid bits are reset.
-		report "checking valid and dirty bits..." severity NOTE;
+		-- ---------------------------------------------------------------------------------------------------
+		report "checking valid and dirty bits after reset..." severity NOTE;
 		for I in 0 to ADDRESSWIDTH - 1 loop
+		
+			-- Set to mode READ.
 			rd      <= '1';
 			wr      <= '0';
-			tag     := (others => '0');
-			index   := STD_LOGIC_VECTOR(TO_UNSIGNED(I, config.indexNrOfBits));
+			
+			-- Define tag, index and offset.
+			tag1     := (others => '0');
+			index := GET_INDEX( I ); 
 			offset  := (others => '0');
-			addrCPU <= tag & index & offset;
+			addrCPU <= tag1 & index & offset;
 
+			-- Check the outputs.
 			if (valid = '0' and dirty_out = '0' and hit = '0') then
 				report "valid bit and dirty bit in block line with index <" & INTEGER'IMAGE(I) & "> are valid." severity NOTE;
 			elsif (valid /= '0') then
@@ -174,6 +228,7 @@ begin
 				report "hit is expected to be <0> but it is actually <" & STD_LOGIC'IMAGE(hit) & ">." severity FAILURE;
 			end if;
 			
+			-- Wait for one cycle.
 			wait until rising_edge(clk);
 			wait until falling_edge(clk);
 		end loop;
@@ -181,39 +236,144 @@ begin
 		wait until rising_edge(clk);
 		wait until falling_edge(clk);
 
+
+
+		-- ---------------------------------------------------------------------------------------------------
 		-- Check writing single data words to cache blocks.
+		-- ---------------------------------------------------------------------------------------------------
 		report "checking writing single words to one cache block..." severity NOTE;
 		for I in 0 to ADDRESSWIDTH - 1 loop
+		
+			-- Create random number.
+			uniform(seed1, seed2, rand);
+			irand := GET_RANDOM( rand );
+			
+			-- Define the tag.
+			tag1 := GET_TAG( irand );
+
+			-- Change mode to write.
 			wr    <= '1';
 			rd    <= '0';
-			tag   := (others => '0');
-			index := STD_LOGIC_VECTOR(TO_UNSIGNED(I, config.indexNrOfBits));
+			
+			-- Define the index.
+			index := GET_INDEX( I );
 
 			for J in 0 to BLOCKSIZE - 1 loop
-				offset  := STD_LOGIC_VECTOR(TO_UNSIGNED(J, config.offsetNrOfBits));
-				addrCPU <= tag & index & offset;
+			
+				-- Determine offset.
+				offset  := GET_OFFSET( J );
 				
-				uniform(seed1, seed2, rand); -- Make a random real between 0 and 1
-				irand := INTEGER((rand * 100.0 - 0.5) + 50.0); -- Make a random integer between 50 and 150.
-				wait for irand * 1 ns;  -- Wait for that many ns.
+				-- Define the address for the CPU.
+				addrCPU <= tag1 & index & offset;
 				
-				--wait until rising_edge(clk);
-				dataCPU_in   <= STD_LOGIC_VECTOR(TO_UNSIGNED(irand, DATA_WIDTH));
-				blockLine(J) := STD_LOGIC_VECTOR(TO_UNSIGNED(irand, DATA_WIDTH));
-				myDataWord     <= blockLine(J); 
+				-- Create random number.
+				uniform(seed1, seed2, rand);
+				irand := GET_RANDOM( rand );
 				
+				
+				dataCPU_in   <= GET_DATA( irand );
+				blockLine(J) := GET_DATA( irand );
+				myDataWord   <= blockLine(J); 
+				
+				-- Wait for one cycle.
 				wait until rising_edge(clk);
 				wait until falling_edge(clk);
 				data3        := TO_INTEGER(UNSIGNED(addrCPU));
-				report "offset <" & INTEGER'IMAGE(J) & "> addrCPU <" & INTEGER'IMAGE(data3) & ">  write <" & INTEGER'IMAGE(irand) & "> to cache block with index <" & INTEGER'IMAGE(I) & ">..." severity NOTE;
+				report "addrCPU <" & INTEGER'IMAGE(data3) & "> offset <" & INTEGER'IMAGE(J) & " index <" & INTEGER'IMAGE(I) & "> write <" & INTEGER'IMAGE(irand) & "> to cache block" severity NOTE;
+				
+				-- Wait for one cycle.
+				wait until rising_edge(clk);		-- TODO Why is this line necessary?
+				wait until falling_edge(clk);		-- TODO Why is this line necessary? 
+			end loop; 
 			
+			-- Wait.
+			wait for 50 ns;
+
+			-- Set the mode to READ.
+			wr <= '0';
+			rd <= '1';
 			
+			for J in 0 to BLOCKSIZE - 1 loop
+			
+				-- Determine offset.
+				offset  := GET_OFFSET( J );
+				
+				-- Define the address for the CPU.
+				addrCPU <= tag1 & index & offset;
+				
+				-- Wait for one cycle.	
 				wait until rising_edge(clk);		-- TODO Why is this line necessary?
 				wait until falling_edge(clk);		-- TODO Why is this line necessary?
+
+				
+				data1 := TO_INTEGER(UNSIGNED(blockLine(J)));
+				data2 := TO_INTEGER(UNSIGNED(dataCPU_out));
+				data3 := TO_INTEGER(UNSIGNED(addrCPU));
+			
+				-- Wait for one cycle.
 				wait until rising_edge(clk);		-- TODO Why is this line necessary?
 				wait until falling_edge(clk);		-- TODO Why is this line necessary?
+				 
+				-- Check the output.
+				if (dataCPU_out = blockLine(J)) then
+					report "addrCPU <" & INTEGER'IMAGE(data3) & "> offset <" & INTEGER'IMAGE(J) & " index <" & INTEGER'IMAGE(I) & "> read cache block is correct." severity NOTE;
+				else
+					report "addrCPU <" & INTEGER'IMAGE(data3) & "> offset <" & INTEGER'IMAGE(J) & " index <" & INTEGER'IMAGE(I) & "> read cache block is actually <" & INTEGER'IMAGE(data2) & ">, but expected <" & INTEGER'IMAGE(data1) & ">." severity FAILURE;
+				end if; 
+			end loop;
+			report breakLine severity NOTE;
+
+		end loop;
+		report "FINISHED checking writing single words to one cache block..." severity NOTE;
+
+
+
+		-- ---------------------------------------------------------------------------------------------------
+		-- Check tag.
+		-- ---------------------------------------------------------------------------------------------------
+		report "START checking tags..." severity NOTE;
+		for I in 0 to ADDRESSWIDTH - 1 loop
+		
+			-- Create random number.
+			uniform(seed1, seed2, rand);
+			irand := GET_RANDOM( rand );
+			
+			-- Determine tag.
+			tag1 := GET_TAG( irand );
+			
+			-- Change mode to write.
+			wr    <= '1';
+			rd    <= '0';
+			
+			-- Determine index. 
+			index := GET_INDEX( I );
+
+			for J in 0 to BLOCKSIZE - 1 loop
+				
+				-- Determine offset.
+				offset  := GET_OFFSET( J );
+				
+				-- Determine address for CPU.
+				addrCPU <= tag1 & index & offset;
+			
+				-- Create random number.
+				uniform(seed1, seed2, rand);
+				irand := GET_RANDOM( rand );
+				 
+				dataCPU_in   <= GET_DATA( irand );
+				blockLine(J) := GET_DATA( irand );
+				myDataWord     <= blockLine(J); 
+				
+				-- Wait for one cycle.
+				wait until rising_edge(clk);
+				wait until falling_edge(clk);
+				
+				data3 := TO_INTEGER(UNSIGNED(addrCPU));
+				report "addrCPU <" & INTEGER'IMAGE(data3) & "> offset <" & INTEGER'IMAGE(J) & " index <" & INTEGER'IMAGE(I) & "> write <" & INTEGER'IMAGE(irand) & "> to cache block" severity NOTE;
+						
+				-- Wait for one cycle.
 				wait until rising_edge(clk);		-- TODO Why is this line necessary?
-				wait until falling_edge(clk);		-- TODO Why is this line necessary?
+				wait until falling_edge(clk);		-- TODO Why is this line necessary? 
 			end loop; 
 			wait for 50 ns;
 
@@ -222,54 +382,64 @@ begin
 			
 			for J in 0 to BLOCKSIZE - 1 loop
 			
-				offset  := STD_LOGIC_VECTOR(TO_UNSIGNED(J, config.offsetNrOfBits));
-				addrCPU <= tag & index & offset;
+				-- Determine the offset vector.
+				offset  := GET_OFFSET( J );
+				
+				-- Determine the address for CPU.
+				addrCPU <= tag1 & index & offset;
+				
+				-- Wait for one cycle.
 				wait until rising_edge(clk);		-- TODO Why is this line necessary?
 				wait until falling_edge(clk);		-- TODO Why is this line necessary?
 
-				data1 := TO_INTEGER(UNSIGNED(blockLine(J)));
-				data2 := TO_INTEGER(UNSIGNED(dataCPU_out));
-				data3 := TO_INTEGER(UNSIGNED(addrCPU));
-			
-				wait until rising_edge(clk);		-- TODO Why is this line necessary?
-				wait until falling_edge(clk);		-- TODO Why is this line necessary?
-				 
-				if (dataCPU_out = blockLine(J)) then
-					report "read cache block with index <" & INTEGER'IMAGE(I) & ">, offset <" & INTEGER'IMAGE(J) & "> is correct." severity NOTE;
-				else
-					report "addrCPU <" & INTEGER'IMAGE(data3) & "> read cache block with index <" & INTEGER'IMAGE(I) & ">, offset <" & INTEGER'IMAGE(J) & "> is actually <" & INTEGER'IMAGE(data2) & ">, but expected <" & INTEGER'IMAGE(data1) & ">." severity FAILURE;
+				-- Check the output.
+				if (valid='1' and hit='1') then
+					report "valid and hit bits are correct." severity NOTE;
+				elsif ( valid='0' ) then
+					report "valid bit is not correct." severity FAILURE;
+				elsif ( hit='0' ) then 
+					report "hit bit is not correct." severity FAILURE;
 				end if;
 				wait for 5 ns; 
 			end loop;
-			report "----------------------" severity NOTE;
-			report "" severity NOTE;
-			report "" severity NOTE;
-
+			
+			-- Create random tag.
+			uniform(seed1, seed2, rand);
+			irand := GET_RANDOM( rand );
+			tag2 := GET_TAG( irand );
+			
+			for J in 0 to BLOCKSIZE - 1 loop
+			
+				-- Determine the offset vector.
+				offset  := GET_OFFSET( J );
+				
+				-- Determine the address for CPU.
+				addrCPU <= tag2 & index & offset;
+				
+				-- Wait for one cycle.
+				wait until rising_edge(clk);		-- TODO Why is this line necessary?
+				wait until falling_edge(clk);		-- TODO Why is this line necessary?
+				
+				-- Check the outputs.
+				if ( tag1/=tag2 and hit='0' and valid='1' ) then
+					report "tags are different, valid and hit bits are correct." severity NOTE;
+				elsif ( tag1=tag2 and hit='1' and valid='1' ) then
+					report "tags are equal, valid and hit bits are correct." severity NOTE;
+				elsif (tag1/=tag2 and (hit/='0' or valid/='1')) then
+					report "tags are different, valid and hit bits are not correct." severity NOTE;
+				else
+					report "tags are equal, valid and hit bits are not correct." severity FAILURE;
+				end if;
+			end loop;			
+			report breakLine severity NOTE;
 		end loop;
-		report "FINISHED checking writing single words to one cache block..." severity NOTE;
+		report "FINISHED checking tags..." severity NOTE;
+		
+		-- Check whether to rerun the process.
+		if rerunProcess='0' then
+			wait;
+		end if;
 
-		myMemory.index   <= "00001111";
-		wr               <= '0';
-		rd               <= '0';
-		wrCacheBlockLine <= '0';
-		dataCPU_in       <= "11111111111111111111111111111111";
-		wait for 5 us;
-		wr <= '1';
-		rd <= '0';
-		wait for 20 us;
-		wr <= '0';
-		rd <= '1';
-		wait for 30 us;
-		myMemory.index   <= "11111000";
-		wr               <= '1';
-		rd               <= '0';
-		wrCacheBlockLine <= '0';
-		addrCPU(0)       <= '1';
-		dataCPU_in       <= "11111111111111111111111111111111";
-		wait for 5 us;
-		wr <= '0';
-		rd <= '1';
-		wait for 50 us;
 	end process;
 
 end;

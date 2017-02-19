@@ -7,4 +7,4 @@ echo ++++++++++ analyze automatically outdated files and create an executable ++
 ghdl -m -g -O3 --ieee=synopsys --workdir=workA directMappedCache_tb
 echo.
 echo ++++++++++ run the executable for 15us and save all waveforms ++++++++++
-ghdl -r -g -O3 --ieee=synopsys --workdir=workA directMappedCache_tb --stop-time=200us  --wave=../sim/directMappedCacheTestbench.ghw
+ghdl -r -g -O3 --ieee=synopsys --workdir=workA directMappedCache_tb --stop-time=500us  --wave=../sim/directMappedCacheTestbench.ghw

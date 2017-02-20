@@ -186,6 +186,7 @@ begin
 	--dataMEM_out <= BLOCK_LINE_TO_STD_LOGIC_VECTOR(cacheBlockLine_out);
 	dataMEM_out_tmp <= BLOCK_LINE_TO_STD_LOGIC_VECTOR( cacheBlockLine_out );
 	dataMEM <= dataMEM_out_tmp when state=WRITE AND counter>=BLOCKSIZE else
+			   dataMEM_out_tmp when state=READ AND counter>=BLOCKSIZE else
 				(others=>'Z'); 
 
 end synth;

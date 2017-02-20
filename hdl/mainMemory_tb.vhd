@@ -188,6 +188,7 @@ begin
 		dataMEM <= data_in_D_stdVec;
 		wait until readyMEM = '1';
 		-- ---------------------------------------------------------------------------
+		dataMEM <= (others=>'Z'); -- TODO Why is this important?
 		wrMEM   <= '0';
 		rdMEM   <= '1';
 		addrMEM <= addr_X;

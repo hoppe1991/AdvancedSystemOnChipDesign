@@ -62,11 +62,25 @@ package cache_pkg is
 	end record;
 
 	function GET_CONFIG_BITS_WIDTH(ADDRESSWIDTH : in INTEGER; BLOCKSIZE : in INTEGER;
-			                       DATA_WIDTH   : in INTEGER; OFFSET : in INTEGER) return CONFIG_BITS_WIDTH;
+		DATA_WIDTH   : in INTEGER; OFFSET : in INTEGER) return CONFIG_BITS_WIDTH;
+		
+	-- ---------------------------------------------------------------------------------------------------------
+	-- This function determines the number of bits of the tag bit vector.
+	-- ---------------------------------------------------------------------------------------------------------
+	function GET_TAG_NR_BITS( MEMORY_ADDRESS_WIDTH : in INTEGER; ADDRESSWIDTH : in INTEGER;
+		BLOCKSIZE : in INTEGER; DATA_WIDTH : in INTEGER; OFFSET : in INTEGER) return INTEGER;
 
 end cache_pkg;
 
 package body cache_pkg is
+	function GET_TAG_NR_BITS( MEMORY_ADDRESS_WIDTH : in INTEGER; ADDRESSWIDTH : in INTEGER;
+		BLOCKSIZE : in INTEGER; DATA_WIDTH : in INTEGER; OFFSET : in INTEGER) return INTEGER is
+		variable r : INTEGER := 0;
+	begin
+		r :=MEMORY_ADDRESS_WIDTH-DETERMINE_NR_BITS(ADDRESSWIDTH)-DETERMINE_NR_BITS(BLOCKSIZE*DATA_WIDTH/OFFSET);
+		return r;
+	end function;
+	
 	function GET_CONFIG_BITS_WIDTH(ADDRESSWIDTH : in INTEGER; BLOCKSIZE : in INTEGER;
 			                       DATA_WIDTH   : in INTEGER; OFFSET : in INTEGER) return CONFIG_BITS_WIDTH is
 		variable config : CONFIG_BITS_WIDTH;
@@ -102,6 +116,7 @@ package body cache_pkg is
 		v := (ARG.tag) & ARG.index & ARG.offset;
 		return v;
 	end;
+	
 	function DETERMINE_NR_BITS(ARG : in INTEGER) return INTEGER IS
 	begin
 		return INTEGER(CEIL(LOG2(REAL(ARG))));

@@ -50,41 +50,39 @@ entity directMappedCacheController is
 	);
 
 	port(
-		-- Clock signal is used for BRAM.
-		clk              : in    STD_LOGIC;
-
-		-- Reset signal to reset the cache.
-		reset            : in    STD_LOGIC;
-		addrCPU          : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0); -- Memory address from CPU is divided into block address and block offset.
-		dataCPU_in       : in    STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
-		dataCPU_out      : out   STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
-		dataMEM_in       : in STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0); -- Data from memory to cache or from cache to memory.
-		dataMEM_out      : out STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0); -- Data from memory to cache or from cache to memory.
-		cacheBlockLine_in : in STD_LOGIC_VECTOR( (BLOCKSIZE*DATA_WIDTH)-1 downto 0 );
-		cacheBlockLine_out : out STD_LOGIC_VECTOR( (BLOCKSIZE*DATA_WIDTH)-1 downto 0 );
-
-		wrCacheBlockLine : in    STD_LOGIC; -- Write signal identifies whether a complete cache block should be written into cache.
-		rd               : in    STD_LOGIC; -- Read signal identifies to read data from the cache.
-		wr               : in    STD_LOGIC; -- Write signal identifies to write data into the cache.
-
+		
+		-- Clock and reset signal.
+		clk              : in    STD_LOGIC; -- Clock signal is used for BRAM.
+		reset            : in    STD_LOGIC; -- Reset signal to reset the cache.
+		
+		-- Ports regarding CPU and MEM.
+		addrCPU          : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);	-- Memory address from CPU is divided into block address and block offset.
+		dataCPU       	 : inout STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0); 			-- Data from CPU to cache or from cache to CPU.
+		dataMEM       	 : inout STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0); -- Data from memory to cache or from cache to memory
 		valid            : inout STD_LOGIC; -- Identify whether the cache block/line contains valid content.
-		dirty_in         : in    STD_LOGIC; -- Identify whether the cache block/line is changed as against the main memory.
-		dirty_out        : out   STD_LOGIC; -- Identify whether the cache block/line is changed as against the main memory.
+		dirty         	 : inout STD_LOGIC; -- Identify whether the cache block/line is changed as against the main memory.
 		setValid         : in    STD_LOGIC; -- Identify whether the valid bit should be set.
 		setDirty         : in    STD_LOGIC; -- Identify whether the dirty bit should be set.
-
-		hit              : out   STD_LOGIC; -- Signal identify whether data are available in the cache ('1') or not ('0').
+		hit 			 : out   STD_LOGIC; -- Signal identify whether data are available in the cache ('1') or not ('0').
 		
-		writeToTagBRAM : out STD_LOGIC;
+		-- Ports defines how to read or write the data BRAM.
+		wrCBLine : in   STD_LOGIC; -- Write signal identifies whether a complete cache block should be written into cache.
+		rdCBLine : in	STD_LOGIC; -- Read signal identifies whether a complete cache block should be read from cache.
+		rdWord	 : in   STD_LOGIC; -- Read signal identifies to read data word from the cache.
+		wrWord   : in   STD_LOGIC; -- Write signal identifies to write data word into the cache.
+
+		-- Index determines to which line of BRAM should be written or read.
 		index : out STD_LOGIC_VECTOR(DETERMINE_NR_BITS(ADDRESSWIDTH)-1 downto 0);
-		tagBRAM_in : in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-DETERMINE_NR_BITS(ADDRESSWIDTH)-DETERMINE_NR_BITS(BLOCKSIZE*DATA_WIDTH/OFFSET)-1 downto 0);
-		tagBRAM_out : out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-DETERMINE_NR_BITS(ADDRESSWIDTH)-DETERMINE_NR_BITS(BLOCKSIZE*DATA_WIDTH/OFFSET)-1 downto 0);
-	
-		cbBramIn  : out STD_LOGIC_VECTOR(BLOCKSIZE*DATA_WIDTH-1 downto 0);
-		cbBramOut : in STD_LOGIC_VECTOR(BLOCKSIZE*DATA_WIDTH-1 downto 0);
-		writeToDataBRAM : out STD_LOGIC
-	
-	
+				
+		-- Ports regarding BRAM tag.
+		tagToBRAM : out STD_LOGIC_VECTOR(GET_TAG_NR_BITS( MEMORY_ADDRESS_WIDTH, ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET )-1 downto 0);
+		tagFromBRAM : in STD_LOGIC_VECTOR(GET_TAG_NR_BITS( MEMORY_ADDRESS_WIDTH, ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET )-1 downto 0);
+		writeToTagBRAM : out STD_LOGIC;
+		
+		-- Ports regarding BRAM data.
+		writeToDataBRAM		: out 	STD_LOGIC;
+		dataToBRAM		    : out STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0);
+		dataFromBRAM	    : in STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0)
 	);
 
 end;
@@ -100,7 +98,7 @@ end;
 -- =============================================================================
 architecture synth of directMappedCacheController is
 	constant config : CONFIG_BITS_WIDTH := GET_CONFIG_BITS_WIDTH(ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET);
-
+	 
 	type MEMORY_ADDRESS is record
 		tag    : STD_LOGIC_VECTOR(config.tagNrOfBits - 1 downto 0);
 		index  : STD_LOGIC_VECTOR(config.indexNrOfBits - 1 downto 0);
@@ -119,14 +117,12 @@ architecture synth of directMappedCacheController is
 		addr.offsetAsInteger := TO_INTEGER(UNSIGNED(addr.offset));
 		return addr;
 	end function;
-	
+
 	signal memoryAddress : MEMORY_ADDRESS;
    
 	-- Bit string contains a complete cache line.
-	signal cacheLine : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
-  	
-	signal myCacheLineBits : INTEGER := config.cacheLineBits;
-
+	signal cacheLine : STD_LOGIC_VECTOR(config.cacheLineBits-1 downto 0) := (others => '0');
+  	 
 	-- Bit string contains for each cache block the correspondent valid bit.
 	signal validBits : STD_LOGIC_VECTOR(ADDRESSWIDTH - 1 downto 0) := (others => '0');
 
@@ -144,8 +140,90 @@ architecture synth of directMappedCacheController is
 	signal dataEndIndex : INTEGER := 0;
 	
 	signal writeToDataBRAMs : STD_LOGIC := '0';
+	
+	
+  	type CACHE_MODE is ( 
+  		READ_DATA,  -- Indicates to read a single word from the cache line.
+  		READ_LINE,  -- Indicates to read a complete cache line.
+  		WRITE_DATA, -- Indicates to write a single word from the cache line.
+  		WRITE_LINE, -- Indicates to write a complete cache line.
+  		NOTHING	    -- Do nothing.
+  	);
+  	signal myCacheMode : CACHE_MODE := NOTHING;
+	
+	-- -----------------------------------------------------------------------------------------------------------
+	-- The function determines the start index of the data word in the cache line.
+	-- -----------------------------------------------------------------------------------------------------------
+	function GET_START_INDEX( offset : in INTEGER ) return INTEGER is
+		variable index : INTEGER := 0;
+	begin
+		index := config.cacheLineBits-1-(DATA_WIDTH*offset);
+		return index;
+	end function;
+	
+	-- -----------------------------------------------------------------------------------------------------------
+	-- The function determines the end index of the data word in the cache line.
+	-- -----------------------------------------------------------------------------------------------------------
+	function GET_END_INDEX( offset : in INTEGER ) return INTEGER is
+		variable index : INTEGER := 0;
+	begin
+		index := config.cacheLineBits-1-(DATA_WIDTH*offset)-DATA_WIDTH+1;
+		return index;
+	end function;
+	
+	type CACHE_BLOCK_LINE is ARRAY ( BLOCKSIZE-1 downto 0) of STD_LOGIC_VECTOR( DATAWIDTH-1 downto 0 );
+	signal blockLineFromBRAM : CACHE_BLOCK_LINE;
+	signal blockLineToBRAM : CACHE_BLOCK_LINE;
+	function TO_CACHE_BLOCK_LINE( ARG : in STD_LOGIC_VECTOR ) return CACHE_BLOCK_LINE is
+		variable b : CACHE_BLOCK_LINE;
+		variable s : INTEGER;
+		variable t : INTEGER;
+	begin
+		for I in 0 to BLOCKSIZE-1 loop
+			s := GET_START_INDEX( I );
+			t := GET_END_INDEX( I );
+			b(I) := ARG( s downto t );
+		end loop;
+		return b;
+	end function;
+	function TO_STD_LOGIC_VECTOR( ARG : in CACHE_BLOCK_LINE ) return STD_LOGIC_VECTOR is
+		variable v : STD_LOGIC_VECTOR( DATAWIDTH*BLOCKSIZE-1 downto 0 ) := (others=>'0');
+		variable s, t : INTEGER;
+	begin 
+		for I in 0 to BLOCKSIZE-1 loop
+			s := GET_START_INDEX( I );
+			t := GET_END_INDEX( I );
+			v(s downto t) := ARG(I);
+		end loop;
+		return v;
+	end function;
+	function SET_BLOCK_LINE( b_in : in CACHE_BLOCK_LINE; data : in STD_LOGIC_VECTOR(DATAWIDTH-1 downto 0); offset : in INTEGER ) return CACHE_BLOCK_LINE is
+		variable b : CACHE_BLOCK_LINE;
+	begin
+		for I in 0 to BLOCKSIZE-1 loop
+		if I=offset then
+			b(I):=data;
+		else
+			b(I):=b_in(I);
+		end if;
+		end loop;
+		return b;
+	end function;
+	
+		
+
 -----------------------------------------------------------------------------------
 begin
+	
+
+	-- -----------------------------------------------------------------------------
+	-- Determines the read/write mode.
+	-- -----------------------------------------------------------------------------
+	myCacheMode <= READ_DATA  when wrWord='0' AND rdWord='1' AND wrCBLine='0' AND rdCBLine='0' else 
+	 	           WRITE_DATA when wrWord='1' AND rdWord='0' AND wrCBLine='0' AND rdCBLine='0' else 
+	 	           READ_LINE  when rdWord='0' and wrWord='0' AND wrCBLine='1' AND rdCBLine='0' else
+	 	           WRITE_LINE when rdWord='0' AND wrWord='0' AND wrCBLine='0' AND rdCBLine='1' else 
+	 	           NOTHING;
 
 	-- -----------------------------------------------------------------------------
 	-- Determine the offset, index and tag of the address signal.
@@ -156,79 +234,85 @@ begin
 	-- -----------------------------------------------------------------------------
 	-- Determine the valid bit.
 	-- -----------------------------------------------------------------------------
-	valid     <= validBits(memoryAddress.indexAsInteger) when setValid = '0' and rising_edge(clk);
-	dirty_out <= dirtyBits(memoryAddress.indexAsInteger) when setDirty = '0' and rising_edge(clk) and reset = '0';
+	valid <= validBits(memoryAddress.indexAsInteger) when setValid = '0' and rising_edge(clk) else 
+	         'Z';
+	dirty <= dirtyBits(memoryAddress.indexAsInteger) when setDirty = '0' and rising_edge(clk) and reset = '0' else
+	         'Z';
 
 	-- -----------------------------------------------------------------------------
-	-- Set the valid bit and the dirty bit.
+	-- Reset the valid bits and the dirty bits when to reset.
+	-- Otherwise, set the correspondent dirty bit and valid bit.
 	-- -----------------------------------------------------------------------------
-	process(clk, reset, memoryAddress.indexAsInteger, writeToDataBRAMs)
+	dirtyValidBits: process(clk, reset, memoryAddress.indexAsInteger, writeToDataBRAMs, setDirty)
 	begin
 		if rising_edge(clk) and reset='1' then
+			-- Reset the valid bits and dirty bits.
 			validBits <= (others=>'0');
-		elsif (writeToDataBRAMs='1') then
-			validBits(memoryAddress.indexAsInteger) <= '1';
+			dirtyBits <= (others=>'0');
+		else
+			
+			-- When write to data BRAM, then set the correspondent valid bit.
+		 	if (writeToDataBRAMs='1') then
+				validBits(memoryAddress.indexAsInteger) <= '1';
+			end if;
+			
+			-- When to set the dirty bit, update the correspondent dirty bit.
+			if (setDirty='1' and rising_edge(clk)) then
+				dirtyBits(memoryAddress.indexAsInteger) <= dirty;
+			end if;
+			
 		end if;
 	end process;
-	
-	dirtyBits(memoryAddress.indexAsInteger) <= dirty_in when setDirty = '1' and rising_edge(clk) else '0' when reset = '1' and rising_edge(clk);
-
-	-- -----------------------------------------------------------------------------
-	-- Check whether the tags are equal.
-	-- -----------------------------------------------------------------------------
-	tagsAreEqual <= '1' when tagBRAM_in = memoryAddress.tag else '0';
-
+ 
 	-- -----------------------------------------------------------------------------
 	-- Determine whether a cache block/line should be read or written.
 	-- -----------------------------------------------------------------------------
-	cacheBlockLine_out <= cbBramOut when rd = '1' AND wr = '0' AND wrCacheBlockLine = '0';
+	cacheLine <= dataFromBRAM when myCacheMode=WRITE_DATA else
+				 dataFromBRAM when myCacheMode=READ_DATA;
 
 	-- -----------------------------------------------------------------------------
-	-- Determine whether a tag should be read or written.
+	-- Determine the new tag value to save in correspondent BRAM.
 	-- -----------------------------------------------------------------------------
-
-	tagBRAM_out <= memoryAddress.tag when rd = '0' AND wr = '1' AND wrCacheBlockLine = '0' else 
-	               memoryAddress.tag when rd = '0' AND wr = '0' AND wrCacheBlockLine = '1';
+	tagToBRAM <= memoryAddress.tag when myCacheMode=WRITE_DATA else 
+	             memoryAddress.tag when myCacheMode=WRITE_LINE;
 
 	-- -----------------------------------------------------------------------------
 	-- Determine the start index and end index of the correspondent word in the cache line.
 	-- -----------------------------------------------------------------------------
-	dataStartIndex <= config.cacheLineBits-1-DATA_WIDTH * memoryAddress.offsetAsInteger;
-	dataEndIndex   <= dataStartIndex - DATA_WIDTH + 1;
+	dataStartIndex <= GET_START_INDEX( memoryAddress.offsetAsInteger );
+	dataEndIndex   <= GET_END_INDEX( memoryAddress.offsetAsInteger );
 
 	-- -----------------------------------------------------------------------------
 	-- Determine the new cache block line.
 	-- -----------------------------------------------------------------------------
-	cbBramIn <= 
-		cacheBlockLine_in when writeToDataBRAMs='0' and wr='0' and rd='0' and wrCacheBlockLine='1' and rising_edge(clk) else
-		dataCPU_in & cbBramOut(dataEndIndex - 1 downto 0) when writeToDataBRAMs = '1' AND memoryAddress.offsetAsInteger = 0 AND rising_edge(clk) else 
-		cbBramOut(config.cacheLineBits - 1 downto dataStartIndex + 1) & dataCPU_in when writeToDataBRAMs = '1' AND memoryAddress.offsetAsInteger = (BLOCKSIZE - 1) AND rising_edge(clk) else
-		cbBramOut(config.cacheLineBits - 1 downto dataStartIndex + 1) & dataCPU_in & cbBramOut(dataEndIndex - 1 downto 0) when writeToDataBRAMs = '1' AND rising_edge(clk);
+
+	blockLineToBRAM <= SET_BLOCK_LINE( blockLineFromBRAM, dataCPU, memoryAddress.offsetAsInteger ) when myCacheMode=WRITE_DATA else
+						blockLineFromBRAM;
+	blockLineFromBRAM <=  TO_CACHE_BLOCK_LINE( dataFromBRAM );
+	dataToBRAM <= TO_STD_LOGIC_VECTOR( blockLineToBRAM );
+
+
+	dataCPU <= blockLineFromBRAM(memoryAddress.offsetAsInteger) when myCacheMode=READ_DATA else
+		       (others=>'Z');
+
+
 
 	-- -----------------------------------------------------------------------------
 	-- Check whether to read or write the data BRAM.
 	-- -----------------------------------------------------------------------------
-	
-	
-	 writeToDataBRAMs <= '0' when wr = '0' AND rd = '1' AND wrCacheBlockLine = '0' else 
-	 	                 '1' when wr = '1' AND rd = '0' AND wrCacheBlockLine = '0' else 
-	 	                 wrCacheBlockLine when rd = '0' and wr = '0' else 
+	 writeToDataBRAMs <= '0' when myCacheMode=READ_DATA else 
+	 	                 '1' when myCacheMode=WRITE_DATA else 
+	 	                 '1' when myCacheMode=WRITE_LINE else
+	 	                 '0' when myCacheMode=READ_LINE else 
 	 	                 'U';
 	 writeToDataBRAM <= writeToDataBRAMs;
 	 writeToTagBRAM <= writeToDataBRAMs;
-	-- -----------------------------------------------------------------------------
-	-- Determine the output data signal, which will be sent to CPU.
-	-- -----------------------------------------------------------------------------                   
-	dataCPU_out <= cbBramOut(127 downto 96) when wr = '0' and rd = '1' and dataStartIndex=127 else
-				   cbBramOut(95 downto 64) when wr = '0' and rd = '1' and dataStartIndex=95 else
-				   cbBramOut(63 downto 32) when wr = '0' and rd = '1' and dataStartIndex=63 else
-				   cbBramOut(31 downto 0) when wr = '0' and rd = '1' and dataStartIndex=31 else
-				   dataCPU_in when wr = '1' and rd = '0' else
-				   dataCPU_in when wr = '0' and rd = '0' else (others => 'U'); -- TODO 
+	  
 
 	-- -----------------------------------------------------------------------------
 	-- The hit signal is supposed to be an asynchronous signal.
 	-- -----------------------------------------------------------------------------
-	hit <= '1' when valid = '1' AND tagsAreEqual = '1' else '0';
+	tagsAreEqual <= '1' when tagFromBRAM=memoryAddress.tag else '0';
+	hit 		 <= '1' when valid = '1' AND tagsAreEqual = '1' else '0';
 
 end synth;

@@ -35,19 +35,17 @@ entity mainMemoryController is
 	);
 
 	port(
-		clk         : in  STD_LOGIC;
-		readyMEM    : out STD_LOGIC;
-		rdMEM       : in  STD_LOGIC;
-		wrMEM       : in  STD_LOGIC;
-		addrMEM     : in  STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0);
-		dataMEM_in  : in  STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
-		dataMEM_out : out STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
-		reset       : in  STD_LOGIC;	
-		dataBRAM_in : out STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
-		dataBRAM_out : in STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
-		writeToBRAM : out STD_LOGIC;
-		addrBram : out STD_LOGIC_VECTOR(BRAM_ADDR_WIDTH - 1 downto 0);
-		myTestOut : out STD_LOGIC
+		clk         	: in  STD_LOGIC;
+		readyMEM    	: out STD_LOGIC;
+		rdMEM       	: in  STD_LOGIC;
+		wrMEM       	: in  STD_LOGIC;
+		addrMEM     	: in  STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0);
+		dataMEM  	    : inout  STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
+		reset       	: in  STD_LOGIC;	
+		dataToBRAM 	 	: out STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
+		dataFromBRAM 	: in STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
+		writeToBRAM 	: out STD_LOGIC;
+		addrBram 		: out STD_LOGIC_VECTOR(BRAM_ADDR_WIDTH - 1 downto 0) 
 	);
 end;
 
@@ -174,21 +172,20 @@ begin
 
 	-- Store the read word.
 	addrMEM_mod16               <= addrMEM(MEMORY_ADDRESS_WIDTH - 1 downto 4) & "0000" when state = IDLE;
-	cacheBlockLine_out(counter-1) <= dataBRAM_out when counter>0 and counter<=BLOCKSIZE;
+	cacheBlockLine_out(counter-1) <= dataFromBRAM when counter>0 and counter<=BLOCKSIZE;
 	addr                        <= STD_LOGIC_VECTOR(unsigned(addrMEM_mod16) + 4 * counter) when state=READ else
 								   STD_LOGIC_VECTOR(unsigned(addrMEM_mod16) + 4 * counter) when state=WRITE;
 	addrBram <= addr( 11 downto 2 );
 
 	-- Determine the output.
-	cacheBlockLine_tmp <= dataMEM_in when state = IDLE;
+	cacheBlockLine_tmp <= dataMEM when state = IDLE;
 	cacheBlockLine_in  <= STD_LOGIC_VECTOR_TO_BLOCK_LINE(cacheBlockLine_tmp) when state = IDLE;
-	dataBRAM_in            <= cacheBlockLine_in(counter) when counter >= 0  and counter < BLOCKSIZE;
+	dataToBRAM            <= cacheBlockLine_in(counter) when counter >= 0  and counter < BLOCKSIZE;
  
 	-- Determine the output.
 	--dataMEM_out <= BLOCK_LINE_TO_STD_LOGIC_VECTOR(cacheBlockLine_out);
 	dataMEM_out_tmp <= BLOCK_LINE_TO_STD_LOGIC_VECTOR( cacheBlockLine_out );
-	dataMEM_out <= dataMEM_out_tmp;
-	
-	myTestOut <= '1';
+	dataMEM <= dataMEM_out_tmp when state=WRITE AND counter>=BLOCKSIZE else
+				(others=>'Z'); 
 
 end synth;

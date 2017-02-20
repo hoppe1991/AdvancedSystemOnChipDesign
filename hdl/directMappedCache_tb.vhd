@@ -27,23 +27,21 @@ end;
 architecture test of directMappedCache_tb is
 	signal reset            : STD_LOGIC                                            := '0';
 	signal addrCPU          : STD_LOGIC_VECTOR(MEMADDRESSWIDTH - 1 downto 0)       := (others => '0');
-	signal dataCPU_in       : STD_LOGIC_VECTOR(DATAWIDTH - 1 downto 0)             := (others => '0');
-	signal dataCPU_out      : STD_LOGIC_VECTOR(DATAWIDTH - 1 downto 0)             := (others => '0');
+	signal dataCPU       : STD_LOGIC_VECTOR(DATAWIDTH - 1 downto 0)             := (others => 'Z');
 	signal clk              : STD_LOGIC                                            := '0';
 	signal rd               : STD_LOGIC                                            := '0';
 	signal wr               : STD_LOGIC                                            := '0';
 	signal valid            : STD_LOGIC                                            := '0';
-	signal dirty_out        : STD_LOGIC                                            := '0';
-	signal dirty_in         : STD_LOGIC                                            := '0';
+	signal dirty        	: STD_LOGIC                                            := '0';
 	signal hit              : STD_LOGIC                                            := '0';
-	signal dataMem_in       : STD_LOGIC_VECTOR(DATAWIDTH * BLOCKSIZE - 1 downto 0) := (others => '0');
-	signal dataMem_out      : STD_LOGIC_VECTOR(DATAWIDTH * BLOCKSIZE - 1 downto 0) := (others => '0');
-	signal wrCacheBlockLine : STD_LOGIC                                            := '0';
+	signal dataMem          : STD_LOGIC_VECTOR(DATAWIDTH * BLOCKSIZE - 1 downto 0) := (others => '0');
+	signal wrCBLine : STD_LOGIC                                            := '0';
+	signal rdCBLine : STD_LOGIC := '0';
 	signal setValid         : STD_LOGIC                                            := '0';
 	signal setDirty         : STD_LOGIC                                            := '0';
-	signal cacheBlockLine_in  : STD_LOGIC_VECTOR((BLOCKSIZE * DATA_WIDTH) - 1 downto 0);
-	signal cacheBlockLine_out : STD_LOGIC_VECTOR((BLOCKSIZE * DATA_WIDTH) - 1 downto 0);
+	signal cacheBlockLine  : STD_LOGIC_VECTOR((BLOCKSIZE * DATA_WIDTH) - 1 downto 0);
 	
+
 	constant breakLine : STRING := "----------------------------------------------------------------------------------------------";
 
 	constant config : CONFIG_BITS_WIDTH := GET_CONFIG_BITS_WIDTH(ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET);
@@ -143,24 +141,26 @@ begin
 			FILE_EXTENSION		 => FILE_EXTENSION
 		)
 		port map(
+			-- Clock and reset signal.
 			clk                => clk,
 			reset              => reset,
-			dataCPU_in         => dataCPU_in,
-			dataCPU_out        => dataCPU_out,
+			
+			dataCPU            => dataCPU,
 			addrCPU            => addrCPU,
-			dataMem_in         => dataMem_in,
-			dataMem_out        => dataMem_out,
-			rd                 => rd,
-			wr                 => wr,
+			
+			dataMem            => dataMem,
+			
+			rdWord                 => rd,
+			wrWord                 => wr,
+			wrCBLine   			   => wrCBLine,
+			rdCBLine 			   => rdCBLine,
+			
 			valid              => valid,
-			dirty_in           => dirty_in,
-			dirty_out          => dirty_out,
+			dirty           	=> dirty, 
 			setValid           => setValid,
 			setDirty           => setDirty,
-			hit                => hit,
-			cacheBlockLine_in  => cacheBlockLine_in,
-			cacheBlockLine_out => cacheBlockLine_out,
-			wrCacheBlockLine   => wrCacheBlockLine
+			
+			hit                => hit
 		);
 
 	-- -----------------------------------------------------------------------------
@@ -187,7 +187,7 @@ begin
 		variable blockLine    : BLOCK_LINE := INIT_BLOCK_LINE(0, 0, 0, 0);
 		variable rand : REAL;
 	begin
-		
+		dataCPU <= (others=>'Z');
 		-- ---------------------------------------------------------------------------------------------------
 		-- Reset the Direct Mapped Cache.
 		-- ---------------------------------------------------------------------------------------------------
@@ -222,12 +222,12 @@ begin
 			addrCPU <= tag1 & index & offset;
 
 			-- Check the outputs.
-			if (valid = '0' and dirty_out = '0' and hit = '0') then
+			if (valid = '0' and dirty = '0' and hit = '0') then
 				report "valid bit and dirty bit in block line with index <" & INTEGER'IMAGE(I) & "> are valid." severity NOTE;
 			elsif (valid /= '0') then
 				report "valid bit is expected to be <0> but it is actually <" & STD_LOGIC'IMAGE(valid) & ">." severity FAILURE;
-			elsif (dirty_out /= '0') then
-				report "dirty bit is expected to be <0> but it is actually <" & STD_LOGIC'IMAGE(dirty_out) & ">." severity FAILURE;
+			elsif (dirty /= '0') then
+				report "dirty bit is expected to be <0> but it is actually <" & STD_LOGIC'IMAGE(dirty) & ">." severity FAILURE;
 			elsif (hit /= '0') then
 				report "hit is expected to be <0> but it is actually <" & STD_LOGIC'IMAGE(hit) & ">." severity FAILURE;
 			end if;
@@ -273,9 +273,8 @@ begin
 				-- Create random number.
 				uniform(seed1, seed2, rand);
 				irand := GET_RANDOM( rand );
-				
-				
-				dataCPU_in   <= GET_DATA( irand );
+				 
+				dataCPU   <= GET_DATA( irand );
 				blockLine(J) := GET_DATA( irand );
 				myDataWord   <= blockLine(J); 
 				
@@ -297,7 +296,11 @@ begin
 			wr <= '0';
 			rd <= '1';
 			
+			
 			for J in 0 to BLOCKSIZE - 1 loop
+			
+				-- TODO It is important to set the bits to 'Z' because of inout type.
+				dataCPU <= (others=>'Z');
 			
 				-- Determine offset.
 				offset  := GET_OFFSET( J );
@@ -311,15 +314,15 @@ begin
 
 				
 				data1 := TO_INTEGER(UNSIGNED(blockLine(J)));
-				data2 := TO_INTEGER(UNSIGNED(dataCPU_out));
+				data2 := TO_INTEGER(UNSIGNED(dataCPU));
 				data3 := TO_INTEGER(UNSIGNED(addrCPU));
 			
 				-- Wait for one cycle.
 				wait until rising_edge(clk);		-- TODO Why is this line necessary?
 				wait until falling_edge(clk);		-- TODO Why is this line necessary?
-				 
+				  
 				-- Check the output.
-				if (dataCPU_out = blockLine(J)) then
+				if (dataCPU = blockLine(J)) then
 					report "addrCPU <" & INTEGER'IMAGE(data3) & "> offset <" & INTEGER'IMAGE(J) & " index <" & INTEGER'IMAGE(I) & "> read cache block is correct." severity NOTE;
 				else
 					report "addrCPU <" & INTEGER'IMAGE(data3) & "> offset <" & INTEGER'IMAGE(J) & " index <" & INTEGER'IMAGE(I) & "> read cache block is actually <" & INTEGER'IMAGE(data2) & ">, but expected <" & INTEGER'IMAGE(data1) & ">." severity FAILURE;
@@ -329,7 +332,6 @@ begin
 
 		end loop;
 		report "FINISHED checking writing single words to one cache block..." severity NOTE;
-
 
 
 		-- ---------------------------------------------------------------------------------------------------
@@ -364,7 +366,7 @@ begin
 				uniform(seed1, seed2, rand);
 				irand := GET_RANDOM( rand );
 				 
-				dataCPU_in   <= GET_DATA( irand );
+				dataCPU   <= GET_DATA( irand );
 				blockLine(J) := GET_DATA( irand );
 				myDataWord     <= blockLine(J); 
 				

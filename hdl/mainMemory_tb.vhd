@@ -41,8 +41,7 @@ architecture mainMemory_testbench of mainMemory_tb is
 	signal rdMEM           : STD_LOGIC                                             := '0';
 	signal wrMEM           : STD_LOGIC                                             := '0';
 	signal addrMEM         : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0)   := (others => '0');
-	signal dataMEM_in      : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0) := (others => '0');
-	signal dataMEM_out     : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0) := (others => '0');
+	signal dataMEM         : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0) := (others => '0');
 	signal reset           : STD_LOGIC                                             := '0';
 
 	-- Definition of type BLOCK_LINE as an array of STD_LOGIC_VECTORs.
@@ -125,7 +124,15 @@ begin
 			        BRAM_ADDR_WIDTH 	 => BRAM_ADDR_WIDTH,
 			        DATA_FILENAME        => DATA_FILENAME
 		)
-		port map(clk, readyMEM, rdMEM, wrMEM, addrMEM, dataMEM_in, dataMEM_out, reset);
+		port map(
+			clk => clk, 
+			readyMEM => readyMEM,
+			rdMEM => rdMEM, 
+			wrMEM => wrMEM, 
+			addrMEM => addrMEM, 
+			dataMEM => dataMEM,
+			reset => reset
+		);
 
 	-- Generate clock with 10 ns period
 	clockProcess : process
@@ -146,7 +153,7 @@ begin
 		wrMEM      <= '1';
 		rdMEM      <= '0';
 		addrMEM    <= addr_X;
-		dataMEM_in <= data_in_A_stdVec;
+		dataMEM <= data_in_A_stdVec;
 		wait until readyMEM = '1';
 		-- ---------------------------------------------------------------------------
 		wrMEM   <= '0';
@@ -154,31 +161,31 @@ begin
 		addrMEM <= addr_X;
 		wait until readyMEM = '1';
 		report "checking test case 1..." severity NOTE;
-		if (readyMEM = '1' and dataMEM_out = data_in_A_stdVec) then
+		if (readyMEM = '1' and dataMEM = data_in_A_stdVec) then
 			report "checking test case 1...NO ERROR" severity NOTE;
 		else
 			report "expected value: <" & PRINT_VECTOR(data_in_A_stdVec) & ">" severity NOTE;
-			report "current value : <" & PRINT_VECTOR(dataMEM_out) & ">" severity NOTE;
+			report "current value : <" & PRINT_VECTOR(dataMEM) & ">" severity NOTE;
 			report "checking test case 1...ERROR" severity FAILURE;
 		end if;
 		-- ---------------------------------------------------------------------------
 		wrMEM      <= '1';
 		rdMEM      <= '0';
 		addrMEM    <= addr_Y;
-		dataMEM_in <= data_in_B_stdVec;
+		dataMEM <= data_in_B_stdVec;
 		wait until readyMEM = '1';
 		-- ---------------------------------------------------------------------------
 
 		wrMEM      <= '1';
 		rdMEM      <= '0';
 		addrMEM    <= addr_Z;
-		dataMEM_in <= data_in_C_stdVec;
+		dataMEM <= data_in_C_stdVec;
 		wait until readyMEM = '1';
 		-- ---------------------------------------------------------------------------
 		wrMEM      <= '1';
 		rdMEM      <= '0';
 		addrMEM    <= addr_X;
-		dataMEM_in <= data_in_D_stdVec;
+		dataMEM <= data_in_D_stdVec;
 		wait until readyMEM = '1';
 		-- ---------------------------------------------------------------------------
 		wrMEM   <= '0';
@@ -186,11 +193,11 @@ begin
 		addrMEM <= addr_X;
 		wait until readyMEM = '1';
 		report "checking test case 2..." severity NOTE;
-		if (readyMEM = '1' and dataMEM_out = data_in_D_stdVec) then
+		if (readyMEM = '1' and dataMEM = data_in_D_stdVec) then
 			report "checking test case 2...NO ERROR" severity NOTE;
 		else
 			report "expected value: <" & PRINT_VECTOR(data_in_D_stdVec) & ">" severity NOTE;
-			report "current value : <" & PRINT_VECTOR(dataMEM_out) & ">" severity NOTE;
+			report "current value : <" & PRINT_VECTOR(dataMEM) & ">" severity NOTE;
 			report "checking test case 2...ERROR" severity FAILURE;
 		end if;
 		-- ---------------------------------------------------------------------------
@@ -199,11 +206,11 @@ begin
 		addrMEM <= addr_Y;
 		wait until readyMEM = '1';
 		report "checking test case 3..." severity NOTE;
-		if (readyMEM = '1' and dataMEM_out = data_in_B_stdVec) then
+		if (readyMEM = '1' and dataMEM = data_in_B_stdVec) then
 			report "checking test case 3...NO ERROR" severity NOTE;
 		else
 			report "expected value: <" & PRINT_VECTOR(data_in_B_stdVec) & ">" severity NOTE;
-			report "current value : <" & PRINT_VECTOR(dataMEM_out) & ">" severity NOTE;
+			report "current value : <" & PRINT_VECTOR(dataMEM) & ">" severity NOTE;
 			report "checking test case 3...ERROR" severity FAILURE;
 		end if;
 		-- ---------------------------------------------------------------------------
@@ -212,11 +219,11 @@ begin
 		addrMEM <= addr_Z;
 		wait until readyMEM = '1';
 		report "checking test case 4..." severity NOTE;
-		if (readyMEM = '1' and dataMEM_out = data_in_C_stdVec) then
+		if (readyMEM = '1' and dataMEM = data_in_C_stdVec) then
 			report "checking test case 4...NO ERROR" severity NOTE;
 		else
 			report "expected value: <" & PRINT_VECTOR(data_in_C_stdVec) & ">" severity NOTE;
-			report "current value : <" & PRINT_VECTOR(dataMEM_out) & ">" severity NOTE;
+			report "current value : <" & PRINT_VECTOR(dataMEM) & ">" severity NOTE;
 			report "checking test case 4...ERROR" severity FAILURE;
 		end if;
 	-- ---------------------------------------------------------------------------

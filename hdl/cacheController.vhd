@@ -55,8 +55,7 @@ entity cacheController is
 		rdMEM       : out   STD_LOGIC;
 		wrMEM       : out   STD_LOGIC;
 		addrMEM     : out   STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0);
-		dataMEM_in     : in STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0);
-		dataMEM_out     : out STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0)
+		dataMEM  : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0)
 	);
 
 end;
@@ -352,9 +351,10 @@ begin
  
 	-- Determine the read block line.
 	blockLineCache    <= STD_LOGIC_VECTOR_TO_BLOCK_LINE(cacheBlockLine);
-	dataMEM_out           <= cacheBlockLine when (state = CHECK1 and lineIsDirty = '1');
-	blockLineMEM      <= STD_LOGIC_VECTOR_TO_BLOCK_LINE(dataMEM_in);
-	cacheBlockLine 	  <= dataMEM_in;
+	dataMEM           <= cacheBlockLine when (state = CHECK1 and lineIsDirty = '1') else
+						 (others=>'Z');
+	blockLineMEM      <= STD_LOGIC_VECTOR_TO_BLOCK_LINE(dataMEM);
+	cacheBlockLine 	  <= dataMEM;
 
 	-- Data CPU output.
 	dataCPUcache <= directMappedCache_data_out when (hitFromCache='1' and state = CHECK2);

@@ -43,9 +43,8 @@ architecture tests of cache_tb is
 	signal rdMEM    : STD_LOGIC                                             := '0';
 	signal wrMEM    : STD_LOGIC                                             := '0';
 	signal addrMEM  : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0)   := (others => '0');
-	signal dataMEM_out  : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0) := (others => '0');
-	signal dataMEM_in  : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0) := (others => '0');
-		
+	signal dataMEM  : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0) := (others => '0');
+	
 	signal tagI         : INTEGER := 0;
 	signal indexI       : INTEGER := 0;
 	signal offsetI      : INTEGER := 0;
@@ -85,8 +84,7 @@ begin
 			     rdMEM       => rdMEM,
 			     wrMEM       => wrMEM,
 			     addrMEM     => addrMEM,
-			     dataMEM_in  => dataMEM_out,
-			     dataMEM_out => dataMEM_in
+			     dataMEM     => dataMEM
 		);
 
 	mainMemoryController : entity work.mainMemory
@@ -104,8 +102,7 @@ begin
 			addrMEM     => addrMEM,
 			rdMEM       => rdMEM,
 			wrMEM       => wrMEM,
-			dataMEM_in  => dataMEM_in,
-			dataMEM_out => dataMEM_out,
+			dataMEM  	=> dataMEM,
 			reset       => reset
 		);
 
@@ -121,6 +118,7 @@ begin
 	-- Generate reset for first two clock cycles
 	process
 	begin
+		dataMEM <= (others=>'Z');
 		reset <= '1';
 		wait for 4 ns;
 		reset <= '0';

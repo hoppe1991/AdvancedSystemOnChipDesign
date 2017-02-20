@@ -56,20 +56,19 @@ entity directMappedCache is
 		-- Reset signal to reset the cache.
 		reset            : in    STD_LOGIC;
 		addrCPU          : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0); -- Memory address from CPU is divided into block address and block offset.
-		dataCPU_in       : in    STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
-		dataCPU_out      : out   STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
-		dataMEM_in       : in STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0); -- Data from memory to cache or from cache to memory.
-		dataMEM_out      : out STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0); -- Data from memory to cache or from cache to memory.
-		cacheBlockLine_in : in STD_LOGIC_VECTOR( (BLOCKSIZE*DATA_WIDTH)-1 downto 0 );
-		cacheBlockLine_out : out STD_LOGIC_VECTOR( (BLOCKSIZE*DATA_WIDTH)-1 downto 0 );
+		dataCPU       	 : inout    STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
+		
+		
+		dataMEM          : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0); -- Data from memory to cache or from cache to memory.
+		cacheBlockLine 	 : inout STD_LOGIC_VECTOR( (BLOCKSIZE*DATA_WIDTH)-1 downto 0 ); 
 
-		wrCacheBlockLine : in    STD_LOGIC; -- Write signal identifies whether a complete cache block should be written into cache.
-		rd               : in    STD_LOGIC; -- Read signal identifies to read data from the cache.
-		wr               : in    STD_LOGIC; -- Write signal identifies to write data into the cache.
+		wrCBLine		 : in    STD_LOGIC; -- Write signal identifies whether a complete cache block should be written into cache.
+		rdCBLine		 : in	 STD_LOGIC; -- Read signal identifies whether a complete cache block should be read from cache.
+		rdWord           : in    STD_LOGIC; -- Read signal identifies to read data from the cache.
+		wrWord           : in    STD_LOGIC; -- Write signal identifies to write data into the cache.
 
 		valid            : inout STD_LOGIC; -- Identify whether the cache block/line contains valid content.
-		dirty_in         : in    STD_LOGIC; -- Identify whether the cache block/line is changed as against the main memory.
-		dirty_out        : out   STD_LOGIC; -- Identify whether the cache block/line is changed as against the main memory.
+		dirty         	 : inout    STD_LOGIC; -- Identify whether the cache block/line is changed as against the main memory.
 		setValid         : in    STD_LOGIC; -- Identify whether the valid bit should be set.
 		setDirty         : in    STD_LOGIC; -- Identify whether the dirty bit should be set.
 
@@ -93,14 +92,15 @@ architecture synth of directMappedCache is
 	-- Signal identifies whether a tag should be written ('1') to BRAM or should be read ('0') from BRAM.
 	signal writeToTagBRAM : STD_LOGIC := '0';
 
-	-- Cache block to be written into BRAM or to be read from BRAM.
-	signal cbBramIn  : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
-	signal cbBramOut : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
+	-- Cache block to be written into BRAM or to be read from BRAM. 
+	signal cbFromBram : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
+	signal cbToBram : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
  
 	signal writeToDataBRAM : STD_LOGIC := '0';
 	signal index : STD_LOGIC_VECTOR(DETERMINE_NR_BITS(ADDRESSWIDTH)-1 downto 0);
-	signal tagBRAM_in : STD_LOGIC_VECTOR(config.tagNrOfBits-1 downto 0);
-	signal tagBRAM_out : STD_LOGIC_VECTOR(config.tagNrOfBits-1 downto 0);
+	signal tagToBRAM : STD_LOGIC_VECTOR(config.tagNrOfBits-1 downto 0);
+	signal tagFromBRAM : STD_LOGIC_VECTOR(config.tagNrOfBits-1 downto 0);
+
 begin
 	
 	-- -----------------------------------------------------------------------------
@@ -118,31 +118,39 @@ begin
 		FILE_EXTENSION => FILE_EXTENSION
 		)
 	port map (
+		
+		-- Clock and reset signal.
 		clk => clk,
 		reset => reset,
-		
+		 
+		-- Ports regarding CPU and MEM.
 		addrCPU => addrCPU,
-		dataCPU_in => dataCPU_in,
-		dataCPU_out => dataCPU_out,
-		dataMEM_in => dataMEM_in,
-		dataMEM_out => dataMEM_out,
-		cacheBlockLine_in => cacheBlockLine_in,
-		cacheBlockLine_out => cacheBlockLine_out,
-		wrCacheBlockLine => wrCacheBlockLine,
-		rd => rd,
-		wr => wr,
+		dataCPU => dataCPU,
+		dataMEM => dataMEM, 
 		valid => valid,
-		dirty_in => dirty_in,
-		dirty_out => dirty_out,
+		dirty => dirty, 
 		setValid => setValid,
 		setDirty => setDirty,
 		hit => hit,
-		writeToTagBRAM => writeToTagBRAM,
+		
+		-- Ports defines how to read or write the data BRAM.
+		wrCBLine => wrCBLine,
+		rdCBLine => rdCBLine,
+		rdWord => rdWord,
+		wrWord => wrWord,
+		
+		-- Index determines to which line of BRAM should be written or read.
 		index => index,
-		tagBRAM_in => tagBRAM_in,
-		tagBRAM_out => tagBRAM_out,
-		cbBramIn => cbBramIn,
-		cbBramOut => cbBramOut,
+		
+		
+		-- Ports regarding BRAM tag.
+		tagFromBRAM => tagFromBRAM,
+		tagToBram => tagToBRAM,
+		writeToTagBRAM => writeToTagBRAM,
+		
+		-- Ports regarding BRAM data.
+		dataToBRAM => cbToBRAM,
+		dataFromBRAM => cbFromBRAM,
 		writeToDataBRAM => writeToDataBRAM
 	);
 	 
@@ -154,7 +162,7 @@ begin
 			        ADDR => config.indexNrOfBits,
 			        DATA => config.tagNrOfBits
 		)
-		port map(clk, writeToTagBRAM, index, tagBRAM_out, tagBRAM_in);
+		port map(clk, writeToTagBRAM, index, tagToBRAM, tagFromBRAM);
 
 	-- -----------------------------------------------------------------------------
 	-- The data area should be BRAM blocks.
@@ -165,6 +173,6 @@ begin
 			        DATA => config.cacheLineBits,
 			        MODE => WRITE_FIRST
 		)
-		port map(clk, writeToDataBRAM, index, cbBramIn, cbBramOut);
+		port map(clk, writeToDataBRAM, index, cbToBram, cbFromBram);
  
 end synth;

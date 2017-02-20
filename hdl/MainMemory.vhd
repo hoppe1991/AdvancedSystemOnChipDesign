@@ -45,8 +45,7 @@ entity mainMemory is
 		rdMEM       : in  STD_LOGIC;
 		wrMEM       : in  STD_LOGIC;
 		addrMEM     : in  STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0);
-		dataMEM_in  : in  STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
-		dataMEM_out : out STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
+		dataMEM  	: inout  STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0); 
 		reset       : in  STD_LOGIC
 	);
 end;
@@ -57,19 +56,17 @@ architecture rtl of mainMemory is
 	constant bramAddrWidth : INTEGER := 10;
 
 	-- Data word should be written to BRAM.
-	signal dataBRAM_in : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0) := (others => '0');
+	signal dataFromBRAM : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0) := (others => '0');
 
 	-- Data word should be read from BRAM.
-	signal dataBRAM_out : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0) := (others => '0');
+	signal dataToBRAM : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0) := (others => '0');
 
 	-- Signal identify whether a word should be written to BRAM ('1') or should be read from BRAM ('0').
 	signal writeToBRAM : STD_LOGIC := '0';
 
 	-- Bit string containing the address for the BRAM.
 	signal addrBram : STD_LOGIC_VECTOR(bramAddrWidth - 1 downto 0) := (others => '0');
-	
-	signal myTestOut : STD_LOGIC := '0';
- 
+	  
 begin
 	
 	bramMainMemory : entity work.bram   -- data memory
@@ -77,7 +74,7 @@ begin
 			        ADDR => bramAddrWidth,
 			        DATA => DATA_WIDTH
 		)
-		port map(clk, writeToBRAM, addrBram, dataBRAM_in, dataBRAM_out);
+		port map(clk, writeToBRAM, addrBram, dataToBRAM, dataFromBRAM);
 
 
 	mainMemoryContr: entity work.mainMemoryController
@@ -98,13 +95,11 @@ begin
 		rdMEM => rdMEM,
 		wrMEM => wrMEM,
 		addrMEM => addrMEM,
-		dataMEM_in => dataMEM_in,
-		dataMEM_out => dataMEM_out,
-		dataBRAM_in => dataBRAM_in,
-		dataBRAM_out => dataBRAM_out,
+		dataMEM => dataMEM,
+		dataFromBRAM => dataFromBRAM,
+		dataToBRAM => dataToBRAM,
 		writeToBRAM => writeToBRAM,
-		addrBRAM => addrBRAM,
-		myTestOut => myTestOut
+		addrBRAM => addrBRAM 
 	);
 
 end architecture;

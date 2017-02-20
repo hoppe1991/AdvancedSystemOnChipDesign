@@ -58,7 +58,8 @@ entity directMappedCacheController is
 		addrCPU          : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0); -- Memory address from CPU is divided into block address and block offset.
 		dataCPU_in       : in    STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
 		dataCPU_out      : out   STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
-		dataMEM          : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0); -- Data from memory to cache or from cache to memory.
+		dataMEM_in       : in STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0); -- Data from memory to cache or from cache to memory.
+		dataMEM_out      : out STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0); -- Data from memory to cache or from cache to memory.
 		cacheBlockLine_in : in STD_LOGIC_VECTOR( (BLOCKSIZE*DATA_WIDTH)-1 downto 0 );
 		cacheBlockLine_out : out STD_LOGIC_VECTOR( (BLOCKSIZE*DATA_WIDTH)-1 downto 0 );
 
@@ -186,7 +187,8 @@ begin
 	-- Determine whether a tag should be read or written.
 	-- -----------------------------------------------------------------------------
 
-	tagBRAM_out <= memoryAddress.tag when rd = '0' AND wr = '1' AND wrCacheBlockLine = '0' else memoryAddress.tag when rd = '0' AND wr = '0' AND wrCacheBlockLine = '1';
+	tagBRAM_out <= memoryAddress.tag when rd = '0' AND wr = '1' AND wrCacheBlockLine = '0' else 
+	               memoryAddress.tag when rd = '0' AND wr = '0' AND wrCacheBlockLine = '1';
 
 	-- -----------------------------------------------------------------------------
 	-- Determine the start index and end index of the correspondent word in the cache line.

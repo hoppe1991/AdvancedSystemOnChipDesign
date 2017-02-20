@@ -46,7 +46,8 @@ entity mainMemoryController is
 		dataBRAM_in : out STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
 		dataBRAM_out : in STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
 		writeToBRAM : out STD_LOGIC;
-		addrBram : out STD_LOGIC_VECTOR(BRAM_ADDR_WIDTH - 1 downto 0)
+		addrBram : out STD_LOGIC_VECTOR(BRAM_ADDR_WIDTH - 1 downto 0);
+		myTestOut : out STD_LOGIC
 	);
 end;
 
@@ -75,6 +76,8 @@ architecture synth of mainMemoryController is
 	
 	-- Bit string containing the input address modulo 16.
 	signal addrMEM_mod16        : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others => '0');
+	
+	signal dataMEM_out_tmp : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
 	 
 	-- Definition of possible states of the FSM.
 	type statetype is (
@@ -182,6 +185,10 @@ begin
 	dataBRAM_in            <= cacheBlockLine_in(counter) when counter >= 0  and counter < BLOCKSIZE;
  
 	-- Determine the output.
-	dataMEM_out <= BLOCK_LINE_TO_STD_LOGIC_VECTOR(cacheBlockLine_out);
+	--dataMEM_out <= BLOCK_LINE_TO_STD_LOGIC_VECTOR(cacheBlockLine_out);
+	dataMEM_out_tmp <= BLOCK_LINE_TO_STD_LOGIC_VECTOR( cacheBlockLine_out );
+	dataMEM_out <= dataMEM_out_tmp;
+	
+	myTestOut <= '1';
 
 end synth;

@@ -42,16 +42,19 @@ entity cache is
 		rdMEM       : out   STD_LOGIC;
 		wrMEM       : out   STD_LOGIC;
 		addrMEM     : out   STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0);
-		dataMEM     : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0)
+		dataMEM_in  : in STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0);
+		dataMEM_out : out STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0)
 	);
 end;
 
 architecture rtl of cache is
-	signal rd                 : STD_LOGIC := '0';
-	signal wr                 : STD_LOGIC := '0';
+	signal rdCache                 : STD_LOGIC := '0';
+	signal wrCache                 : STD_LOGIC := '0';
 	signal dirty_in           : STD_LOGIC := '0';
+	signal dirty : STD_LOGIC := '0';
 	signal setValid           : STD_LOGIC := '0';
 	signal setDirty           : STD_LOGIC := '0';
+	signal cacheBlockLine  : STD_LOGIC_VECTOR((BLOCKSIZE * DATA_WIDTH) - 1 downto 0);
 	signal cacheBlockLine_in  : STD_LOGIC_VECTOR((BLOCKSIZE * DATA_WIDTH) - 1 downto 0);
 	signal cacheBlockLine_out : STD_LOGIC_VECTOR((BLOCKSIZE * DATA_WIDTH) - 1 downto 0);
 	signal hit                : STD_LOGIC := '0';
@@ -60,10 +63,11 @@ architecture rtl of cache is
 	signal wrCacheBlockLine   : STD_LOGIC := '0';
 	signal dataCPU_in  		  : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
 	signal dataCPU_out 	      : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
-	
+	signal dataMEMcache : STD_LOGIC_VECTOR(BLOCKSIZE*DATA_WIDTH-1 downto 0);
+	signal dataCPUcache : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
 
 begin
-	myDirectMappedCache : work.directMappedCache
+	myDirectMappedCache : entity work.directMappedCache
 	generic map (
 		MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
 		DATA_WIDTH => DATA_WIDTH,
@@ -77,15 +81,17 @@ begin
 		port map(
 			clk                => clk,
 			reset              => reset,
+			
 			addrCPU            => addrCPU,
 			dataCPU_in         => dataCPU,
 			dataCPU_out        => dataCPU,
-			dataMEM            => dataMEM,
+			dataMEM_in         => dataMEM_in,
+			dataMEM_out		   => dataMEM_out,
 			cacheBlockLine_in  => cacheBlockLine_in,
 			cacheBlockLine_out => cacheBlockLine_out,
 			wrCacheBlockLine   => wrCacheBlockLine,
-			rd                 => rd,
-			wr                 => wr,
+			rd                 => rdCache,
+			wr                 => wrCache,
 			valid              => valid,
 			dirty_in           => dirty_in,
 			dirty_out          => dirty_out,
@@ -94,7 +100,7 @@ begin
 			hit                => hit
 		);
 		
-		cacheContr: work.cacheController
+		cacheContr: entity work.cacheController
 		generic map (
 			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
 			DATA_WIDTH => DATA_WIDTH,
@@ -103,21 +109,40 @@ begin
 			OFFSET => OFFSET
 		)
 		port map (
-			hitCounter => hitCounter,
-			missCounter => missCounter,
+			
+			-- Clock and reset signal.
 			clk => clk,
 			reset => reset,
+			
+			-- Ports regarding Direct Mapped Cache.
+			rdCache => rdCache,
+			wrCache => wrCache,
+			wrCacheLine => wrCacheBlockLine,
+			cacheBlockLine => cacheBlockLine,
+			valid => valid,
+			dirty => dirty,
+			setValid => setValid,
+			setDirty => setDirty,
+			hitFromCache => hit,
+			dataMEMcache => dataMEMcache,
+			dataCPUcache => dataCPUcache,
+		 
+			-- Ports regarding CPU.
+			hitCounter => hitCounter,
+			missCounter => missCounter,
 			stallCPU => stallCPU,
 			rdCPU => rdCPU,
 			wrCPU => wrCPU,
 			addrCPU => addrCPU,
-			dataCPU_in => dataCPU_in,
-			dataCPU_out => dataCPU_out,
+			dataCPU => dataCPU_in,
+			
+			-- Ports regarding MEM.
 			readyMEM => readyMEM,
 			rdMEM => rdMEM,
 			wrMEM => wrMEM,
 			addrMEM => addrMEM,
-			dataMEM => dataMEM
+			dataMEM_in => dataMEM_in,
+			dataMEM_out => dataMEM_out
 		);
 		
 end rtl;

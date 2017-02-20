@@ -36,7 +36,8 @@ architecture test of directMappedCache_tb is
 	signal dirty_out        : STD_LOGIC                                            := '0';
 	signal dirty_in         : STD_LOGIC                                            := '0';
 	signal hit              : STD_LOGIC                                            := '0';
-	signal dataMem          : STD_LOGIC_VECTOR(DATAWIDTH * BLOCKSIZE - 1 downto 0) := (others => '0');
+	signal dataMem_in       : STD_LOGIC_VECTOR(DATAWIDTH * BLOCKSIZE - 1 downto 0) := (others => '0');
+	signal dataMem_out      : STD_LOGIC_VECTOR(DATAWIDTH * BLOCKSIZE - 1 downto 0) := (others => '0');
 	signal wrCacheBlockLine : STD_LOGIC                                            := '0';
 	signal setValid         : STD_LOGIC                                            := '0';
 	signal setDirty         : STD_LOGIC                                            := '0';
@@ -147,7 +148,8 @@ begin
 			dataCPU_in         => dataCPU_in,
 			dataCPU_out        => dataCPU_out,
 			addrCPU            => addrCPU,
-			dataMem            => dataMem,
+			dataMem_in         => dataMem_in,
+			dataMem_out        => dataMem_out,
 			rd                 => rd,
 			wr                 => wr,
 			valid              => valid,

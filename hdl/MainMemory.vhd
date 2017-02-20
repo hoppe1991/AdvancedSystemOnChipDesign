@@ -67,6 +67,8 @@ architecture rtl of mainMemory is
 
 	-- Bit string containing the address for the BRAM.
 	signal addrBram : STD_LOGIC_VECTOR(bramAddrWidth - 1 downto 0) := (others => '0');
+	
+	signal myTestOut : STD_LOGIC := '0';
  
 begin
 	
@@ -101,7 +103,8 @@ begin
 		dataBRAM_in => dataBRAM_in,
 		dataBRAM_out => dataBRAM_out,
 		writeToBRAM => writeToBRAM,
-		addrBRAM => addrBRAM
+		addrBRAM => addrBRAM,
+		myTestOut => myTestOut
 	);
 
 end architecture;

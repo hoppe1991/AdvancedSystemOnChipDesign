@@ -57,7 +57,7 @@ architecture rtl of cache is
 	signal cacheBlockLine   : STD_LOGIC_VECTOR((BLOCKSIZE * DATA_WIDTH) - 1 downto 0);
 	signal hit              : STD_LOGIC := '0';
 	signal valid            : STD_LOGIC := '0';
-	signal wrCacheBlockLine : STD_LOGIC := '0'; 
+	signal wrCacheBlockLine : STD_LOGIC := '0';
 	signal dataMEMcache     : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
 	signal dataCPUcache     : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
 
@@ -106,9 +106,10 @@ begin
 			reset          => reset,
 
 			-- Ports regarding Direct Mapped Cache.
-			rdCache        => rdWord,
-			wrCache        => wrWord,
-			wrCacheLine    => wrCBLine, 
+			rdWord         => rdWord,
+			wrWord         => wrWord,
+			wrCBLine       => wrCBLine,
+			rdCBLine       => rdCBLine,
 			cacheBlockLine => cacheBlockLine,
 			valid          => valid,
 			dirty          => dirty,

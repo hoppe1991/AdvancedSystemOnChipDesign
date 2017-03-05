@@ -125,6 +125,7 @@ architecture synth of directMappedCacheController is
   	 
 	-- Bit string contains for each cache block the correspondent valid bit.
 	signal validBits : STD_LOGIC_VECTOR(ADDRESSWIDTH - 1 downto 0) := (others => '0');
+	signal validBitBuffer : STD_LOGIC := '0';
 
 	-- Bit string contains for each cache block the correspondent dirty bit.
 	-- 1 --> block line is modified, 0 --> block line is unmodified.
@@ -210,7 +211,15 @@ architecture synth of directMappedCacheController is
 		return b;
 	end function;
 	
-		
+	
+	function GET_VALIDBITS( index_in : in INTEGER; validBits_in : in STD_LOGIC_VECTOR(ADDRESSWIDTH - 1 downto 0)) return STD_LOGIC_VECTOR is
+		variable v : STD_LOGIC_VECTOR(ADDRESSWIDTH - 1 downto 0) := (others=>'0');
+	begin
+		v := validBits_in;
+		v(index_in) := '1';
+		return v;
+	end;
+	
 
 -----------------------------------------------------------------------------------
 begin
@@ -221,8 +230,8 @@ begin
 	-- -----------------------------------------------------------------------------
 	myCacheMode <= READ_DATA  when wrWord='0' AND rdWord='1' AND wrCBLine='0' AND rdCBLine='0' else 
 	 	           WRITE_DATA when wrWord='1' AND rdWord='0' AND wrCBLine='0' AND rdCBLine='0' else 
-	 	           READ_LINE  when rdWord='0' and wrWord='0' AND wrCBLine='1' AND rdCBLine='0' else
-	 	           WRITE_LINE when rdWord='0' AND wrWord='0' AND wrCBLine='0' AND rdCBLine='1' else 
+	 	           READ_LINE  when rdWord='0' and wrWord='0' AND wrCBLine='0' AND rdCBLine='1' else
+	 	           WRITE_LINE when rdWord='0' AND wrWord='0' AND wrCBLine='1' AND rdCBLine='0' else 
 	 	           NOTHING;
 
 	-- -----------------------------------------------------------------------------
@@ -234,7 +243,7 @@ begin
 	-- -----------------------------------------------------------------------------
 	-- Determine the valid bit.
 	-- -----------------------------------------------------------------------------
-	valid <= validBits(memoryAddress.indexAsInteger) when setValid = '0' and rising_edge(clk) else 
+	valid <= validBits(memoryAddress.indexAsInteger) when setValid = '0' else 
 	         'Z';
 	dirty <= dirtyBits(memoryAddress.indexAsInteger) when setDirty = '0' and rising_edge(clk) and reset = '0' else
 	         'Z';
@@ -243,26 +252,11 @@ begin
 	-- Reset the valid bits and the dirty bits when to reset.
 	-- Otherwise, set the correspondent dirty bit and valid bit.
 	-- -----------------------------------------------------------------------------
-	dirtyValidBits: process(clk, reset, memoryAddress.indexAsInteger, writeToDataBRAMs, setDirty)
-	begin
-		if rising_edge(clk) and reset='1' then
-			-- Reset the valid bits and dirty bits.
-			validBits <= (others=>'0');
-			dirtyBits <= (others=>'0');
-		else
-			
-			-- When write to data BRAM, then set the correspondent valid bit.
-		 	if (writeToDataBRAMs='1') then
-				validBits(memoryAddress.indexAsInteger) <= '1';
-			end if;
-			
-			-- When to set the dirty bit, update the correspondent dirty bit.
-			if (setDirty='1' and rising_edge(clk)) then
-				dirtyBits(memoryAddress.indexAsInteger) <= dirty;
-			end if;
-			
-		end if;
-	end process;
+	validBits <= (others=>'0') when rising_edge(clk) and reset='1' else
+				 GET_VALIDBITS(memoryAddress.indexAsInteger, validBits) when writeToDataBRAMs='1';
+	dirtyBits <= (others=>'0') when rising_edge(clk) and reset='1'; 
+	dirtyBits(memoryAddress.indexAsInteger) <= dirty when rising_edge(clk) and setDirty='1';
+
  
 	-- -----------------------------------------------------------------------------
 	-- Determine whether a cache block/line should be read or written.
@@ -287,11 +281,11 @@ begin
 	-- -----------------------------------------------------------------------------
 
 	blockLineToBRAM <= SET_BLOCK_LINE( blockLineFromBRAM, dataCPU, memoryAddress.offsetAsInteger ) when myCacheMode=WRITE_DATA else
+					   TO_CACHE_BLOCK_LINE( dataMEM ) when myCacheMode=WRITE_LINE else
 						blockLineFromBRAM;
 	blockLineFromBRAM <=  TO_CACHE_BLOCK_LINE( dataFromBRAM );
 	dataToBRAM <= TO_STD_LOGIC_VECTOR( blockLineToBRAM );
-
-
+ 
 	dataCPU <= blockLineFromBRAM(memoryAddress.offsetAsInteger) when myCacheMode=READ_DATA else
 		       (others=>'Z');
 
@@ -304,7 +298,7 @@ begin
 	 	                 '1' when myCacheMode=WRITE_DATA else 
 	 	                 '1' when myCacheMode=WRITE_LINE else
 	 	                 '0' when myCacheMode=READ_LINE else 
-	 	                 'U';
+	 	                 '0';
 	 writeToDataBRAM <= writeToDataBRAMs;
 	 writeToTagBRAM <= writeToDataBRAMs;
 	  

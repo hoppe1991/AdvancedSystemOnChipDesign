@@ -142,7 +142,6 @@ begin
 		-- Index determines to which line of BRAM should be written or read.
 		index => index,
 		
-		
 		-- Ports regarding BRAM tag.
 		tagFromBRAM => tagFromBRAM,
 		tagToBram => tagToBRAM,

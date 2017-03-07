@@ -93,4 +93,12 @@ The testbench should verify the behavior of the cache. Therefore, we look at dif
 \begin{description}
 	\item[Reset Cache I] If the cache is reset, then the miss counter and the hit counter are reset to zero.
 	\item[Reset Cache II] If the cache is reset, then all cache blocks/lines are invalid.
+	
+	\item[Read Cache, Line is Not Dirty] In dem zu lesenden Cacheblock befinden sich bereits gültige Daten. Die Daten sind nicht geändert gegenüber dem Hauptspeicher. Es wird nun erneut gelesen, wobei die Tags unterschiedlich sind. Daher wird aus dem Hauptspeicher in den Cache gelesen. Entsprechend wird das Stall-Signal auf 1 gesetzt und der Miss-Zähler erhöht.
+\item[Read Cache - Different Offset] Im ersten Lesebefehl wird aus einem Offset-Block aus einem Cacheblock gelesen. Beim nächsten Lesebefehl wird aus dem gleichen Cacheblock aus einem anderen Offset-Block gelesen. Entsprechend wird das Stall-Signal auf 1 gesetzt und der Miss-Zähler erhöht.
+\item[Read Cache - Line is Dirty] In dem zu lesenden Cacheblock befinden sich bereits gültige Daten. Die Daten sind geändert gegenüber dem Hauptspeicher. Es wird nun erneut gelesen, wobei die Tags unterschiedlich sind. Daher werden die Daten aus dem Cache zuvor in den Hauptspeicher zurückgeschrieben.
+\item[Write Cache - Invalid Cacheblocks] Zu Beginn sind alle Cacheblöcke invalid. Deshalb wird, wenn ein Cacheblock gelesen wird, aus dem Hauptspeicher gelesen. Entsprechend wird das Stall-Signal auf 1 gesetzt und der Miss-Counter erhöht.
+\item[Write Cache – Line is Dirty] In dem zu schreibenden Cacheblock befinden sich bereits gültige Daten. Die Daten sind gegenüber dem Hauptspeicher geändert. Es wird nun erneut geschrieben, wobei die Tags unterschiedlich sind. Daher werden die Daten aus dem Cache zuvor in den Hauptspeicher zurückgeschrieben.
+\item[Write Cache – Line Is Not Dirty] In dem zu schreibenden Cacheblock befinden sich bereits gültige Daten. Die Daten sind gegenüber dem Hauptspeicher nicht geändert. Es wird nun erneut in den Cacheblock geschrieben, wobei die Tags unterschiedlich sind. Daher werden die neuen Daten direkt in den Cache geschrieben.
+
 \end{description}

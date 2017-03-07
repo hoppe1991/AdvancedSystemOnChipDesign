@@ -5,14 +5,25 @@ imem/*.cache
 # Ignore all .dmem files in folder dmem.
 dmem/*.dmem
 
-doc/task4_caches/*.lof
-doc/task4_caches/*.log
-doc/task4_caches/*.lot
-doc/task4_caches/*.aux
-doc/task4_caches/*.bbl
-doc/task4_caches/*.blg
-doc/task4_caches/*.lol
-doc/task4_caches/*.out
-doc/task4_caches/*.xml
-doc/task4_caches/*.gz
-doc/task4_caches/*.toc
+doc/*.lof
+doc/*.log
+doc/*.lot
+doc/*.aux
+doc/*.bbl
+doc/*.blg
+doc/*.lol
+doc/*.out
+doc/*.xml
+doc/*.gz
+doc/*.toc
+
+
+
+
+.library_mapping.xml
+.metadata/
+.project
+.settings/
+Backup/
+Literature/
+RemoteSystemsTempFiles/       

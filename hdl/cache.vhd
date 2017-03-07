@@ -47,19 +47,33 @@ entity cache is
 end;
 
 architecture rtl of cache is
+	
+	-- Signal identifies whether to read a single data word from cache block line.
 	signal rdWord           : STD_LOGIC := '0';
+	
+	-- Signal identifies whether to write a single data word to cache block line.
 	signal wrWord           : STD_LOGIC := '0';
+	
+	-- Signal identifies whether to read a complete cache block line.
 	signal rdCBLine         : STD_LOGIC := '0';
+	
+	-- Signal identifies whether to write a complete cache block line.
 	signal wrCBLine         : STD_LOGIC := '0';
+	
+	-- Signal identifies whether a cache block line is dirty or not.
 	signal dirty            : STD_LOGIC := '0';
-	signal setValid         : STD_LOGIC := '0';
-	signal setDirty         : STD_LOGIC := '0';
-	signal cacheBlockLine   : STD_LOGIC_VECTOR((BLOCKSIZE * DATA_WIDTH) - 1 downto 0);
-	signal hit              : STD_LOGIC := '0';
+	
+	-- Signal identifies whether a cache block line is valid or not.
 	signal valid            : STD_LOGIC := '0';
-	signal wrCacheBlockLine : STD_LOGIC := '0';
-	signal dataMEMcache     : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
-	signal dataCPUcache     : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
+	
+	-- Signal identifies whether the valid bit of a cache block line should be updated.
+	signal setValid         : STD_LOGIC := '0';
+	
+	-- Signal identifies whether the dirty bit of a cache block line should be updated.
+	signal setDirty         : STD_LOGIC := '0';
+	
+	-- Signal identifies whether a cache hit or cache miss is reached.
+	signal hit              : STD_LOGIC := '0'; 
 
 begin
 	direct_mapped_cache : entity work.directMappedCache
@@ -79,7 +93,6 @@ begin
 			addrCPU        => addrCPU,
 			dataCPU        => dataCPU,
 			dataMEM        => dataMEM,
-			cacheBlockLine => cacheBlockLine,
 			rdCBLine       => rdCBLine,
 			wrCBLine       => wrCBLine,
 			rdWord         => rdWord,
@@ -110,14 +123,11 @@ begin
 			wrWord         => wrWord,
 			wrCBLine       => wrCBLine,
 			rdCBLine       => rdCBLine,
-			cacheBlockLine => cacheBlockLine,
 			valid          => valid,
 			dirty          => dirty,
 			setValid       => setValid,
 			setDirty       => setDirty,
 			hitFromCache   => hit,
-			dataMEMcache   => dataMEMcache,
-			dataCPUcache   => dataCPUcache,
 
 			-- Ports regarding CPU.
 			hitCounter     => hitCounter,

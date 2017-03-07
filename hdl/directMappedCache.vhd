@@ -59,7 +59,6 @@ entity directMappedCache is
 		dataCPU       	 : inout    STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0); -- Data from CPU to cache or from cache to CPU.
 		
 		dataMEM          : inout STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0); -- Data to read from memory to cache or written from cache to memory.
-		cacheBlockLine 	 : inout STD_LOGIC_VECTOR((BLOCKSIZE*DATA_WIDTH)-1 downto 0); -- TODO Unused signal.
 
 		wrCBLine		 : in    STD_LOGIC; -- Write signal identifies whether a complete cache block should be written into cache.
 		rdCBLine		 : in	 STD_LOGIC; -- Read signal identifies whether a complete cache block should be read from cache.
@@ -67,7 +66,7 @@ entity directMappedCache is
 		wrWord           : in    STD_LOGIC; -- Write signal identifies to write data into the cache.
 
 		valid            : inout STD_LOGIC; -- Identify whether the cache block/line contains valid content.
-		dirty         	 : inout    STD_LOGIC; -- Identify whether the cache block/line is changed as against the main memory.
+		dirty         	 : inout STD_LOGIC; -- Identify whether the cache block/line is changed as against the main memory.
 		setValid         : in    STD_LOGIC; -- Identify whether the valid bit should be set.
 		setDirty         : in    STD_LOGIC; -- Identify whether the dirty bit should be set.
 

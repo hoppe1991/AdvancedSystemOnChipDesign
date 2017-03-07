@@ -33,23 +33,20 @@ entity cacheController is
 		wrWord 		: out 	STD_LOGIC; 	-- Signal indicates whether to write to Direct Mapped Cache.
 		wrCBLine 	: out 	STD_LOGIC;	-- Signal indicates whether to write cache block line to Direct Mapped Cache.
 		rdCBLine	: out   STD_LOGIC;  -- Signal indicates whether to read a complete block line from Direct Mapped Cache.
-		cacheBlockLine 	: inout STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0);
 		valid 			: inout STD_LOGIC; 	-- Valid bit from Direct Mapped Cache.
 		dirty 			: inout STD_LOGIC;
 		setValid 		: out 	STD_LOGIC;	-- Indicates whether to reset the valid bit of Direct Mapped Cache.
 		setDirty 		: out 	STD_LOGIC;	-- Indicates whether to set the dirty bit of Direct Mapped Cache.
 		hitFromCache 	: in 	STD_LOGIC;
-		dataMEMcache 	: inout STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0);
-		dataCPUcache 	: inout STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
-		 
+		   
 		-- Ports regarding to CPU.
-		hitCounter  : out   INTEGER;
-		missCounter : out   INTEGER;
-		stallCPU    : out   STD_LOGIC;
-		rdCPU       : in    STD_LOGIC;
-		wrCPU       : in    STD_LOGIC;
-		addrCPU     : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0);
-		dataCPU  : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
+		hitCounter  : out   INTEGER; -- Counter stores the number of cache hits.
+		missCounter : out   INTEGER; -- Counter stores the number of cache misses.
+		stallCPU    : out   STD_LOGIC; -- Signal identifies whether to stall the CPU or not.
+		rdCPU       : in    STD_LOGIC; -- Read signal from CPU.
+		wrCPU       : in    STD_LOGIC; -- Write signal from CPU.
+		addrCPU     : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0); -- Address signal from CPU.
+		dataCPU     : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data signal from/to CPU.
 		
 		-- Ports regarding MEM.
 		readyMEM    : in    STD_LOGIC;
@@ -79,15 +76,19 @@ architecture synth of cacheController is
   	end function;
   
 
+	-- Definition of auxiliary functions.
 	function BLOCK_LINE_TO_STD_LOGIC_VECTOR(ARG : in BLOCK_LINE) return STD_LOGIC_VECTOR;
 	function STD_LOGIC_VECTOR_TO_BLOCK_LINE(ARG : in STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0)) return BLOCK_LINE;
-
-	-- Block line from/to cache.
-	signal blockLineCache : BLOCK_LINE := InitBlockLine;
-	
-	-- Block line from/to main memory.
-	signal blockLineMEM   : BLOCK_LINE := InitBlockLine;
-
+--	function REPLACE_OFFSET_DATA_IN_BLOCK_LINE( blockLine : in BLOCK_LINE;
+--				   data : in STD_LOGIC_VECTOR(DATAWIDTH-1 downto 0); 
+--				   offset : in STD_LOGIC_VECTOR(config.offsetNrOfBits-1 downto 0)
+--	) return BLOCK_LINE;
+--	function REPLACE_OFFSET_DATA_IN_BLOCK_LINE( blockLine : in STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0);
+--		data : in STD_LOGIC_VECTOR(DATAWIDTH-1 downto 0);
+--		offset : in STD_LOGIC_VECTOR(config.offsetNrOfBits-1 downto 0)
+--	) return BLOCK_LINE;
+--		
+		 
 	-- Declaration of states.
 	type statetype is (
 		IDLE,
@@ -129,33 +130,43 @@ architecture synth of cacheController is
 	signal lineIsNotDirty : STD_LOGIC := '0';
 	signal lineIsDirty    : STD_LOGIC := '0';
 
-	function CREATE_NEW_BLOCK_LINE( blockLine : in BLOCK_LINE;
-				   data : in STD_LOGIC_VECTOR(DATAWIDTH-1 downto 0); 
-				   offset : in STD_LOGIC_VECTOR(config.offsetNrOfBits-1 downto 0)
-	) return BLOCK_LINE is
-		variable b : BLOCK_LINE;
-	begin
-		for I in 0 to BLOCKSIZE-1 loop
-			if (I = TO_INTEGER(UNSIGNED(offset))) then
-				b(I) := data;
-			else
-				b(I) := blockLine(I);
-			end if;
-		end loop;
-		return b;
-	end;
-	
-	function CREATE_NEW_BLOCK_LINE( blockLine : in STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0);
-		data : in STD_LOGIC_VECTOR(DATAWIDTH-1 downto 0);
-		offset : in STD_LOGIC_VECTOR(config.offsetNrOfBits-1 downto 0)
-	) return BLOCK_LINE is
-		variable b : BLOCK_LINE;
-		variable t : BLOCK_LINE;
-	begin
-		t := STD_LOGIC_VECTOR_TO_BLOCK_LINE( blockLine );
-		b := CREATE_NEW_BLOCK_LINE( t, data, offset );
-		return b;
-	end;
+--	-- ----------------------------------------------------------------------------------------
+--	-- This function REPLACE_OFFSET_DATA_IN_BLOCK_LINE creates a new cache block line 
+--	-- by using the given cache block line vector and 
+--	-- replacing the correspondent offset block by the given data vector.
+--	-- ----------------------------------------------------------------------------------------
+--	function REPLACE_OFFSET_DATA_IN_BLOCK_LINE( blockLine : in BLOCK_LINE;
+--				   data : in STD_LOGIC_VECTOR(DATAWIDTH-1 downto 0); 
+--				   offset : in STD_LOGIC_VECTOR(config.offsetNrOfBits-1 downto 0)
+--	) return BLOCK_LINE is
+--		variable b : BLOCK_LINE;
+--	begin
+--		for I in 0 to BLOCKSIZE-1 loop
+--			if (I = TO_INTEGER(UNSIGNED(offset))) then
+--				b(I) := data;
+--			else
+--				b(I) := blockLine(I);
+--			end if;
+--		end loop;
+--		return b;
+--	end;
+--	
+--	-- ----------------------------------------------------------------------------------------
+--	-- This function REPLACE_OFFSET_DATA_IN_BLOCK_LINE creates a new cache block line 
+--	-- by using the given cache block line vector and 
+--	-- replacing the correspondent offset block by the given data vector.
+--	-- ----------------------------------------------------------------------------------------
+--	function REPLACE_OFFSET_DATA_IN_BLOCK_LINE( blockLine : in STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0);
+--		data : in STD_LOGIC_VECTOR(DATAWIDTH-1 downto 0);
+--		offset : in STD_LOGIC_VECTOR(config.offsetNrOfBits-1 downto 0)
+--	) return BLOCK_LINE is
+--		variable b : BLOCK_LINE;
+--		variable t : BLOCK_LINE;
+--	begin
+--		t := STD_LOGIC_VECTOR_TO_BLOCK_LINE( blockLine );
+--		b := REPLACE_OFFSET_DATA_IN_BLOCK_LINE( t, data, offset );
+--		return b;
+--	end;
 
 	-- Returns the given BLOCK_LINE as a STD_LOGIC_VECTOR. 
 	function BLOCK_LINE_TO_STD_LOGIC_VECTOR(ARG : in BLOCK_LINE) return STD_LOGIC_VECTOR is
@@ -349,17 +360,10 @@ begin
 	            '1' when (state = WRITE and readyMEM = '1') else 
 	            '0';
 	
-	-- Data word to MEM.
-	blockLineCache <= CREATE_NEW_BLOCK_LINE(cacheBlockLine, dataCPUcache, adddressCPU.offset);
-	cacheBlockLine <= BLOCK_LINE_TO_STD_LOGIC_VECTOR( blockLineCache ) when (state=CHECK1 and hitFromCache='1');
- 
-	-- Determine the read block line.
-	blockLineCache    <= STD_LOGIC_VECTOR_TO_BLOCK_LINE(cacheBlockLine);
-	dataMEM           <= cacheBlockLine when (state = CHECK1 and lineIsDirty = '1') else
+	-- Determine the data word to be written to Main Memory.
+	dataMEM           <= dataMEM when (state=CHECK1 and lineIsDirty='1') else
 						 (others=>'Z');
-	blockLineMEM      <= STD_LOGIC_VECTOR_TO_BLOCK_LINE(dataMEM);
-	cacheBlockLine 	  <= dataMEM;
-
+	
 	-- Data CPU output.
-	dataCPUcache <= directMappedCache_data_out when (hitFromCache='1' and state = CHECK2);
+	dataCPU <= directMappedCache_data_out when (hitFromCache='1' and state = CHECK2);
 end synth;

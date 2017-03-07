@@ -40,7 +40,7 @@ architecture tests of cache_tb is
 	procedure VALIDATE_SIGNAL( signalName : in STRING; currentValue : in STD_LOGIC; expectedValue : in STD_LOGIC );
 	
 	-- Report mode indicates whether all reports will be printed to console.
-	signal report_mode : STD_LOGIC := '1';
+	signal report_mode : STD_LOGIC := '0';
 		
 	signal clk, reset, memwrite : STD_LOGIC := '0';
 
@@ -353,7 +353,7 @@ begin
 		-- --------------------------------------------------------------------------------------
 		-- Test 4 - Read Cache. Different Offset.
 		-- --------------------------------------------------------------------------------------
-		PRINT_START_TEST(3); 
+		PRINT_START_TEST(4); 
 		for L in 0 to ADDRESSWIDTH-1 loop
 			for O in 0 to BLOCKSIZE-1 loop
 				-- Read from another offset block.

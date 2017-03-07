@@ -55,12 +55,11 @@ entity directMappedCache is
 
 		-- Reset signal to reset the cache.
 		reset            : in    STD_LOGIC;
-		addrCPU          : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0); -- Memory address from CPU is divided into block address and block offset.
-		dataCPU       	 : inout    STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
+		addrCPU          : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0); -- Memory address from CPU is divided into block address and block offset.
+		dataCPU       	 : inout    STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0); -- Data from CPU to cache or from cache to CPU.
 		
-		
-		dataMEM          : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0); -- Data from memory to cache or from cache to memory.
-		cacheBlockLine 	 : inout STD_LOGIC_VECTOR( (BLOCKSIZE*DATA_WIDTH)-1 downto 0 ); 
+		dataMEM          : inout STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0); -- Data to read from memory to cache or written from cache to memory.
+		cacheBlockLine 	 : inout STD_LOGIC_VECTOR((BLOCKSIZE*DATA_WIDTH)-1 downto 0); -- TODO Unused signal.
 
 		wrCBLine		 : in    STD_LOGIC; -- Write signal identifies whether a complete cache block should be written into cache.
 		rdCBLine		 : in	 STD_LOGIC; -- Read signal identifies whether a complete cache block should be read from cache.
@@ -77,34 +76,54 @@ entity directMappedCache is
 
 end;
 
+
+-- =============================================================================
+-- Example of memory address:
+-- 
 --  31  ...             10   9   ...             2   1  ...         0
 -- +-----------------------+-----------------------+------------------+
 -- | Tag                   | Index                 | Offset           |
 -- +-----------------------+-----------------------+------------------+
+--
+
+-- =============================================================================
 
 
 -- =============================================================================
 -- Definition of architecture.
 -- =============================================================================
 architecture synth of directMappedCache is
+	
+	-- Configuration stores the number of bits regarding the index, offset and tag.
 	constant config : CONFIG_BITS_WIDTH := GET_CONFIG_BITS_WIDTH(ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET);
 
+	-- Index identifies the line in the BRAMs.
+	signal index : STD_LOGIC_VECTOR(DETERMINE_NR_BITS(ADDRESSWIDTH)-1 downto 0);
+	
 	-- Signal identifies whether a tag should be written ('1') to BRAM or should be read ('0') from BRAM.
 	signal writeToTagBRAM : STD_LOGIC := '0';
 
-	-- Cache block to be written into BRAM or to be read from BRAM. 
+	-- Cache block to be read from BRAM. 
 	signal cbFromBram : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
+	
+	-- Cache block to be written into BRAM.
 	signal cbToBram : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
  
+    -- Signal identifies whether a cache block should be written ('1') to BRAM or should be read ('0') from BRAM.
 	signal writeToDataBRAM : STD_LOGIC := '0';
-	signal index : STD_LOGIC_VECTOR(DETERMINE_NR_BITS(ADDRESSWIDTH)-1 downto 0);
-	signal tagToBRAM : STD_LOGIC_VECTOR(config.tagNrOfBits-1 downto 0);
+	
+	-- Tag to be read from BRAM.
 	signal tagFromBRAM : STD_LOGIC_VECTOR(config.tagNrOfBits-1 downto 0);
-
+	
+	-- Tag to be written into BRAM.
+	signal tagToBRAM : STD_LOGIC_VECTOR(config.tagNrOfBits-1 downto 0);
+	
 begin
 	
 	-- -----------------------------------------------------------------------------
-	-- The tag area should be BRAM blocks.
+	-- The direct mapped cache controller handles the read and write operations
+	-- to the tag BRAM and data BRAM. Also, it stores whether a block line is
+	-- dirty or not as well as whether it is valid or invalid. 
 	-- -----------------------------------------------------------------------------
 	 DirectMappedCacheCont: entity work.directMappedCacheController
 	 	generic map (
@@ -156,7 +175,7 @@ begin
 	-- -----------------------------------------------------------------------------
 	-- The tag area should be BRAM blocks.
 	-- -----------------------------------------------------------------------------
-	BRAMtag : entity work.bram          -- data memory
+	BRAM_Tag : entity work.bram
 		generic map(INIT => (TAG_FILENAME & FILE_EXTENSION),
 			        ADDR => config.indexNrOfBits,
 			        DATA => config.tagNrOfBits
@@ -166,7 +185,7 @@ begin
 	-- -----------------------------------------------------------------------------
 	-- The data area should be BRAM blocks.
 	-- -----------------------------------------------------------------------------
-	BRAMdata : entity work.bram         -- data memory
+	BRAM_Data : entity work.bram
 		generic map(INIT => (DATA_FILENAME & FILE_EXTENSION),
 			        ADDR => config.indexNrOfBits,
 			        DATA => config.cacheLineBits,

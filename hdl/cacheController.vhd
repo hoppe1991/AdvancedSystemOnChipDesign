@@ -122,9 +122,6 @@ architecture synth of cacheController is
 	signal rHitCounter  : INTEGER := 0; -- Hit counter.
 	signal rMissCounter : INTEGER := 0; -- Miss counter. 
 	
-	-- Current value of the dirty bit.
-	signal dirty_out : STD_LOGIC := '0';
-	
 	signal directMappedCache_data_out : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0) := (others => '0');
 
 	-- Auxiliary signals.

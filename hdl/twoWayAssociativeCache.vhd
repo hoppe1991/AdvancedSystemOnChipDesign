@@ -103,6 +103,39 @@ begin
 			reset => reset
 		);
 
+	GEN1 : for I in 1 to 2 generate
+	GEN1_I: entity work.directMappedCache
+		generic map ( 
+			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
+			DATA_WIDTH           => DATA_WIDTH,
+			ADDRESSWIDTH         => ADDRESSWIDTH,
+			BLOCKSIZE            => BLOCKSIZE_CACHE,
+			OFFSET               => OFFSET,
+			TAG_FILENAME         => TAG_FILENAME,
+			DATA_FILENAME        => DATA_FILENAME,
+			FILE_EXTENSION       => FILE_EXTENSION
+		)
+		port map(
+			clk            => clk,
+			reset          => reset,
+			addrCPU        => addrCPU,
+			dataCPU        => dataCPU,
+			dataMEM        => dataMEM,
+			cacheBlockLine => cacheBlockLine,
+			wrCBLine       => wrCBLine,
+			rdCBLine       => rdCBLine,
+			rdWord         => rdWord,
+			wrWord         => wrWord,
+			valid          => valid,
+			dirty          => dirty,
+			setValid       => setValid,
+			setDirty       => setDirty,
+			hit            => hit
+		);
+		end generate GEN1;
+		
+
+
 	-- -----------------------------------------------------------------------------
 	-- First Direct Mapped Cache.
 	-- -----------------------------------------------------------------------------

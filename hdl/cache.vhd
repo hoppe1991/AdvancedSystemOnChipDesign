@@ -62,7 +62,7 @@ architecture rtl of cache is
 	signal dataCPUcache     : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
 
 begin
-	myDirectMappedCache : entity work.directMappedCache
+	direct_mapped_cache : entity work.directMappedCache
 		generic map(
 			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
 			DATA_WIDTH           => DATA_WIDTH,
@@ -91,7 +91,7 @@ begin
 			hit            => hit
 		);
 
-	cacheContr : entity work.cacheController
+	cache_controller : entity work.cacheController
 		generic map(
 			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
 			DATA_WIDTH           => DATA_WIDTH,

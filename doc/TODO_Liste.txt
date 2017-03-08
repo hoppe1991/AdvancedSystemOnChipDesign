@@ -1,0 +1,11 @@
+TODO Liste
+Treffen 08.03.2017
+--------------------------------------------
+
+1. [Task 4, Cache] Beantwortung der Fragen 2.1 in der Dokumentation.
+	a) Why are there so many different stoarage types?
+	b) What are the advantages and disadvantages of different cache organization forms?
+
+2. [Task 4, Cache] Wolfgang fragen, was ist mit n-way caches gemeint?
+
+3. [Task 4, Cache] Aktualisierung der Finite State Machine.

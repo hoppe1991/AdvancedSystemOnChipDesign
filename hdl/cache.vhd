@@ -60,6 +60,12 @@ architecture rtl of cache is
 	-- Signal identifies whether to write a complete cache block line.
 	signal wrCBLine         : STD_LOGIC := '0';
 	
+	-- Signal identifies whether to write or read from cache.
+	signal writeMode	    : STD_LOGIC := '0';
+	
+	-- Control signal identifies whether a new cache block line should be written into cache.
+	signal wrNewCBLine : STD_LOGIC := '0';
+	
 	-- Signal identifies whether a cache block line is dirty or not.
 	signal dirty            : STD_LOGIC := '0';
 	
@@ -74,8 +80,14 @@ architecture rtl of cache is
 	
 	-- Signal identifies whether a cache hit or cache miss is reached.
 	signal hit              : STD_LOGIC := '0'; 
+	
+	-- New cache block line will be written into cache.
+	signal newCacheBlockLine : STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0) := (others=>'0');
+	
 
 begin
+	dataCPU <= (others=>'Z');
+	
 	direct_mapped_cache : entity work.directMappedCache
 		generic map(
 			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
@@ -95,8 +107,11 @@ begin
 			dataMEM        => dataMEM,
 			rdCBLine       => rdCBLine,
 			wrCBLine       => wrCBLine,
+			newCacheBlockLine => newCacheBlockLine,
+			wrNewCBLine	   => wrNewCBLine,
 			rdWord         => rdWord,
 			wrWord         => wrWord,
+			writeMode	   => writeMode,
 			valid          => valid,
 			dirty          => dirty,
 			setValid       => setValid,
@@ -119,15 +134,18 @@ begin
 			reset          => reset,
 
 			-- Ports regarding Direct Mapped Cache.
+			wrNewCBLine	   => wrNewCBLine,
 			rdWord         => rdWord,
 			wrWord         => wrWord,
 			wrCBLine       => wrCBLine,
 			rdCBLine       => rdCBLine,
+			writeMode	   => writeMode,
 			valid          => valid,
 			dirty          => dirty,
 			setValid       => setValid,
 			setDirty       => setDirty,
 			hitFromCache   => hit,
+			newCacheBlockLine => newCacheBlockLine,
 
 			-- Ports regarding CPU.
 			hitCounter     => hitCounter,

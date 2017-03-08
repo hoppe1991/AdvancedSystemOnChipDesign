@@ -37,6 +37,7 @@ architecture test of directMappedCache_tb is
 	signal dataMem          : STD_LOGIC_VECTOR(DATAWIDTH * BLOCKSIZE - 1 downto 0) := (others => '0');
 	signal wrCBLine : STD_LOGIC                                            := '0';
 	signal rdCBLine : STD_LOGIC := '0';
+	signal writeMode : STD_LOGIC := '0';
 	signal setValid         : STD_LOGIC                                            := '0';
 	signal setDirty         : STD_LOGIC                                            := '0';
 	signal cacheBlockLine  : STD_LOGIC_VECTOR((BLOCKSIZE * DATA_WIDTH) - 1 downto 0);
@@ -142,25 +143,26 @@ begin
 		)
 		port map(
 			-- Clock and reset signal.
-			clk                => clk,
-			reset              => reset,
+			clk			=> clk,
+			reset		=> reset,
 			
-			dataCPU            => dataCPU,
-			addrCPU            => addrCPU,
+			dataCPU		=> dataCPU,
+			addrCPU		=> addrCPU,
 			
-			dataMem            => dataMem,
+			dataMem		=> dataMem,
 			
-			rdWord                 => rd,
-			wrWord                 => wr,
-			wrCBLine   			   => wrCBLine,
-			rdCBLine 			   => rdCBLine,
+			rdWord		=> rd,
+			wrWord		=> wr,
+			wrCBLine	=> wrCBLine,
+			rdCBLine 	=> rdCBLine,
+			writeMode	=> writeMode,
 			
-			valid              => valid,
-			dirty           	=> dirty, 
-			setValid           => setValid,
-			setDirty           => setDirty,
+			valid       => valid,
+			dirty       => dirty, 
+			setValid    => setValid,
+			setDirty    => setDirty,
 			
-			hit                => hit
+			hit         => hit
 		);
 
 	-- -----------------------------------------------------------------------------

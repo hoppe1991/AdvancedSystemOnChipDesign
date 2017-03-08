@@ -11,10 +11,6 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity mainMemoryController is
 	generic(
-
-		-- Number of cache blocks.
-		ADDRESSWIDTH         : INTEGER := 256;
-
 		-- Width of bit string containing the memory address. 
 		MEMORY_ADDRESS_WIDTH : INTEGER := 32;
 
@@ -25,13 +21,7 @@ entity mainMemoryController is
 		DATA_WIDTH           : INTEGER := 32;
 		
 		-- Width of BRAM address (10 <=> Compare code in file mips.vhd).
-		BRAM_ADDR_WIDTH 	: INTEGER := 10;
-
-		-- File extension regarding BRAM.
-		FILE_EXTENSION       : STRING  := ".imem";
-
-		-- Filename regarding regarding BRAM.
-		DATA_FILENAME        : STRING  := "../imem/mainMemory"
+		BRAM_ADDR_WIDTH 	: INTEGER := 10
 	);
 
 	port(
@@ -75,6 +65,7 @@ architecture synth of mainMemoryController is
 	-- Bit string containing the input address modulo 16.
 	signal addrMEM_mod16        : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others => '0');
 	
+	-- Auxiliary signal to determine the data to MEM.
 	signal dataMEM_out_tmp : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
 	 
 	-- Definition of possible states of the FSM.

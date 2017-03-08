@@ -42,7 +42,7 @@ architecture tests of cache_tb is
 	-- Report mode indicates whether all reports will be printed to console.
 	signal report_mode : STD_LOGIC := '0';
 		
-	signal clk, reset, memwrite : STD_LOGIC := '0';
+	signal clk, reset : STD_LOGIC := '0';
 
 	signal stallCPU : STD_LOGIC                                             := '0';
 	signal rdCPU    : STD_LOGIC                                             := '0';
@@ -259,10 +259,11 @@ begin
 	-- ------------------------------------------------------------------------------------------
 	testProcess: process
 	begin
-
+		
 		-- --------------------------------------------------------------------------------------
 		-- Reset the cache.
 		-- --------------------------------------------------------------------------------------
+		dataCPU <= (others=>'Z');
 		dataMEM <= (others=>'Z');
 		reset 	<= '1';
 		wait for 5 ns;
@@ -376,13 +377,14 @@ begin
 		reset <= '1';
 		rdCPU <= '0';
 		wrCPU <= '0';
+		dataCPU <= (others=>'Z');
 		wait until rising_edge(clk);
 		reset <= '0';
 		wait until rising_edge(clk);
 		VALIDATE_SIGNALS(stallCPU, '0', missCounter, 0, hitCounter, 0);
 		tagI <= 0;
 		offsetI <= 0;
-		dataCPU <= (others=>'0');
+		dataCPU <= (others=>'1');
 		for L in 0 to ADDRESSWIDTH-1 loop
 			wrCPU <= '1';
 			rdCPU <= '0';
@@ -403,7 +405,7 @@ begin
 			PRINT_HITCOUNTER( hitCounter, missCounter );
 		end loop;
 		PRINT_END_TEST(6);
-		
+		report "---" severity FAILURE;
 		
 		 
 		-- --------------------------------------------------------------------------------------

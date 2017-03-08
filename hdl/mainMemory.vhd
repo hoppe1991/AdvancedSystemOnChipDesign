@@ -18,9 +18,6 @@ use work.casts.all;
 entity mainMemory is
 	generic(
 
-		-- Number of cache blocks.
-		ADDRESSWIDTH         : INTEGER := 256;
-
 		-- Width of bit string containing the memory address. 
 		MEMORY_ADDRESS_WIDTH : INTEGER := 32;
 
@@ -69,7 +66,10 @@ architecture rtl of mainMemory is
 	  
 begin
 	
-	bramMainMemory : entity work.bram   -- data memory
+	-- ------------------------------------------------------------------------------------------------
+	-- BRAM stores the data.
+	-- ------------------------------------------------------------------------------------------------
+	BRAM_main_memory : entity work.bram
 		generic map(INIT => (DATA_FILENAME & FILE_EXTENSION),
 			        ADDR => bramAddrWidth,
 			        DATA => DATA_WIDTH
@@ -77,16 +77,15 @@ begin
 		port map(clk, writeToBRAM, addrBram, dataToBRAM, dataFromBRAM);
 
 
-	mainMemoryContr: entity work.mainMemoryController
+	-- ------------------------------------------------------------------------------------------------
+	-- Controller handles the read and write operations to BRAM.
+	-- ------------------------------------------------------------------------------------------------
+	controller_main_Memory: entity work.mainMemoryController
 	generic map (
-
-		ADDRESSWIDTH => ADDRESSWIDTH,
 		MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
 		BLOCKSIZE => BLOCKSIZE,
 		DATA_WIDTH => DATA_WIDTH,
-		BRAM_ADDR_WIDTH => BRAM_ADDR_WIDTH,
-		FILE_EXTENSION => FILE_EXTENSION,
-		DATA_FILENAME => DATA_FILENAME
+		BRAM_ADDR_WIDTH => BRAM_ADDR_WIDTH
 	)
 	port map (
 		clk => clk,

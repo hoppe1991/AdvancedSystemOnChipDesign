@@ -58,12 +58,15 @@ entity directMappedCache is
 		addrCPU          : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0); -- Memory address from CPU is divided into block address and block offset.
 		dataCPU       	 : inout    STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0); -- Data from CPU to cache or from cache to CPU.
 		
+		newCacheBlockLine : in STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0); -- New cache block line.
 		dataMEM          : inout STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0); -- Data to read from memory to cache or written from cache to memory.
 
+		wrNewCBLine		 : in    STD_LOGIC; -- Control signal identifies whether a new cache block line should be written into cache.
 		wrCBLine		 : in    STD_LOGIC; -- Write signal identifies whether a complete cache block should be written into cache.
 		rdCBLine		 : in	 STD_LOGIC; -- Read signal identifies whether a complete cache block should be read from cache.
 		rdWord           : in    STD_LOGIC; -- Read signal identifies to read data from the cache.
 		wrWord           : in    STD_LOGIC; -- Write signal identifies to write data into the cache.
+		writeMode 		 : in    STD_LOGIC; -- Signal identifies whether to read or write from cache.
 
 		valid            : inout STD_LOGIC; -- Identify whether the cache block/line contains valid content.
 		dirty         	 : inout STD_LOGIC; -- Identify whether the cache block/line is changed as against the main memory.
@@ -110,7 +113,7 @@ architecture synth of directMappedCache is
  
     -- Signal identifies whether a cache block should be written ('1') to BRAM or should be read ('0') from BRAM.
 	signal writeToDataBRAM : STD_LOGIC := '0';
-	
+		
 	-- Tag to be read from BRAM.
 	signal tagFromBRAM : STD_LOGIC_VECTOR(config.tagNrOfBits-1 downto 0);
 	
@@ -124,16 +127,13 @@ begin
 	-- to the tag BRAM and data BRAM. Also, it stores whether a block line is
 	-- dirty or not as well as whether it is valid or invalid. 
 	-- -----------------------------------------------------------------------------
-	 DirectMappedCacheCont: entity work.directMappedCacheController
+	 direct_mapped_cache_controller: entity work.directMappedCacheController
 	 	generic map (
 		MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
 		DATA_WIDTH => DATA_WIDTH,
 		ADDRESSWIDTH => ADDRESSWIDTH,
 		BLOCKSIZE => BLOCKSIZE,
-		OFFSET => OFFSET,
-		TAGFILENAME => TAG_FILENAME,
-		DATAFILENAME => DATA_FILENAME,
-		FILE_EXTENSION => FILE_EXTENSION
+		OFFSET => OFFSET
 		)
 	port map (
 		
@@ -144,7 +144,8 @@ begin
 		-- Ports regarding CPU and MEM.
 		addrCPU => addrCPU,
 		dataCPU => dataCPU,
-		dataMEM => dataMEM, 
+		dataMEM => dataMEM,
+		newCacheBlockLine => newCacheBlockLine,
 		valid => valid,
 		dirty => dirty, 
 		setValid => setValid,
@@ -152,10 +153,12 @@ begin
 		hit => hit,
 		
 		-- Ports defines how to read or write the data BRAM.
+		wrNewCBLine => wrNewCBLine,
 		wrCBLine => wrCBLine,
 		rdCBLine => rdCBLine,
 		rdWord => rdWord,
 		wrWord => wrWord,
+		writeMode => writeMode,
 		
 		-- Index determines to which line of BRAM should be written or read.
 		index => index,

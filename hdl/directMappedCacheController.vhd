@@ -37,16 +37,7 @@ entity directMappedCacheController is
 
 		-- The number of bits specifies the smallest unit that can be selected
 		-- in the cache. Byte (8 Bits) access should be possible.
-		OFFSET               : integer := 8;
-
-		-- Filename for tag BRAM.
-		TAGFILENAME          : STRING  := "../imem/tagFileName";
-
-		-- Filename for data BRAM.
-		DATAFILENAME         : STRING  := "../imem/dataFileName";
-
-		-- File extension for BRAM.
-		FILE_EXTENSION       : STRING  := ".txt"
+		OFFSET               : integer := 8
 	);
 
 	port(
@@ -59,6 +50,7 @@ entity directMappedCacheController is
 		addrCPU          : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);	-- Memory address from CPU is divided into block address and block offset.
 		dataCPU       	 : inout STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0); 			-- Data from CPU to cache or from cache to CPU.
 		dataMEM       	 : inout STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0); -- Data from memory to cache or from cache to memory
+		newCacheBlockLine : in STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0);
 		valid            : inout STD_LOGIC; -- Identify whether the cache block/line contains valid content.
 		dirty         	 : inout STD_LOGIC; -- Identify whether the cache block/line is changed as against the main memory.
 		setValid         : in    STD_LOGIC; -- Identify whether the valid bit should be set.
@@ -66,10 +58,12 @@ entity directMappedCacheController is
 		hit 			 : out   STD_LOGIC; -- Signal identify whether data are available in the cache ('1') or not ('0').
 		
 		-- Ports defines how to read or write the data BRAM.
+		wrNewCBLine : in STD_LOGIC; -- Control signal identifies whether a new cache block line should be written into cache.
 		wrCBLine : in   STD_LOGIC; -- Write signal identifies whether a complete cache block should be written into cache.
 		rdCBLine : in	STD_LOGIC; -- Read signal identifies whether a complete cache block should be read from cache.
 		rdWord	 : in   STD_LOGIC; -- Read signal identifies to read data word from the cache.
 		wrWord   : in   STD_LOGIC; -- Write signal identifies to write data word into the cache.
+		writeMode : in STD_LOGIC; -- '1' when write mode. '0' when read mode.
 
 		-- Index determines to which line of BRAM should be written or read.
 		index : out STD_LOGIC_VECTOR(DETERMINE_NR_BITS(ADDRESSWIDTH)-1 downto 0);
@@ -98,6 +92,8 @@ end;
 -- =============================================================================
 architecture synth of directMappedCacheController is
 	constant config : CONFIG_BITS_WIDTH := GET_CONFIG_BITS_WIDTH(ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET);
+	
+	signal dataCPU_TMP : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0); -- TODO Remove this signal.
 	 
 	type MEMORY_ADDRESS is record
 		tag    : STD_LOGIC_VECTOR(config.tagNrOfBits - 1 downto 0);
@@ -125,7 +121,6 @@ architecture synth of directMappedCacheController is
   	 
 	-- Bit string contains for each cache block the correspondent valid bit.
 	signal validBits : STD_LOGIC_VECTOR(ADDRESSWIDTH - 1 downto 0) := (others => '0');
-	signal validBitBuffer : STD_LOGIC := '0';
 
 	-- Bit string contains for each cache block the correspondent dirty bit.
 	-- 1 --> block line is modified, 0 --> block line is unmodified.
@@ -142,13 +137,16 @@ architecture synth of directMappedCacheController is
 	
 	signal writeToDataBRAMs : STD_LOGIC := '0';
 	
+	signal myTestSignal : STD_LOGIC := '0';
+	
 	
   	type CACHE_MODE is ( 
-  		READ_DATA,  -- Indicates to read a single word from the cache line.
-  		READ_LINE,  -- Indicates to read a complete cache line.
-  		WRITE_DATA, -- Indicates to write a single word from the cache line.
-  		WRITE_LINE, -- Indicates to write a complete cache line.
-  		NOTHING	    -- Do nothing.
+  		READ_DATA,      -- Indicates to read a single word from the cache line.
+  		READ_LINE,      -- Indicates to read a complete cache line.
+  		WRITE_DATA,     -- Indicates to write a single word from the cache line.
+  		WRITE_LINE,     -- Indicates to write a complete cache line.
+  		WRITE_NEW_LINE, -- Indicates to write a new cache block line.
+  		NOTHING	        -- Do nothing.
   	);
   	signal myCacheMode : CACHE_MODE := NOTHING;
 	
@@ -228,7 +226,8 @@ begin
 	-- -----------------------------------------------------------------------------
 	-- Determines the read/write mode.
 	-- -----------------------------------------------------------------------------
-	myCacheMode <= READ_DATA  when wrWord='0' AND rdWord='1' AND wrCBLine='0' AND rdCBLine='0' else 
+	myCacheMode <= WRITE_NEW_LINE when wrNewCBLine='1' else
+				   READ_DATA  when wrWord='0' AND rdWord='1' AND wrCBLine='0' AND rdCBLine='0' else 
 	 	           WRITE_DATA when wrWord='1' AND rdWord='0' AND wrCBLine='0' AND rdCBLine='0' else 
 	 	           READ_LINE  when rdWord='0' and wrWord='0' AND wrCBLine='0' AND rdCBLine='1' else
 	 	           WRITE_LINE when rdWord='0' AND wrWord='0' AND wrCBLine='1' AND rdCBLine='0' else 
@@ -243,6 +242,7 @@ begin
 	-- -----------------------------------------------------------------------------
 	-- Determine the valid bit.
 	-- -----------------------------------------------------------------------------
+	myTestSignal <= '1' when (memoryAddress.indexAsInteger<0 or memoryAddress.indexAsInteger>ADDRESSWIDTH) and writeToDataBRAMs='0' else '0';
 	valid <= validBits(memoryAddress.indexAsInteger) when setValid = '0' else 
 	         'Z';
 	dirty <= dirtyBits(memoryAddress.indexAsInteger) when setDirty = '0' and rising_edge(clk) and reset = '0' else
@@ -282,11 +282,17 @@ begin
 
 	blockLineToBRAM <= SET_BLOCK_LINE( blockLineFromBRAM, dataCPU, memoryAddress.offsetAsInteger ) when myCacheMode=WRITE_DATA else
 					   TO_CACHE_BLOCK_LINE( dataMEM ) when myCacheMode=WRITE_LINE else
-						blockLineFromBRAM;
+					   blockLineFromBRAM;
 	blockLineFromBRAM <=  TO_CACHE_BLOCK_LINE( dataFromBRAM );
-	dataToBRAM <= TO_STD_LOGIC_VECTOR( blockLineToBRAM );
+	dataToBRAM <= newCacheBlockLine when wrNewCBLine='1' else 
+	              TO_STD_LOGIC_VECTOR( blockLineToBRAM );
  
-	dataCPU <= blockLineFromBRAM(memoryAddress.offsetAsInteger) when myCacheMode=READ_DATA else
+ 	dataCPU_TMP <= (others=>'Z') when writeMode='1' else
+			   blockLineFromBRAM(memoryAddress.offsetAsInteger) when myCacheMode=READ_DATA else
+		       (others=>'Z');
+ 	
+	dataCPU <= (others=>'Z') when writeMode='1' else
+			   blockLineFromBRAM(memoryAddress.offsetAsInteger) when myCacheMode=READ_DATA else
 		       (others=>'Z');
 
 
@@ -294,7 +300,8 @@ begin
 	-- -----------------------------------------------------------------------------
 	-- Check whether to read or write the data BRAM.
 	-- -----------------------------------------------------------------------------
-	 writeToDataBRAMs <= '0' when myCacheMode=READ_DATA else 
+	 writeToDataBRAMs <= '1' when myCacheMode=WRITE_NEW_LINE else
+	 				     '0' when myCacheMode=READ_DATA else 
 	 	                 '1' when myCacheMode=WRITE_DATA else 
 	 	                 '1' when myCacheMode=WRITE_LINE else
 	 	                 '0' when myCacheMode=READ_LINE else 

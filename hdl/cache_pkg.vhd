@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 -- filename : directMappedCache_tb.vhd
--- author   : Hoppe
+-- author   : Meyer zum Felde, Püttjer, Hoppe
 -- company  : TUHH
 -- revision : 0.1
 -- date     : 09/02/17
@@ -14,42 +14,38 @@ use ieee.math_real.log2;
 
 package cache_pkg is
  
-	function DETERMINE_NR_BITS(ARG : in INTEGER) return INTEGER;
-
-	constant DATAWIDTH            : INTEGER := 32;
-	constant MEMORY_ADDRESS_WIDTH : INTEGER := 32;
-	constant DATA_WIDTH           : INTEGER := 32;
-	constant ADDRESSWIDTH         : INTEGER := 256;
-	constant BLOCKSIZE            : INTEGER := 4;
-	constant OFFSET               : INTEGER := 8;
-
-	constant INDEX_BITS        : INTEGER := DETERMINE_NR_BITS(ADDRESSWIDTH);
-	constant OFFSET_BITS       : INTEGER := DETERMINE_NR_BITS(BLOCKSIZE * DATA_WIDTH / OFFSET);
-	constant OFFSET_BLOCK_BITS : INTEGER := DETERMINE_NR_BITS(BLOCKSIZE);
-	constant OFFSET_BYTE_BITS  : INTEGER := DETERMINE_NR_BITS(DATA_WIDTH / OFFSET);
-	constant TAG_BITS          : INTEGER := MEMORY_ADDRESS_WIDTH - INDEX_BITS - OFFSET_BITS;
-	constant BLOCK_BITS        : INTEGER := BLOCKSIZE * DATAWIDTH;
-
-	type TAG_VECTOR is array (natural range <>) of STD_LOGIC;
-	type INDEX_VECTOR is array (natural range <>) of STD_LOGIC;
-	type OFFSET_VECTOR is array (natural range <>) of STD_LOGIC;
-
-	type MEMORY_ADDRESS is record
-		tag    : STD_LOGIC_VECTOR(TAG_BITS - 1 downto 0);
-		index  : STD_LOGIC_VECTOR(INDEX_BITS - 1 downto 0);
-		offset : STD_LOGIC_VECTOR(OFFSET_BITS - 1 downto 0);
-	end record;
-
-	function TO_STD_LOGIC_VECTOR(ARG : in MEMORY_ADDRESS) return STD_LOGIC_VECTOR;
-
-	function INIT_MEMORY_ADDRESS return MEMORY_ADDRESS;
-
+	-- Replacement strategy used by the two way associative cache.
+	-- There are two replacement strategies:
+	-- 1. Random replacement.
+	-- 2. Least Recently Used (LRU) replacement. 	
+	type replacementStrategy is (
+		RANDOM,
+		LRU
+	);
+ 
+	-- -----------------------------------------------------------------------------------------
+	-- The record type CONFIG_BITS_WIDTH contains the number of bits
+	-- used for index vector, offset vector and tag vector regarding the memory address.
+	-- This record type also contains the number of bits of a cache block line.
+	-- -----------------------------------------------------------------------------------------
 	type CONFIG_BITS_WIDTH is record
+	
+		-- Number of bits regarding the index vector.
 		indexNrOfBits       : INTEGER;
+		
+		-- Number of bits regarding the offset vector.
 		offsetNrOfBits      : INTEGER;
+		
+		-- Number of bits regarding the block offset vector.
 		offsetBlockNrOfBits : INTEGER;
+		
+		-- Number of bits regarding the byte offset vector.
 		offsetByteNrOfBits  : INTEGER;
+		
+		-- Number of bits regarding the tag vector.
 		tagNrOfBits         : INTEGER;
+		
+		-- Number of bits regarding a cache block line.
 		cacheLineBits       : INTEGER;
 
 		tagIndexH    : INTEGER;
@@ -58,31 +54,40 @@ package cache_pkg is
 		indexIndexL  : INTEGER;
 		offsetIndexH : INTEGER;
 		offsetIndexL : INTEGER;
-
 	end record;
 
-	function GET_CONFIG_BITS_WIDTH(ADDRESSWIDTH : in INTEGER; BLOCKSIZE : in INTEGER;
+	-- -----------------------------------------------------------------------------------------
+	-- The auxiliary function DETERMINE_NR_BITS returns an INTEGER by calculation
+	-- the log-function by the given INTEGER value.
+	-- -----------------------------------------------------------------------------------------
+	function DETERMINE_NR_BITS(ARG : in INTEGER) return INTEGER;
+ 
+	-- -----------------------------------------------------------------------------------------
+	-- The function GET_CONFIG_BITS_WIDTH calculates the number of bits
+	-- used for the index vector, tag vector and offset vector regarding
+	-- the memory address.
+	-- Also, calculates the number of bits of a whole cache block line.
+	-- -----------------------------------------------------------------------------------------
+	function GET_CONFIG_BITS_WIDTH(MEMORY_ADDRESS_WIDTH : in INTEGER; ADDRESSWIDTH : in INTEGER; BLOCKSIZE : in INTEGER;
 		DATA_WIDTH   : in INTEGER; OFFSET : in INTEGER) return CONFIG_BITS_WIDTH;
-		
-	-- ---------------------------------------------------------------------------------------------------------
-	-- This function determines the number of bits of the tag bit vector.
-	-- ---------------------------------------------------------------------------------------------------------
-	function GET_TAG_NR_BITS( MEMORY_ADDRESS_WIDTH : in INTEGER; ADDRESSWIDTH : in INTEGER;
-		BLOCKSIZE : in INTEGER; DATA_WIDTH : in INTEGER; OFFSET : in INTEGER) return INTEGER;
-
+		 
 end cache_pkg;
 
 package body cache_pkg is
-	function GET_TAG_NR_BITS( MEMORY_ADDRESS_WIDTH : in INTEGER; ADDRESSWIDTH : in INTEGER;
-		BLOCKSIZE : in INTEGER; DATA_WIDTH : in INTEGER; OFFSET : in INTEGER) return INTEGER is
-		variable r : INTEGER := 0;
-	begin
-		r :=MEMORY_ADDRESS_WIDTH-DETERMINE_NR_BITS(ADDRESSWIDTH)-DETERMINE_NR_BITS(BLOCKSIZE*DATA_WIDTH/OFFSET);
-		return r;
-	end function;
-	
-	function GET_CONFIG_BITS_WIDTH(ADDRESSWIDTH : in INTEGER; BLOCKSIZE : in INTEGER;
-			                       DATA_WIDTH   : in INTEGER; OFFSET : in INTEGER) return CONFIG_BITS_WIDTH is
+
+	-- -----------------------------------------------------------------------------------------
+	-- The function GET_CONFIG_BITS_WIDTH calculates the number of bits
+	-- used for the index vector, tag vector and offset vector regarding
+	-- the memory address.
+	-- Also, calculates the number of bits of a whole cache block line.
+	-- -----------------------------------------------------------------------------------------
+	function GET_CONFIG_BITS_WIDTH(
+		MEMORY_ADDRESS_WIDTH : in INTEGER;
+		ADDRESSWIDTH : in INTEGER;
+		BLOCKSIZE : in INTEGER;
+		DATA_WIDTH : in INTEGER;
+		OFFSET : in INTEGER)
+	return CONFIG_BITS_WIDTH is
 		variable config : CONFIG_BITS_WIDTH;
 	begin
 		config.indexNrOfBits       := DETERMINE_NR_BITS(ADDRESSWIDTH);
@@ -99,24 +104,11 @@ package body cache_pkg is
 		config.offsetIndexL        := 0;
 		return config;
 	end;
-
-	function INIT_MEMORY_ADDRESS return MEMORY_ADDRESS IS
-		VARIABLE a : MEMORY_ADDRESS;
-	begin
-		a.tag    := (others => '0');
-		a.index  := (others => '0');
-		a.offset := (others => '0');
-		return a;
-
-	end;
-
-	function TO_STD_LOGIC_VECTOR(ARG : in MEMORY_ADDRESS) return STD_LOGIC_VECTOR IS
-		variable v : STD_LOGIC_VECTOR(TAG_BITS + INDEX_BITS + OFFSET_BITS - 1 downto 0);
-	begin
-		v := (ARG.tag) & ARG.index & ARG.offset;
-		return v;
-	end;
-	
+ 
+	-- -----------------------------------------------------------------------------------------
+	-- The auxiliary function DETERMINE_NR_BITS returns an INTEGER by calculation
+	-- the log-function by the given INTEGER value.
+	-- -----------------------------------------------------------------------------------------
 	function DETERMINE_NR_BITS(ARG : in INTEGER) return INTEGER IS
 	begin
 		return INTEGER(CEIL(LOG2(REAL(ARG))));

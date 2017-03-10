@@ -1,14 +1,21 @@
 --------------------------------------------------------------------------------
 -- filename : mainMemoryController.vhd
--- author   : Hoppe
+-- author   : Meyer zum Felde, Püttjer, Hoppe
 -- company  : TUHH
 -- revision : 0.1
 -- date     : 10/02/17
 --------------------------------------------------------------------------------
+
+-- -----------------------------------------------------------------------------
+-- Include packages.
+-- -----------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
+-- =============================================================================
+-- Entity of the Main Memory Controller.
+-- =============================================================================
 entity mainMemoryController is
 	generic(
 		-- Width of bit string containing the memory address. 
@@ -25,49 +32,46 @@ entity mainMemoryController is
 	);
 
 	port(
+		-- Clock signal.
 		clk         	: in  STD_LOGIC;
-		readyMEM    	: out STD_LOGIC;
-		rdMEM       	: in  STD_LOGIC;
-		wrMEM       	: in  STD_LOGIC;
-		addrMEM     	: in  STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0);
-		dataMEM  	    : inout  STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
+		
+		-- Control signal to reset the main memory.
 		reset       	: in  STD_LOGIC;	
+		
+		-- Signal identifies whether the main memory is ready.
+		readyMEM    	: out STD_LOGIC;
+		
+		-- Control signal to read from main memory.
+		rdMEM       	: in  STD_LOGIC;
+		
+		-- Control signal to write from main memory.
+		wrMEM       	: in  STD_LOGIC;
+		
+		-- Address signal identifies which unit should be read from main memory.
+		addrMEM     	: in  STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0);
+		
+		-- Data to be read or written from main memory.
+		dataMEM  	    : inout  STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
+		
+		-- Data to be written to BRAM.
 		dataToBRAM 	 	: out STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
+		
+		-- Data to be read from BRAM.
 		dataFromBRAM 	: in STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
+		
+		-- Control signal to write to main memory.
 		writeToBRAM 	: out STD_LOGIC;
+		
+		-- Address signal used for BRAM of the main memory.
 		addrBram 		: out STD_LOGIC_VECTOR(BRAM_ADDR_WIDTH - 1 downto 0) 
 	);
 end;
 
+-- =============================================================================
+-- Architecture of the entity of the Main Memory Controller.
+-- =============================================================================
 architecture synth of mainMemoryController is
 	
-	-- Number of bits in a cache line.
-	constant cacheLineBits : INTEGER := BLOCKSIZE * DATA_WIDTH;
- 
-	-- Signal contains the memory address.
-	signal addr        : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0) := (others => '0');
-	  
-	-- Definition of type BLOCK_LINE as an array of STD_LOGIC_VECTORs.
-	TYPE BLOCK_LINE IS ARRAY (BLOCKSIZE - 1 downto 0) of STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
-	
-	-- Signal containing the cache block line to be read from BRAM.
-	signal cacheBlockLine_out    : BLOCK_LINE;
-	
-	-- Signal containing the cache block line to be written from BRAM.
-	signal cacheBlockLine_in : BLOCK_LINE;
-
- 	-- Auxiliary signal.
-	signal counter : integer   := BLOCKSIZE + BLOCKSIZE;
-
-	-- Cache block line should be written into BRAM.
-	signal cacheBlockLine_tmp : STD_LOGIC_VECTOR( cacheLineBits-1 downto 0)        := (others => '0');
-	
-	-- Bit string containing the input address modulo 16.
-	signal addrMEM_mod16        : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others => '0');
-	
-	-- Auxiliary signal to determine the data to MEM.
-	signal dataMEM_out_tmp : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
-	 
 	-- Definition of possible states of the FSM.
 	type statetype is (
 		IDLE,
@@ -75,6 +79,33 @@ architecture synth of mainMemoryController is
 		WRITE
 	);
 	
+	-- Number of bits in a cache line.
+	constant cacheLineBits : INTEGER := BLOCKSIZE * DATA_WIDTH;
+ 
+	-- Signal contains the memory address.
+	signal addr : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0) := (others => '0');
+	  
+	-- Definition of type BLOCK_LINE as an array of STD_LOGIC_VECTORs.
+	TYPE BLOCK_LINE IS ARRAY (BLOCKSIZE - 1 downto 0) of STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
+	
+	-- Signal containing the cache block line to be read from BRAM.
+	signal cacheBlockLine_out : BLOCK_LINE;
+	
+	-- Signal containing the cache block line to be written from BRAM.
+	signal cacheBlockLine_in : BLOCK_LINE;
+
+ 	-- Auxiliary signal.
+	signal counter : integer := BLOCKSIZE + BLOCKSIZE;
+
+	-- Cache block line should be written into BRAM.
+	signal cacheBlockLine_tmp : STD_LOGIC_VECTOR( cacheLineBits-1 downto 0) := (others => '0');
+	
+	-- Bit string containing the input address modulo 16.
+	signal addrMEM_mod16 : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others => '0');
+	
+	-- Auxiliary signal to determine the data to MEM.
+	signal dataMEM_out_tmp : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
+	 
 	-- Actual state of the FSM.
 	signal state     : statetype := IDLE;
 	

@@ -1,16 +1,22 @@
 --------------------------------------------------------------------------------
 -- filename : mainMemoryController_tb.vhd
--- author   : Hoppe
+-- author   : Meyer zum Felde, Püttjer, Hoppe
 -- company  : TUHH
 -- revision : 0.1
 -- date     : 10/02/17
 --------------------------------------------------------------------------------
 
+-- -----------------------------------------------------------------------------
+-- Include packages.
+-- -----------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 use STD.TEXTIO.ALL;
 
+-- =============================================================================
+-- Test bench entity of the Main Memory.
+-- =============================================================================
 entity mainMemory_tb is
 	generic(
 
@@ -34,6 +40,9 @@ entity mainMemory_tb is
 	);
 end;
 
+-- =============================================================================
+-- Test bench of the main memory.
+-- =============================================================================
 architecture mainMemory_testbench of mainMemory_tb is
 	constant blockLineBits : INTEGER                                               := BLOCKSIZE * DATA_WIDTH;
 	signal clk             : STD_LOGIC                                             := '0';
@@ -59,28 +68,9 @@ architecture mainMemory_testbench of mainMemory_tb is
 	constant data_in_C_stdVec : STD_LOGIC_VECTOR(blockLineBits - 1 downto 0) := BLOCK_LINE_TO_STD_LOGIC_VECTOR(data_in_C_blockLine);
 	constant data_in_D_stdVec : STD_LOGIC_VECTOR(blockLineBits - 1 downto 0) := BLOCK_LINE_TO_STD_LOGIC_VECTOR(data_in_D_blockLine);
 
-	signal signal_data_in_A : STD_LOGIC_VECTOR(blockLineBits - 1 downto 0) := data_in_A_stdVec;
-	signal signal_data_in_B : STD_LOGIC_VECTOR(blockLineBits - 1 downto 0) := data_in_B_stdVec;
-	signal signal_data_in_C : STD_LOGIC_VECTOR(blockLineBits - 1 downto 0) := data_in_C_stdVec;
-	signal signal_data_in_D : STD_LOGIC_VECTOR(blockLineBits - 1 downto 0) := data_in_D_stdVec;
-
 	constant addr_X : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0) := STD_LOGIC_VECTOR(TO_UNSIGNED(0, MEMORY_ADDRESS_WIDTH));
 	constant addr_Y : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0) := STD_LOGIC_VECTOR(TO_UNSIGNED(30, MEMORY_ADDRESS_WIDTH));
 	constant addr_Z : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0) := STD_LOGIC_VECTOR(TO_UNSIGNED(60, MEMORY_ADDRESS_WIDTH));
-
-	-- Returns the given STD_LOGIC_VECTOR as a BLOCK_LINE.
-	function STD_LOGIC_VECTOR_TO_BLOCK_LINE(ARG : in STD_LOGIC_VECTOR(blockLineBits - 1 downto 0)) return BLOCK_LINE is
-		variable v          : BLOCK_LINE;
-		variable startIndex : INTEGER;
-		variable endIndex   : INTEGER;
-	begin
-		for I in 0 to BLOCKSIZE - 1 loop
-			startIndex := blockLineBits - 1 - I * DATA_WIDTH;
-			endIndex   := blockLineBits - (I + 1) * DATA_WIDTH;
-			v(I)       := ARG(startIndex downto endIndex);
-		end loop;
-		return v;
-	end;
 
 	-- Returns the given BLOCK_LINE as a STD_LOGIC_VECTOR. 
 	function BLOCK_LINE_TO_STD_LOGIC_VECTOR(ARG : in BLOCK_LINE) return STD_LOGIC_VECTOR is
@@ -150,10 +140,11 @@ begin
 		rdMEM <= '0';
 		wait until readyMEM = '1';
 		-- ---------------------------------------------------------------------------
-		wrMEM      <= '1';
-		rdMEM      <= '0';
-		addrMEM    <= addr_X;
-		dataMEM <= data_in_A_stdVec;
+		-- Write data A to main memory.
+		wrMEM		<= '1';
+		rdMEM		<= '0';
+		addrMEM		<= addr_X;
+		dataMEM 	<= data_in_A_stdVec;
 		wait until readyMEM = '1';
 		-- ---------------------------------------------------------------------------
 		wrMEM   <= '0';

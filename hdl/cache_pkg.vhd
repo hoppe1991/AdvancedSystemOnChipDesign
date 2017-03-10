@@ -70,11 +70,31 @@ package cache_pkg is
 	-- -----------------------------------------------------------------------------------------
 	function GET_CONFIG_BITS_WIDTH(MEMORY_ADDRESS_WIDTH : in INTEGER; ADDRESSWIDTH : in INTEGER; BLOCKSIZE : in INTEGER;
 		DATA_WIDTH   : in INTEGER; OFFSET : in INTEGER) return CONFIG_BITS_WIDTH;
-		 
+	
+	-- ---------------------------------------------------------------------------------------------------------
+	-- This function determines the number of bits of the tag bit vector.
+	-- ---------------------------------------------------------------------------------------------------------
+	function GET_TAG_NR_BITS( MEMORY_ADDRESS_WIDTH : in INTEGER; ADDRESSWIDTH : in INTEGER;
+		BLOCKSIZE : in INTEGER; DATA_WIDTH : in INTEGER; OFFSET : in INTEGER
+	) return INTEGER;
+	
 end cache_pkg;
 
 package body cache_pkg is
 
+
+	-- ---------------------------------------------------------------------------------------------------------
+	-- This function determines the number of bits of the tag bit vector.
+	-- ---------------------------------------------------------------------------------------------------------
+	function GET_TAG_NR_BITS( MEMORY_ADDRESS_WIDTH : in INTEGER; ADDRESSWIDTH : in INTEGER;
+		BLOCKSIZE : in INTEGER; DATA_WIDTH : in INTEGER; OFFSET : in INTEGER
+	) return INTEGER is
+	variable r : INTEGER := 0;
+	begin
+		r :=MEMORY_ADDRESS_WIDTH-DETERMINE_NR_BITS(ADDRESSWIDTH)-DETERMINE_NR_BITS(BLOCKSIZE*DATA_WIDTH/OFFSET);
+		return r;
+	end function;
+	
 	-- -----------------------------------------------------------------------------------------
 	-- The function GET_CONFIG_BITS_WIDTH calculates the number of bits
 	-- used for the index vector, tag vector and offset vector regarding

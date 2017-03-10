@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 -- filename : directMappedCacheController.vhd
--- author   : Hoppe
+-- author   : Meyer zum Felde, Püttjer, Hoppe
 -- company  : TUHH
 -- revision : 0.1
 -- date     : 24/01/17
@@ -69,9 +69,9 @@ entity directMappedCacheController is
 		index : out STD_LOGIC_VECTOR(DETERMINE_NR_BITS(ADDRESSWIDTH)-1 downto 0);
 				
 		-- Ports regarding BRAM tag.
-		tagToBRAM : out STD_LOGIC_VECTOR(GET_TAG_NR_BITS( MEMORY_ADDRESS_WIDTH, ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET )-1 downto 0);
-		tagFromBRAM : in STD_LOGIC_VECTOR(GET_TAG_NR_BITS( MEMORY_ADDRESS_WIDTH, ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET )-1 downto 0);
-		writeToTagBRAM : out STD_LOGIC;
+		tagToBRAM 		: out STD_LOGIC_VECTOR(GET_TAG_NR_BITS( MEMORY_ADDRESS_WIDTH, ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET )-1 downto 0);
+		tagFromBRAM 	: in STD_LOGIC_VECTOR(GET_TAG_NR_BITS( MEMORY_ADDRESS_WIDTH, ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET )-1 downto 0);
+		writeToTagBRAM 	: out STD_LOGIC;
 		
 		-- Ports regarding BRAM data.
 		writeToDataBRAM		: out 	STD_LOGIC;
@@ -91,7 +91,7 @@ end;
 -- Definition of architecture.
 -- =============================================================================
 architecture synth of directMappedCacheController is
-	constant config : CONFIG_BITS_WIDTH := GET_CONFIG_BITS_WIDTH(ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET);
+	constant config : CONFIG_BITS_WIDTH := GET_CONFIG_BITS_WIDTH(MEMORY_ADDRESS_WIDTH, ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET);
 	
 	signal dataCPU_TMP : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0); -- TODO Remove this signal.
 	 
@@ -170,7 +170,7 @@ architecture synth of directMappedCacheController is
 		return index;
 	end function;
 	
-	type CACHE_BLOCK_LINE is ARRAY ( BLOCKSIZE-1 downto 0) of STD_LOGIC_VECTOR( DATAWIDTH-1 downto 0 );
+	type CACHE_BLOCK_LINE is ARRAY ( BLOCKSIZE-1 downto 0) of STD_LOGIC_VECTOR( DATA_WIDTH-1 downto 0 );
 	signal blockLineFromBRAM : CACHE_BLOCK_LINE;
 	signal blockLineToBRAM : CACHE_BLOCK_LINE;
 	function TO_CACHE_BLOCK_LINE( ARG : in STD_LOGIC_VECTOR ) return CACHE_BLOCK_LINE is
@@ -186,7 +186,7 @@ architecture synth of directMappedCacheController is
 		return b;
 	end function;
 	function TO_STD_LOGIC_VECTOR( ARG : in CACHE_BLOCK_LINE ) return STD_LOGIC_VECTOR is
-		variable v : STD_LOGIC_VECTOR( DATAWIDTH*BLOCKSIZE-1 downto 0 ) := (others=>'0');
+		variable v : STD_LOGIC_VECTOR( DATA_WIDTH*BLOCKSIZE-1 downto 0 ) := (others=>'0');
 		variable s, t : INTEGER;
 	begin 
 		for I in 0 to BLOCKSIZE-1 loop
@@ -196,7 +196,7 @@ architecture synth of directMappedCacheController is
 		end loop;
 		return v;
 	end function;
-	function SET_BLOCK_LINE( b_in : in CACHE_BLOCK_LINE; data : in STD_LOGIC_VECTOR(DATAWIDTH-1 downto 0); offset : in INTEGER ) return CACHE_BLOCK_LINE is
+	function SET_BLOCK_LINE( b_in : in CACHE_BLOCK_LINE; data : in STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0); offset : in INTEGER ) return CACHE_BLOCK_LINE is
 		variable b : CACHE_BLOCK_LINE;
 	begin
 		for I in 0 to BLOCKSIZE-1 loop

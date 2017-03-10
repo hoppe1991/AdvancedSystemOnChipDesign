@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 -- filename : directMappedCache.vhd
--- author   : Hoppe
+-- author   : Meyer zum Felde, Püttjer, Hoppe
 -- company  : TUHH
 -- revision : 0.1
 -- date     : 24/01/17
@@ -55,6 +55,8 @@ entity directMappedCache is
 
 		-- Reset signal to reset the cache.
 		reset            : in    STD_LOGIC;
+		
+		
 		addrCPU          : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0); -- Memory address from CPU is divided into block address and block offset.
 		dataCPU       	 : inout    STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0); -- Data from CPU to cache or from cache to CPU.
 		
@@ -97,7 +99,10 @@ end;
 architecture synth of directMappedCache is
 	
 	-- Configuration stores the number of bits regarding the index, offset and tag.
-	constant config : CONFIG_BITS_WIDTH := GET_CONFIG_BITS_WIDTH(ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET);
+	constant config : CONFIG_BITS_WIDTH := GET_CONFIG_BITS_WIDTH(MEMORY_ADDRESS_WIDTH, ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET);
+	subtype CACHE_BLOCK_LINE_RANGE is NATURAL range config.cacheLineBits-1 downto 0;
+	subtype TAG_RANGE is NATURAL range config.tagNrOfBits-1 downto 0;
+
 
 	-- Index identifies the line in the BRAMs.
 	signal index : STD_LOGIC_VECTOR(DETERMINE_NR_BITS(ADDRESSWIDTH)-1 downto 0);
@@ -106,19 +111,19 @@ architecture synth of directMappedCache is
 	signal writeToTagBRAM : STD_LOGIC := '0';
 
 	-- Cache block to be read from BRAM. 
-	signal cbFromBram : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
+	signal cbFromBram : STD_LOGIC_VECTOR(CACHE_BLOCK_LINE_RANGE) := (others => '0');
 	
 	-- Cache block to be written into BRAM.
-	signal cbToBram : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
+	signal cbToBram : STD_LOGIC_VECTOR(CACHE_BLOCK_LINE_RANGE) := (others => '0');
  
     -- Signal identifies whether a cache block should be written ('1') to BRAM or should be read ('0') from BRAM.
 	signal writeToDataBRAM : STD_LOGIC := '0';
 		
 	-- Tag to be read from BRAM.
-	signal tagFromBRAM : STD_LOGIC_VECTOR(config.tagNrOfBits-1 downto 0);
+	signal tagFromBRAM : STD_LOGIC_VECTOR(TAG_RANGE);
 	
 	-- Tag to be written into BRAM.
-	signal tagToBRAM : STD_LOGIC_VECTOR(config.tagNrOfBits-1 downto 0);
+	signal tagToBRAM : STD_LOGIC_VECTOR(TAG_RANGE);
 	
 begin
 	

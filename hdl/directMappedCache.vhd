@@ -185,7 +185,8 @@ begin
 	BRAM_Tag : entity work.bram
 		generic map(INIT => (TAG_FILENAME & FILE_EXTENSION),
 			        ADDR => config.indexNrOfBits,
-			        DATA => config.tagNrOfBits
+			        DATA => config.tagNrOfBits,
+			        MODE => WRITE_FIRST
 		)
 		port map(clk, writeToTagBRAM, index, tagToBRAM, tagFromBRAM);
 

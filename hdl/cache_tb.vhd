@@ -30,8 +30,10 @@ end;
 
 architecture tests of cache_tb is
 	
+	signal my_test_test_test_signal : STD_LOGIC := '0';
+	
 	-- Constant object.
-	constant config : CONFIG_BITS_WIDTH := GET_CONFIG_BITS_WIDTH(ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET);
+	constant config : CONFIG_BITS_WIDTH := GET_CONFIG_BITS_WIDTH(MEMORY_ADDRESS_WIDTH, ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET);
 
 	-- Declaration of procedures.
 	procedure VALIDATE_SIGNALS( L : in INTEGER; I : in INTEGER; stallCPU : in STD_LOGIC; expectedStallCPU : in STD_LOGIC; missCounter : in INTEGER; expectedMissCounter : in INTEGER; hitCounter : in INTEGER; expectedHitCounter : INTEGER );
@@ -55,13 +57,11 @@ architecture tests of cache_tb is
 	signal addrMEM  : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0)   := (others => '0');
 	signal dataMEM  : STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0) := (others => '0');
 	
-	signal tagI         : INTEGER := 0;
 	signal indexI       : INTEGER := 0;
 	signal offsetI      : INTEGER := 0;
 	signal offsetBlockI : INTEGER := 0;
 	signal offsetByteI  : INTEGER := 0;
 
-	signal tagV         : STD_LOGIC_VECTOR(config.tagNrOfBits - 1 downto 0)         := (others => '0');
 	signal indexV       : STD_LOGIC_VECTOR(config.indexNrOfBits - 1 downto 0)       := (others => '0');
 	signal offsetV      : STD_LOGIC_VECTOR(config.offsetNrOfBits - 1 downto 0)      := (others => '0');
 	signal offsetBlockV : STD_LOGIC_VECTOR(config.offsetBlockNrOfBits - 1 downto 0) := (others => '0');
@@ -69,8 +69,8 @@ architecture tests of cache_tb is
 
 	signal hitCounter  		   : INTEGER := 0; -- Current hit counter value from cache entity.
 	signal missCounter 		   : INTEGER := 0; -- Current miss counter value from cache entity.
-	signal expectedHitCounter  : INTEGER := 0; -- Expected hit counter value.
-	signal expectedMissCounter : INTEGER := 0; -- Expected miss counter value.
+--	signal expectedHitCounter  : INTEGER := 0; -- Expected hit counter value.
+--	signal expectedMissCounter : INTEGER := 0; -- Expected miss counter value.
 	
 	function GET_TAG( ARG : in INTEGER ) return STD_LOGIC_VECTOR is
 		variable t : STD_LOGIC_VECTOR(config.tagNrOfBits-1 downto 0) := (others=>'0');
@@ -99,8 +99,7 @@ architecture tests of cache_tb is
 		data := STD_LOGIC_VECTOR( TO_UNSIGNED( ARG, DATA_WIDTH ));
 		return data;
 	end;
-	
-	signal myT : STD_LOGIC_VECTOR(config.tagNrOfBits-1 downto 0) := (others=>'0');
+	 
 	function GET_MEMORY_ADDRESS( tag : in INTEGER; index : in INTEGER; offset : in INTEGER) return STD_LOGIC_VECTOR is
 		variable m : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
 		variable t : STD_LOGIC_VECTOR(config.tagNrOfBits-1 downto 0) := (others=>'0');
@@ -253,11 +252,14 @@ begin
 		wait for 1 ns;
 	end process;
 
-
 	-- ------------------------------------------------------------------------------------------
 	-- Process tests some test cases.
 	-- ------------------------------------------------------------------------------------------
 	testProcess: process
+		variable testCaseIndex : INTEGER := 0;
+		variable expected_missCounter, expected_hitCounter : INTEGER := 0;
+		variable expected_stallCPU : STD_LOGIC := '0';
+		variable tag_integer : INTEGER := 0;
 	begin
 		
 		-- --------------------------------------------------------------------------------------
@@ -271,147 +273,122 @@ begin
 		wait for 4 ns;
 		wait until rising_edge(clk);
 		
-		-- --------------------------------------------------------------------------------------
+		-- =======================================================================================================================
 		-- Test 1 - Reset Cache. Miss counter and Hit counter are zero.
 		-- At start the miss counter and hit counter should be zero.
-		-- --------------------------------------------------------------------------------------
+		-- =======================================================================================================================
 		PRINT_START_TEST(1); 
 		VALIDATE_SIGNALS(stallCPU, '0', missCounter, 0, hitCounter, 0); 
 		PRINT_END_TEST(1);
 
-		-- --------------------------------------------------------------------------------------
+		-- =======================================================================================================================
 		-- Test 2 - Reset Cache. Invalid cache blocks.
-		-- --------------------------------------------------------------------------------------
-		PRINT_START_TEST(2); 
-		rdCPU <= '1';
+		-- =======================================================================================================================
+		PRINT_START_TEST(2);
 		addrCPU <= GET_MEMORY_ADDRESS( 0, 0, 0 ); 
-		expectedMissCounter <= missCounter;
-		expectedHitCounter <= hitCounter;
-		wait until rising_edge(clk);
-		VALIDATE_SIGNALS(stallCPU, '0', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
+		expected_missCounter := missCounter;
+		expected_hitCounter := hitCounter;
+		expected_stallCPU := '0';
+		VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 		for L in 0 to ADDRESSWIDTH-1 loop
 			-- ---------------------------------------------------------------------------
 			-- Read from another cache block line.
 			-- ---------------------------------------------------------------------------
+			rdCPU <= '1';
 			addrCPU <= GET_MEMORY_ADDRESS( 0, L, 0 ); 
-			expectedHitCounter <= hitCounter;
+			expected_hitCounter := hitCounter;
+			wait until rising_edge(clk);
 			for I in 1 to 8 loop
-				expectedMissCounter <= missCounter;
+				rdCPU <= '1';
+				expected_missCounter := missCounter;
 				wait until rising_edge(clk);
-				VALIDATE_SIGNALS(L, I, stallCPU, '1', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
+				rdCPU <= '0';
+				expected_stallCPU := '1';
+				VALIDATE_SIGNALS(L, I, stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			    PRINT_HITCOUNTER( hitCounter, missCounter ); 
 			end loop;
 		
 			-- ---------------------------------------------------------------------------
 			-- Check whether miss counter has been incremented.
 			-- ---------------------------------------------------------------------------
-			expectedMissCounter <= expectedMissCounter + 1; 
+			expected_missCounter := expected_missCounter + 1;
+			expected_stallCPU := '0';
 			wait until rising_edge(clk);
-			VALIDATE_SIGNALS(stallCPU, '0', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
-
+			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
+			
 		end loop;
 		PRINT_END_TEST(2);
 		 
 		 
 		 
-		-- --------------------------------------------------------------------------------------
-		-- Test 3 - Reset Cache. Line is not dirty.
-		-- --------------------------------------------------------------------------------------
+		-- =======================================================================================================================
+		-- Test 3 - Read Cache. Line is not dirty.
+		-- =======================================================================================================================
+		rdCPU <= '0';
+		my_test_test_test_signal <= '1';
+		wait until rising_edge(clk);
+		wait until rising_edge(clk);
+		
 		PRINT_START_TEST(3); 
-		rdCPU <= '1';
 		for L in 0 to ADDRESSWIDTH-1 loop
-			tagI <= 0;
-			addrCPU <= GET_MEMORY_ADDRESS( tagI, L, 0 ); 
-			expectedHitCounter <= hitCounter+1;
-			expectedMissCounter <= missCounter;
+			tag_integer := 0;
+			addrCPU <= GET_MEMORY_ADDRESS( tag_integer, L, 0 ); 
+			rdCPU <= '1';
+			expected_hitCounter := hitCounter+1;
+			expected_missCounter := missCounter;
+			expected_stallCPU := '0';
+			wait until rising_edge(clk);
+			rdCPU <= '0';
 			wait until rising_edge(clk);
 			wait until rising_edge(clk);
-			VALIDATE_SIGNALS(stallCPU, '0', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
+			wait until rising_edge(clk);
+			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 		end loop;
 		for L in 0 to ADDRESSWIDTH-1 loop
 			rdCPU <= '0';
-			tagI <= 1;
+			tag_integer := 1;
 			wait until rising_edge(clk);
-			myT <= GET_TAG(tagI);
 			wait until rising_edge(clk);
 			rdCPU <= '1';
-			addrCPU <= GET_MEMORY_ADDRESS( tagI, L, 0 );
-			wait until rising_edge(clk);
-			expectedMissCounter <= missCounter;
-			expectedHitCounter <= hitCounter;
-			for I in 1 to 8 loop
-				expectedMissCounter <= missCounter;
-				wait until rising_edge(clk);
-				VALIDATE_SIGNALS(L, I, stallCPU, '1', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
-			end loop;  
-			expectedMissCounter <= expectedMissCounter + 1; 
-			wait until rising_edge(clk);
-			VALIDATE_SIGNALS(stallCPU, '0', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
+			addrCPU <= GET_MEMORY_ADDRESS( tag_integer, L, 0 );
+			wait until stallCPU='1';
+			expected_missCounter := missCounter;
+			expected_hitCounter := hitCounter;
+			expected_missCounter := expected_missCounter + 1;
+			wait until stallCPU='0';
+			expected_stallCPU := '0';
+			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 		end loop;
 		PRINT_END_TEST(3);
 		 
 		 
-		-- --------------------------------------------------------------------------------------
+		-- =======================================================================================================================
 		-- Test 4 - Read Cache. Different Offset.
-		-- --------------------------------------------------------------------------------------
-		PRINT_START_TEST(4); 
+		-- =======================================================================================================================
+		PRINT_START_TEST(4);
 		for L in 0 to ADDRESSWIDTH-1 loop
 			for O in 0 to BLOCKSIZE-1 loop
+				rdCPU <= '1';
 				-- Read from another offset block.
-				addrCPU <= GET_MEMORY_ADDRESS( tagI, L, O ); 
-				expectedHitCounter <= hitCounter+1;
-				expectedMissCounter <= missCounter;
+				addrCPU <= GET_MEMORY_ADDRESS( tag_integer, L, O ); 
+				expected_hitCounter := hitCounter+1;
+				expected_missCounter := missCounter;
+				wait until rising_edge(clk);
+				rdCPU <= '0';
 				wait until rising_edge(clk);
 				wait until rising_edge(clk);
-				VALIDATE_SIGNALS(stallCPU, '0', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
+				wait until rising_edge(clk);
+				VALIDATE_SIGNALS(stallCPU, '0', missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			    PRINT_HITCOUNTER( hitCounter, missCounter );
 			end loop;
 		end loop;
 		PRINT_END_TEST(4);
 		
-		
-		-- --------------------------------------------------------------------------------------
-		-- Test 6 - Read Cache. Line is dirty.
-		-- --------------------------------------------------------------------------------------
-		PRINT_START_TEST(6); 
-		reset <= '1';
-		rdCPU <= '0';
-		wrCPU <= '0';
-		dataCPU <= (others=>'Z');
-		wait until rising_edge(clk);
-		reset <= '0';
-		wait until rising_edge(clk);
-		VALIDATE_SIGNALS(stallCPU, '0', missCounter, 0, hitCounter, 0);
-		tagI <= 0;
-		offsetI <= 0;
-		dataCPU <= (others=>'1');
-		for L in 0 to ADDRESSWIDTH-1 loop
-			wrCPU <= '1';
-			rdCPU <= '0';
-			wait until rising_edge(clk);
-			wrCPU <= '0';
-			addrCPU <= GET_MEMORY_ADDRESS( tagI, L, offsetI );
-			expectedHitCounter <= hitCounter;
-			expectedMissCounter <= missCounter;
-			PRINT_HITCOUNTER( missCounter, hitCounter );
-			--VALIDATE_SIGNALS(stallCPU, '0', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
-			for I in 1 to 7 loop
-				expectedMissCounter <= missCounter;
-				wait until rising_edge(clk);
-				VALIDATE_SIGNALS(L, I, stallCPU, '1', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
-			end loop;  
-			wait until rising_edge(clk);
-			VALIDATE_SIGNALS( stallCPU, '0', missCounter, expectedMissCounter+1, hitCounter, expectedHitCounter);
-			PRINT_HITCOUNTER( hitCounter, missCounter );
-		end loop;
-		PRINT_END_TEST(6);
-		report "---" severity FAILURE;
-		
-		 
-		-- --------------------------------------------------------------------------------------
+		-- =======================================================================================================================
 		-- Test 5 - Read Cache. Line is dirty.
-		-- --------------------------------------------------------------------------------------
-		PRINT_START_TEST(5);
+		-- =======================================================================================================================
+		testCaseIndex := 5;
+		PRINT_START_TEST(testCaseIndex);
 
 		-- Reset the cache.
 		reset <= '1';
@@ -422,7 +399,7 @@ begin
 		wait until rising_edge(clk);
 		PRINT_HITCOUNTER( missCounter, hitCounter );
 		VALIDATE_SIGNALS(stallCPU, '0', missCounter, 0, hitCounter, 0);
-		tagI <= 0;
+		tag_integer := 0;
 		offsetI <= 0;
 		dataCPU <= (others=>'0');
 		
@@ -430,76 +407,133 @@ begin
 		for L in 0 to ADDRESSWIDTH-1 loop
 			wrCPU <= '0';
 			rdCPU <= '1';
-			expectedHitCounter <= hitCounter;
-			expectedMissCounter <= missCounter;
+			expected_hitCounter := hitCounter;
+			expected_missCounter := missCounter;
 			wait until rising_edge(clk);
 			rdCPU <= '0';
-			addrCPU <= GET_MEMORY_ADDRESS( tagI, L, offsetI );
+			addrCPU <= GET_MEMORY_ADDRESS( tag_integer, L, offsetI );
 			PRINT_HITCOUNTER( missCounter, hitCounter );
 			for I in 1 to 8 loop
-				expectedMissCounter <= missCounter;
+				expected_missCounter := missCounter;
 				wait until rising_edge(clk);
 				PRINT_HITCOUNTER( stallCPU, hitCounter, missCounter);
-				VALIDATE_SIGNALS(L, I, stallCPU, '1', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
+				VALIDATE_SIGNALS(L, I, stallCPU, '1', missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			end loop;  
-			VALIDATE_SIGNALS( stallCPU, '1', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
+			VALIDATE_SIGNALS( stallCPU, '1', missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			wait until rising_edge(clk);
-			report "****************" severity NOTE;
 			PRINT_HITCOUNTER( stallCPU, hitCounter, missCounter);
-			VALIDATE_SIGNALS( stallCPU, '0', missCounter, expectedMissCounter+1, hitCounter, expectedHitCounter);
+			VALIDATE_SIGNALS( stallCPU, '0', missCounter, expected_missCounter+1, hitCounter, expected_hitCounter);
 			PRINT_HITCOUNTER( hitCounter, missCounter );
 		end loop;
 		
 		-- Change data in cache blocks.
+		report "change data in cache blocks..." severity NOTE;
+		dataCPU <= (others=>'1');
+		for L in 0 to ADDRESSWIDTH-1 loop
+			wrCPU <= '1';
+			rdCPU <= '0';
+			addrCPU <= GET_MEMORY_ADDRESS( tag_integer, L, offsetI );
+			wait until rising_edge(clk);
+			wrCPU <= '0';
+			expected_hitCounter := hitCounter;
+			expected_missCounter := missCounter;
+			PRINT_HITCOUNTER( missCounter, hitCounter );
+			wait until rising_edge(clk);
+			wait until rising_edge(clk);
+			expected_hitCounter := expected_hitCounter + 1;
+			VALIDATE_SIGNALS(stallCPU, '0', missCounter, expected_missCounter, hitCounter, expected_hitCounter);
+			PRINT_HITCOUNTER( hitCounter, missCounter );
+		end loop;
+		
+		-- ---------------------------------------------------------------
+		-- Read from dirty cache blocks, where tags are not equal.
+		-- ---------------------------------------------------------------
+		report "read data from cache blocks with different tags..." severity NOTE;
+		wrCPU <= '0';
+		rdCPU <= '0';
+		
+		-- Change the tag value.
+		if tag_integer/=1 then
+			tag_integer := 1;
+		else
+			tag_integer := 0;
+		end if;
+		
+		-- Wait some default clock cycles.
+		wait until rising_edge(clk);
+		wait until rising_edge(clk);
+		
+		for L in 0 to ADDRESSWIDTH-1 loop
+			wrCPU <= '0';
+			rdCPU <= '1';
+			addrCPU <= GET_MEMORY_ADDRESS( tag_integer, L, offsetI );
+			wait until rising_edge(clk);
+			rdCPU <= '0';
+			wrCPU <= '0';
+			expected_hitCounter  := hitCounter;
+			expected_missCounter := missCounter;
+			PRINT_HITCOUNTER( expected_missCounter, expected_hitCounter );
+			expected_stallCPU := '0';
+			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
+			
+			wait until rising_edge(clk);
+			for I in 0 to 6 loop
+				wait until rising_edge(clk);
+				expected_stallCPU := '1';
+				VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
+			end loop;
+			wait until rising_edge(clk);
+			expected_stallCPU := '0';
+			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter+1, hitCounter, expected_hitCounter);
+			PRINT_HITCOUNTER( hitCounter, missCounter );
+			wait until rising_edge(clk);
+		end loop;
+		PRINT_END_TEST(5);
+		
+		-- =======================================================================================================================
+		-- Test 6 - Read Cache. Line is dirty.
+		-- =======================================================================================================================
+		PRINT_START_TEST(6); 
+		reset <= '1';
+		rdCPU <= '0';
+		wrCPU <= '0';
+		dataCPU <= (others=>'Z');
+		wait until rising_edge(clk);
+		reset <= '0';
+		wait until rising_edge(clk);
+		VALIDATE_SIGNALS(stallCPU, '0', missCounter, 0, hitCounter, 0);
+		tag_integer := 0;
+		offsetI <= 0;
 		dataCPU <= (others=>'1');
 		for L in 0 to ADDRESSWIDTH-1 loop
 			wrCPU <= '1';
 			rdCPU <= '0';
 			wait until rising_edge(clk);
 			wrCPU <= '0';
-			addrCPU <= GET_MEMORY_ADDRESS( tagI, L, offsetI );
-			expectedHitCounter <= hitCounter;
-			expectedMissCounter <= missCounter;
+			addrCPU <= GET_MEMORY_ADDRESS( tag_integer, L, offsetI );
+			expected_hitCounter := hitCounter;
+			expected_missCounter := missCounter;
 			PRINT_HITCOUNTER( missCounter, hitCounter );
-			VALIDATE_SIGNALS(stallCPU, '0', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
-			wait until rising_edge(clk);
-			wait until rising_edge(clk);
-			VALIDATE_SIGNALS(stallCPU, '1', missCounter, expectedMissCounter, hitCounter, expectedHitCounter+1);
-			PRINT_HITCOUNTER( hitCounter, missCounter );
-		end loop;
-		
-		-- Read from dirty cache blocks, where tags are not equal.
-		tagI <= 1;
-		for L in 0 to ADDRESSWIDTH-1 loop
-			wrCPU <= '0';
-			rdCPU <= '1';
-			wait until rising_edge(clk);
-			rdCPU <= '0';
-			addrCPU <= GET_MEMORY_ADDRESS( tagI, L, offsetI );
-			expectedHitCounter <= hitCounter;
-			expectedMissCounter <= missCounter;
-			PRINT_HITCOUNTER( missCounter, hitCounter );
-			VALIDATE_SIGNALS(stallCPU, '0', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
-			for I in 0 to 7 loop
+			--VALIDATE_SIGNALS(stallCPU, '0', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
+			for I in 1 to 7 loop
+				expected_missCounter := missCounter;
 				wait until rising_edge(clk);
-				VALIDATE_SIGNALS(stallCPU, '1', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
-			end loop;
+				VALIDATE_SIGNALS(L, I, stallCPU, '1', missCounter, expected_missCounter, hitCounter, expected_hitCounter);
+			end loop;  
 			wait until rising_edge(clk);
-			VALIDATE_SIGNALS(stallCPU, '0', missCounter, expectedMissCounter+1, hitCounter, expectedHitCounter);
+			VALIDATE_SIGNALS( stallCPU, '0', missCounter, expected_missCounter+1, hitCounter, expected_hitCounter);
 			PRINT_HITCOUNTER( hitCounter, missCounter );
 		end loop;
-		PRINT_END_TEST(5);
-		
-		
-		
-		
-		
+		PRINT_END_TEST(6);
+		 
+		 
+
+
 		report "Validation finished." severity NOTE; 
 		wait;
 	end process;
 
 	indexV       <= STD_LOGIC_VECTOR(TO_UNSIGNED(indexI, config.indexNrOfBits));
-	tagV         <= STD_LOGIC_VECTOR(TO_UNSIGNED(tagI, config.tagNrOfBits));
 	offsetBlockV <= STD_LOGIC_VECTOR(TO_UNSIGNED(offsetBlockI, config.offsetBlockNrOfBits));
 	offsetByteV  <= STD_LOGIC_VECTOR(TO_UNSIGNED(offsetByteI, config.offsetByteNrOfBits));
 

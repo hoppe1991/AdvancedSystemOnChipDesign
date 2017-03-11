@@ -38,7 +38,7 @@ entity cacheController is
 		dirty 			: inout STD_LOGIC;
 		setValid 		: out 	STD_LOGIC;	-- Indicates whether to reset the valid bit of Direct Mapped Cache.
 		setDirty 		: out 	STD_LOGIC;	-- Indicates whether to set the dirty bit of Direct Mapped Cache.
-		hitFromCache 	: in 	STD_LOGIC;
+		hitFromCache 	: in 	STD_LOGIC; -- Indicates whether hit from direct mapped cache is reached.
 		
 		newCacheBlockLine : out STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0);
 		wrNewCBLine : out STD_LOGIC;
@@ -65,14 +65,14 @@ end;
 architecture synth of cacheController is
 
 	-- Constant object.
-	constant config : CONFIG_BITS_WIDTH := GET_CONFIG_BITS_WIDTH(ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET);
+	constant config : CONFIG_BITS_WIDTH := GET_CONFIG_BITS_WIDTH(MEMORY_ADDRESS_WIDTH, ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET);
 	constant cacheBlockLineBits : INTEGER := config.cacheLineBits;
 	
 	
 	signal dataCPU_tmp : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- TODO Remove this signal.
 
 	-- Definition of type BLOCK_LINE as an array of STD_LOGIC_VECTORs.
-	type BLOCK_LINE is array(0 to (BLOCKSIZE-1)) of STD_LOGIC_VECTOR(DATAWIDTH-1 downto 0);
+	type BLOCK_LINE is array(0 to (BLOCKSIZE-1)) of STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
 	
 	
 	-- Definition of records.
@@ -95,7 +95,7 @@ architecture synth of cacheController is
 	function BLOCK_LINE_TO_STD_LOGIC_VECTOR(ARG : in BLOCK_LINE) return STD_LOGIC_VECTOR;
 	function GET_NEW_CACHE_BLOCK_LINE(
 		blockLine 		: in STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0);
-		data 	  		: in STD_LOGIC_VECTOR(DATAWIDTH-1 downto 0);
+		data 	  		: in STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
 		offsetAsInteger : in INTEGER
 	) return STD_LOGIC_VECTOR;
 		
@@ -151,14 +151,12 @@ architecture synth of cacheController is
 	signal lineIsInvalid  : STD_LOGIC := '0';
 	signal lineIsNotDirty : STD_LOGIC := '0';
 	signal lineIsDirty    : STD_LOGIC := '0';
+	
+	signal dirtyBit_tmp : STD_LOGIC := '0';
 
-
-	signal blockLineIN : STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0);
-	signal dataIN : STD_LOGIC_VECTOR(DATAWIDTH-1 downto 0);
-	signal offsetIN : STD_LOGIC_VECTOR(config.offsetNrOfBits-1 downto 0);
 	function GET_NEW_CACHE_BLOCK_LINE(
 		blockLine 		: in STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0);
-		data 	  		: in STD_LOGIC_VECTOR(DATAWIDTH-1 downto 0);
+		data 	  		: in STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
 		offsetAsInteger	: in INTEGER
 	) return STD_LOGIC_VECTOR is
 		variable newCacheBlockLine : STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0) := (others=>'0');
@@ -202,17 +200,21 @@ architecture synth of cacheController is
 		return v;
 	end;
 
-	
+	signal auxiliaryCounter : INTEGER := 1;
+	signal myTestSignal : STD_LOGIC := '0';
 begin
 	
 	-- State register.
 	state <= IDLE when reset = '1' else nextstate when rising_edge(clk);
 	
+	myTestSignal <= '1' when hitFromCache='1' and valid='1' and auxiliaryCounter=0 else '0';
+	
+	
 	--------------------------------------------
 	-- TransitionLogic:
 	-- Transition logic of FSM.
 	--------------------------------------------
-	TransitionLogic : process( state, wrCPU, rdCPU, hitFromCache, dirty, readyMEM, valid)
+	TransitionLogic : process( state, wrCPU, rdCPU, hitFromCache, dirty, readyMEM, valid, auxiliaryCounter)
 	begin
 		case state is
 			when IDLE =>
@@ -232,14 +234,15 @@ begin
 				elsif hitFromCache='0' and valid = '1' and dirty='1' then
 					nextstate <= WRITE_BACK1;
 				end if;
+				
 			when CHECK2 =>
-				if hitFromCache='1' and valid = '1' then
+				if hitFromCache='1' and valid='1' and auxiliaryCounter=0 then
 					nextstate <= IDLE;
-				elsif valid = '0' then
+				elsif valid = '0' and auxiliaryCounter=0 then
 					nextstate <= READ;
-				elsif hitFromCache='0' and valid = '1' and dirty='0' then
+				elsif hitFromCache='0' and valid='1' and dirty='0' and auxiliaryCounter=0 then
 					nextstate <= READ;
-				elsif hitFromCache='0' and valid = '1' and dirty='1' then
+				elsif hitFromCache='0' and valid='1' and dirty='1' and auxiliaryCounter=0 then
 					nextstate <= WRITE_BACK2;
 				end if;
 
@@ -280,6 +283,9 @@ begin
 		end case;
 	end process;
 		 
+	auxiliaryCounter <= 1 when state=IDLE and rdCPU='1' else
+						auxiliaryCounter-1 when state=CHECK2 and rising_edge(clk);
+		 
 	-- ------------------------------------------------------------------------------------
 	-- Handling of memory address.
 	-- ------------------------------------------------------------------------------------
@@ -291,8 +297,8 @@ begin
 	-- Increment or reset hit counter and miss counter.
 	-- ------------------------------------------------------------------------------------
 	rHitCounter  <= 0 when reset='1' else
-				    rHitCounter+1 when state=CHECK1 and hitFromCache='1' and rising_edge(clk) else
-		            rHitCounter+1 when state=CHECK2 and hitFromCache='1' and rising_edge(clk);
+				    rHitCounter+1 when state=CHECK1 and hitFromCache='1' and rising_edge(clk) and valid='1' else
+		            rHitCounter+1 when state=CHECK2 and hitFromCache='1' and rising_edge(clk) and auxiliaryCounter=0;
 	rMissCounter <= 0 when reset='1' else
 					rMissCounter+1 when state=WRITE and readyMEM='1' and rising_edge(clk) else
 				    rMissCounter+1 when state=TOCACHE and rising_edge(clk);
@@ -310,6 +316,7 @@ begin
 	rdWord	            <= '1' when (state=IDLE and wrCPU='1') else 
 						   '1' when (state=IDLE and rdCPU='1') else
 						   '0' when (state=CHECK2 and hitFromCache='1') else
+						   '0' when (state=CHECK1 and hitFromCache='1') else
 						   '0' when (state=READ and readyMEM='1') else
 						   '0' when (state=TOCACHE);
 	wrWord            	<= '0' when (state=IDLE and rdCPU='1') else
@@ -350,15 +357,17 @@ begin
 			 
 	writeMode <= '1' when (state=IDLE and wrCPU='1') else
 				 '0' when state=IDLE;
+				 
 	setValid <= '1' when (state=WRITE and readyMEM='1' and rising_edge(clk)) else 
 	            '1' when (state=CHECK1 and hitFromCache='1' and valid = '1' and rising_edge(clk)) else 
 	            '1' when (state=READ and readyMEM = '1' and rising_edge(clk)) else 
 	            '0' when rising_edge(clk);
 	
+	dirtyBit_tmp <= dirty when state=IDLE and nextstate=CHECK2;
+	dirty <= '1' when (state=CHECK1 and hitFromCache='1' and valid='1') else 'Z';
 	setDirty <= '1' when (state=CHECK1 and hitFromCache='1' and valid = '1') else 
 	            '1' when (state = WRITE and readyMEM = '1') else 
 	            '0';
-	
 	
 	dataCPU_tmp <= directMappedCache_data_out when (hitFromCache='1' and state = CHECK2) else (others=>'Z');
 	  

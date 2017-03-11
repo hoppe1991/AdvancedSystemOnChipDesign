@@ -115,7 +115,18 @@ architecture synth of directMappedCacheController is
 	end function;
 
 	signal memoryAddress : MEMORY_ADDRESS;
-   
+	
+	type TAG_VECTOR is ARRAY(1 downto 0) of STD_LOGIC_VECTOR(config.tagNrOfBits-1 downto 0);
+	function TAG_VECTOR_INIT return TAG_VECTOR is
+		variable t : TAG_VECTOR;
+	begin
+		t(0) := (others=>'0');
+		t(1) := (others=>'0');
+		return t;
+	end function;
+	
+	signal tag_delayed : TAG_VECTOR := TAG_VECTOR_INIT;
+	
 	-- Bit string contains a complete cache line.
 	signal cacheLine : STD_LOGIC_VECTOR(config.cacheLineBits-1 downto 0) := (others => '0');
   	 
@@ -218,6 +229,15 @@ architecture synth of directMappedCacheController is
 		return v;
 	end;
 	
+	function GET_MODIFIED_DIRTYBITSVECTOR( index_in : in INTEGER; dirtyBits_in : in STD_LOGIC_VECTOR(ADDRESSWIDTH-1 downto 0); value_in : in STD_LOGIC) return STD_LOGIC_VECTOR is
+		variable v : STD_LOGIC_VECTOR(ADDRESSWIDTH-1 downto 0) := (others=>'0');
+	begin
+		v := dirtyBits_in;
+		v(index_in) := value_in;
+		return v;
+	end;
+	 
+	
 
 -----------------------------------------------------------------------------------
 begin
@@ -245,8 +265,8 @@ begin
 	myTestSignal <= '1' when (memoryAddress.indexAsInteger<0 or memoryAddress.indexAsInteger>ADDRESSWIDTH) and writeToDataBRAMs='0' else '0';
 	valid <= validBits(memoryAddress.indexAsInteger) when setValid = '0' else 
 	         'Z';
-	dirty <= dirtyBits(memoryAddress.indexAsInteger) when setDirty = '0' and rising_edge(clk) and reset = '0' else
-	         'Z';
+	dirty <= dirtyBits(memoryAddress.indexAsInteger) when setDirty = '0' and rdWord='1' and reset = '0' else
+	         'Z' when setDirty='1';
 
 	-- -----------------------------------------------------------------------------
 	-- Reset the valid bits and the dirty bits when to reset.
@@ -254,10 +274,8 @@ begin
 	-- -----------------------------------------------------------------------------
 	validBits <= (others=>'0') when rising_edge(clk) and reset='1' else
 				 GET_VALIDBITS(memoryAddress.indexAsInteger, validBits) when writeToDataBRAMs='1';
-	dirtyBits <= (others=>'0') when rising_edge(clk) and reset='1'; 
-	dirtyBits(memoryAddress.indexAsInteger) <= dirty when rising_edge(clk) and setDirty='1';
-
- 
+	dirtyBits <= (others=>'0') when rising_edge(clk) and reset='1' else
+		         GET_MODIFIED_DIRTYBITSVECTOR( memoryAddress.indexAsInteger, dirtyBits, dirty) when setDirty='1';
 	-- -----------------------------------------------------------------------------
 	-- Determine whether a cache block/line should be read or written.
 	-- -----------------------------------------------------------------------------
@@ -313,6 +331,8 @@ begin
 	-- -----------------------------------------------------------------------------
 	-- The hit signal is supposed to be an asynchronous signal.
 	-- -----------------------------------------------------------------------------
+	tag_delayed(0) <= memoryAddress.tag when rising_edge(clk);
+	tag_delayed(1) <= tag_delayed(0) when rising_edge(clk);
 	tagsAreEqual <= '1' when tagFromBRAM=memoryAddress.tag else '0';
 	hit 		 <= '1' when valid = '1' AND tagsAreEqual = '1' else '0';
 

@@ -82,9 +82,7 @@ architecture rtl of cache is
 	signal hit              : STD_LOGIC := '0'; 
 	
 	-- New cache block line will be written into cache.
-	signal newCacheBlockLine : STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0) := (others=>'0');
-	
-
+	signal newCacheBlockLine : STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0) := (others=>'0');
 begin
 	dataCPU <= (others=>'Z');
 	

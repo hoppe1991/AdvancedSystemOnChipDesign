@@ -15,6 +15,8 @@
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage{pgfplots}
+\usepackage{xcolor}
+\usepackage{multirow}
 \usepackage{mips}
 \usepackage{titling}
 \usepackage[automark]{scrlayer-scrpage}
@@ -25,6 +27,7 @@
 % backend = {biber, bibtex}
 \usepackage{pgf}
 \usepackage{tikz}
+\usetikzlibrary{calc,arrows}
 \usetikzlibrary{arrows,automata,positioning}
 \usepackage{hyperref}
 
@@ -45,6 +48,9 @@
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 \definecolor{gray}{rgb}{0.5,0.5,0.5}
 \definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\definecolor{myOrange}{RGB}{209,234,254}
+
 
 
 \lstset{ %
@@ -83,6 +89,23 @@
 	\label{#3}
 \end{figure}
 }
+
+\newcommand{\cacheTable}[3]{
+\begin{table}
+\caption{#1}
+\label{#2}
+\begin{tabular}{lllll}
+\hline %\toprule
+\multirow{2}{*}{\textbf{Placement (Policy)}}& \multirow{2}{2cm}{\textbf{Block Size} \ \textbf{(Words)}}& \multirow{2}{2cm}{\textbf{Cache Hit Count}}&\multirow{2}{2cm}{\textbf{Cache Miss Count}}&\multirow{2}{2cm}{\textbf{Cache Hit Rate}} \\ & & & &  \\
+\hline %\midrule
+#3
+\hline %\bottomrule
+\end{tabular} 
+\end{table}
+}
+
+
+\input{circuitSettings}
 
 
 % -----------------------------------------------------

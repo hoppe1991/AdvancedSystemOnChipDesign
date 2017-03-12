@@ -6,51 +6,55 @@
 % Reference	:	http://www.texample.net/tikz/examples/state-machine/
 %				https://martin-thoma.com/how-to-draw-a-finite-state-machine/
 % -----------------------------------------------------------------
+In the following section we describe an implementation of an instruction cache and a data cache. We develop a \textit{Direct Mapped Cache} using as the instruction cache and a \textit{2-way set associative cache} using as the data cache.\\
+In the following subsection \ref{sec:introductionToMemories} we give a short introduction to memories. After that, we simulate the efficiency of a cache with MARS in subsection \ref{sec:cacheSimulation}.
 
-\subsection{Memories}
 
+\subsection{Introduction to Memories}
+\label{sec:introductionToMemories}
+TODO
 Why are there so many different storage types?
-What are the advantages and disadvantages of different cache organizsation forms?
+
+
+A cache is a faster but smaller storage system which is placed nearby the CPU. In the Harvard architecture there is one cache for instructions and one cache for data. There are diverse modes to organize the caches. Primary, the caches are organized by answering the following four questions:
+\begin{enumerate}
+	\item \textit{Block Placement} - Where can a block be placed in the cache?
+	\item \textit{Block Identification} - How is a block found in the cache?
+	\item \textit{Block Replacement} - Which block is replaced in case of a cache miss?
+	\item \textit{Write Strategies} - What happens during a write operation?
+\end{enumerate}
+So, there are different cache organizations. But what are the advantages and disadvantages of the different cache organization forms?\\
+Regarding the \textit{Block Placement} there are three essential block placement strategies: \textit{Direct Mapped}, \textit{Set Associative} and \textit{Fully Associative}. The advandtage of the increasing of the grade of associativity is that the miss rate is reduced and the hit rate is increased. The disadvantage of the associativity is the complex implementation and slower access time.\\
+In view of the \textit{Block Identification}increased
+With respect to \textit{Block Replacement} either the \textit{LRU} strategy or the \textit{Random} strategy is used.\\ 
+Regarding the \textit{Write Strategies} we distinguish between the \textit{Write-through} and \textit{Write-back} strategies. The advantages of the strategy Write-back is that single words can be written with the speed of the CPU and not of the main memory. Also, only one single write operation to the main memory is needed for multiple write operations. The advantages of the strategy Write-through are that cache misses can be simpler and cheaper handled. Eventually, the cache blocks do not needed to write back to the main memory in case of a cache miss. Furthermore, the strategy Write-through is easily to implemented.
 
 
 
 \subsection{Cache Simulation - Results}
-The two assembler programs \textit{row-major.asm} and \textit{column-major.asm} has been used for the cache simulation. \ref{tab:tableColumnMajor} contains the results regarding the file \textit{column-major.asm} and \ref{tab:tableRowMajor} illustrates the results of \textit{row-major.asm}.\\
-TODO Interpretation
+\label{sec:cacheSimulation}
+In the following step we simulate the efficiency of a cache with MARS. On this, we compare the cache performance for different block sizes of a direct mapping cache, a 2-way associative cache and a 4-way associative cache. The two assembler programs \textit{row-major.asm} and \textit{column-major.asm} has been used for the cache simulation. For the simulation we vary the block size and placemet policy, but we fix the number of cache blocks to 8. Table \ref{tab:tableColumnMajor} contains the results regarding the file \textit{column-major.asm} and table \ref{tab:tableRowMajor} illustrates the results of \textit{row-major.asm}. The efficiency of a cache is evaluated by counting the number of cache hits and cache misses during executing the assembler program. Besides, the cache hit rate is determined by the cache hit count and the memory access count. In both assembler programs a 16x16 matrix is fully traversed. Therefore, we get a memory access count with value 256 for each program execution.\\
+The first assembler program \textit{column-major.asm} traverses the 16x16 matrix column by column. At first we traverse the lead column, then the second column and so on. When we traverse the first half of a column, each correspondent block is loaded into the cache. But when we handle the second half of a column, the all data in the cache are replaced because all eight cache blocks are already occupied. In the next colum we also traverse at first the first half and then the second half of the column. When traversing the first half, we must also replace all data in the cache, because all cache blocks are already occupied and have different tag values. Finally, we expect that no cache hit occurs. In fact during each access to an array element causes a cache miss. As you can see in table \ref{tab:tableColumnMajor}, for all combinations of the placement policy and the cache block size we achieve a cache hit rate of zero.\\
+Contrary to the column major program, we traverse the 16x16 matrix row by row. When we access an array element, the correspondent block is placed into the cache. Directly after accessing this element, we also access the nearby array elements of this block. Thus, we only expect one cache miss for the access of the first block element and cache hits  for accessing the remainding elemenets of a block. Depending on the cache block size (i.e. the number of words in a cache block), we achieve expect a diverse number of cache hit count and miss hit count. Moreover, table \ref{tab:tableRowMajor} shows that the results are equal relating to the placement policy.\\
+The above assembler programs contrast traversing the matrix column by column with traversing row by row. Two principles of the cache memory are the \textit{Temporal Locality} and the \textit{Spatial Locality}. The above assembler programs illustrate the spatial locality. Thus, memory accesses whose addresses are adjacent will often be accessed in the near future. Therefore, the matrix is stored in memory row by row. The spatial locality requires to access contiguous data in memory element wise. Hence, it is efficient to traverse the given matrix row by row.
 
-
-\begin{table}
-\centering
-\caption{Cache Simulation of Column Major}
-\label{tab:tableColumnMajor}
-\begin{tabular}{lllll}
-\hline %\toprule
-Placement (Policy) & Cache Block Size (Words) & Cache Hit Count & Cache Miss Count & Cache Hit Rate \\
-\hline %\midrule
+% Show table with simulation of column major assembler program.
+\cacheTable{Cache Simulation of Column Major}{tab:tableColumnMajor}{
 Direct Mapping & 2 & 0 & 256 & 0  \\
 Direct Mapping & 4 & 0 & 256 & 0  \\
 Direct Mapping & 8 & 0 & 256 & 0  \\
 Direct Mapping & 16 & 0 & 256 & 0  \\
 2-Way Set Associative & 2 & 0 & 256 & 0 \\
 2-Way Set Associative & 4 & 0 & 256 & 0 \\
-2-Way Set Associative & 8 & 0 & 512 & 0 \\
+2-Way Set Associative & 8 & 0 & 256 & 0 \\
 2-Way Set Associative & 16 & 0 & 256 & 0 \\
 4-Way Set Associative & 2 & 0 & 256 & 0 \\
 4-Way Set Associative & 4 & 0 & 256 & 0 \\
 4-Way Set Associative & 8 & 0 & 256 & 0 \\
-4-Way Set Associative & 16 & 0 & 256 & 0 \\
-\hline %\bottomrule
-\end{tabular} 
-\end{table}
+4-Way Set Associative & 16 & 0 & 256 & 0 \\}
 
-\begin{table}
-\caption{Cache Simulation of Row Major}
-\label{tab:tableRowMajor}
-\begin{tabular}{lllll}
-\hline %\toprule
-Placement (Policy) & Cache Block Size (Words) & Cache Hit Count & Cache Miss Count & Cache Hit Rate \\
-\hline %\midrule
-Direct Mapping & 2 & 128 & 128 & 50  \\
+% Show table with simulation results of row major assembler program.
+\cacheTable{Cache Simulation of Row Major}{tab:tableRowMajor}{Direct Mapping & 2 & 128 & 128 & 50  \\
 Direct Mapping & 4 & 192 & 64 & 75  \\
 Direct Mapping & 8 & 224 & 32 & 88  \\
 Direct Mapping & 16 & 240 & 16 & 94  \\
@@ -60,11 +64,39 @@ Direct Mapping & 16 & 240 & 16 & 94  \\
 2-Way Set Associative & 16 & 240 & 16 & 94 \\
 4-Way Set Associative & 2 & 128 & 128 & 50 \\
 4-Way Set Associative & 4 & 192 & 64 & 75 \\
-4-Way Set Associative & 8 & 224 & 16 & 88 \\
-4-Way Set Associative & 16 & 240 & 16 & 94 \\
-\hline %\bottomrule
-\end{tabular} 
-\end{table}
+4-Way Set Associative & 8 & 224 & 32 & 88 \\
+4-Way Set Associative & 16 & 240 & 16 & 94 \\}
+
+\newpage
+\subsection{Design a direct mapped cache}
+To develop an instruction cache and a data cache, we first implement a direct mapped cache. Thus, in figure \ref{fig:entityDirectMappedCache} we illustrate the entity of the direct mapped cache with all input and output ports.\\
+Of course, the clock signal \textit{clk} is used to handle the behavior of this entity. The \textit{reset} signal is used to reset the direct mapped cache. When the direct mapped cache is reset, all cache block lines will become invalid. The input port \textit{addrCPU} stores the address given from the CPU to the cache. This address determines the cache block line to be read or to be written. The two inout ports \textit{dataCPU} and \textit{dataMEM} are needed to pass data word between the CPU and the cache as well as between the main memory and the cache. The input signal \textit{newCacheBlockLine} stores the new cache block line to be written into the direct mapped cache. Also, there are several control signals to specify, whether the direct mapped cache should be written or read. The signals \textit{wrCBLine} and \textit{rdCBLine} states whether a whole cache block line should be written or read. Accordingly, the signals \textit{rdWord} and \textit{wrWord} satisfy whether a single word should be written or read in the direct mapped cache. The control signal \textit{wrNewCBLine} says, whether a new cache block line should be written into the direct mapped cache. Furthermore, the input ports \textit{setValid} and \textit{setDirty} controls whether the dirty bit and the valid bit should be reset. The inout port \textit{dirty} stores the new value of the dirty bit or the returns the current value of the dirty bit regarding the current cache block line. Finally, the out port \textit{hit} signalises whether a cache hit or a cache miss is achieved during a read/write operation.
+
+% Figure of entity of the Direct Mapped Cache.
+\begin{figure}[htb]
+\label{fig:entityDirectMappedCache}
+\centering
+\begin{tikzpicture}[font=\sffamily,>=triangle 45]
+  \node [shape=circuit] (item) at (0,0) {directMappedCache};
+  \draw [<-] (item.ina) node [anchor=west,labels] {} -- +(-1,0) node [anchor=east] {clk};
+  \draw [<-] (item.inb) node [anchor=west,labels] {} -- +(-1,0) node [anchor=east] {reset};
+  \draw [<-] (item.inc) node [anchor=west,labels] {} -- +(-1,0) node [anchor=east] {addrCPU};
+  \draw [<->] (item.ioa) node [anchor=east,labels] {} -- +(1,0) node [anchor=west] {dataCPU};
+  \draw [<-] (item.ind) node [anchor=west,labels] {} -- +(-1,0) node [anchor=east] {newCacheBlockLine};
+  \draw [<->] (item.iob) node [anchor=east,labels] {} -- +(1,0) node [anchor=west] {dataMEM};
+  \draw [<-] (item.ine) node [anchor=west,labels] {} -- +(-1,0) node [anchor=east] {wrNewCBLine};
+  \draw [<-] (item.inf) node [anchor=west,labels] {} -- +(-1,0) node [anchor=east] {wrCBLine};
+  \draw [<-] (item.ing) node [anchor=west,labels] {} -- +(-1,0) node [anchor=east] {rdCBLine};
+  \draw [<-] (item.inh) node [anchor=west,labels] {} -- +(-1,0) node [anchor=east] {rdWord};
+  \draw [<-] (item.ini) node [anchor=west,labels] {} -- +(-1,0) node [anchor=east] {wrWord};
+  \draw [<-] (item.inj) node [anchor=west,labels] {} -- +(-1,0) node [anchor=east] {writeMode};
+  \draw [->] (item.outa) node [anchor=east,labels] {} -- +(1,0) node [anchor=west] {hit};
+  \draw [<->] (item.ioc) node [anchor=east,labels] {} -- +(1,0) node [anchor=west] {dirty};
+  \draw [<-] (item.ink) node [anchor=west,labels] {} -- +(-1,0) node [anchor=east] {setValid};
+  \draw [<-] (item.inl) node [anchor=west,labels] {} -- +(-1,0) node [anchor=east] {setDirty};
+\end{tikzpicture}
+\caption{Entity of directMappedCache}
+\end{figure}
 
 
 \newpage
@@ -83,7 +115,7 @@ The main memory controller has the purpose to either write a given cache block/l
 
 
 \newpage
-\subsubsection{Design a testbench and simulate the Cache}
+\subsection{Design a testbench and simulate the Cache}
 After implementation of the Cache with \textit{Write Back Policy} and \textit{Write Allocate Policy} we write a testbench and simulate a system with the following properties:
 \begin{itemize} 
 	\item Main memory using a BlockRAM with ready signal.
@@ -99,6 +131,6 @@ The testbench should verify the behavior of the cache. Therefore, we look at dif
 \item[Read Cache - Line is Dirty] In dem zu lesenden Cacheblock befinden sich bereits gültige Daten. Die Daten sind geändert gegenüber dem Hauptspeicher. Es wird nun erneut gelesen, wobei die Tags unterschiedlich sind. Daher werden die Daten aus dem Cache zuvor in den Hauptspeicher zurückgeschrieben.
 \item[Write Cache - Invalid Cacheblocks] Zu Beginn sind alle Cacheblöcke invalid. Deshalb wird, wenn ein Cacheblock gelesen wird, aus dem Hauptspeicher gelesen. Entsprechend wird das Stall-Signal auf 1 gesetzt und der Miss-Counter erhöht.
 \item[Write Cache – Line is Dirty] In dem zu schreibenden Cacheblock befinden sich bereits gültige Daten. Die Daten sind gegenüber dem Hauptspeicher geändert. Es wird nun erneut geschrieben, wobei die Tags unterschiedlich sind. Daher werden die Daten aus dem Cache zuvor in den Hauptspeicher zurückgeschrieben.
-\item[Write Cache – Line Is Not Dirty] In dem zu schreibenden Cacheblock befinden sich bereits gültige Daten. Die Daten sind gegenüber dem Hauptspeicher nicht geändert. Es wird nun erneut in den Cacheblock geschrieben, wobei die Tags unterschiedlich sind. Daher werden die neuen Daten direkt in den Cache geschrieben.
+\item[Write Cache – Line Is Not Dirty] Let's assume that there are already valid, clean data in a cache block/line. If we write new data to this cache block/line and the tags are different, then the valid, clean data will not be written back to the main memory. Instead of that, the correspondent block are read from memory to cache and the relevant offset block is replaced with the new data word. We expect, that the miss counter will be incremented.
 
 \end{description}

@@ -121,18 +121,47 @@ After implementation of the Cache with \textit{Write Back Policy} and \textit{Wr
 	\item Main memory using a BlockRAM with ready signal.
 	\item Direct Mapped Cache with 256 blocks/lines. Each block/line has 4 words. The cache use the write back scheme. Also, byte access is possible.	
 \end{itemize}
-The testbench should verify the behavior of the cache. Therefore, we look at different test cases. In the following, these test cases are described.
-\begin{description}
-	\item[Reset Cache I] If the cache is reset, then the miss counter and the hit counter are reset to zero.
-	\item[Reset Cache II] If the cache is reset, then all cache blocks/lines are invalid.
-	
-	\item[Read Cache, Line is Not Dirty] In dem zu lesenden Cacheblock befinden sich bereits gültige Daten. Die Daten sind nicht geändert gegenüber dem Hauptspeicher. Es wird nun erneut gelesen, wobei die Tags unterschiedlich sind. Daher wird aus dem Hauptspeicher in den Cache gelesen. Entsprechend wird das Stall-Signal auf 1 gesetzt und der Miss-Zähler erhöht.
-\item[Read Cache - Different Offset] Im ersten Lesebefehl wird aus einem Offset-Block aus einem Cacheblock gelesen. Beim nächsten Lesebefehl wird aus dem gleichen Cacheblock aus einem anderen Offset-Block gelesen. Entsprechend wird das Stall-Signal auf 1 gesetzt und der Miss-Zähler erhöht.
-\item[Read Cache - Line is Dirty] In dem zu lesenden Cacheblock befinden sich bereits gültige Daten. Die Daten sind geändert gegenüber dem Hauptspeicher. Es wird nun erneut gelesen, wobei die Tags unterschiedlich sind. Daher werden die Daten aus dem Cache zuvor in den Hauptspeicher zurückgeschrieben.
-\item[Write Cache - Invalid Cacheblocks] Zu Beginn sind alle Cacheblöcke invalid. Deshalb wird, wenn ein Cacheblock gelesen wird, aus dem Hauptspeicher gelesen. Entsprechend wird das Stall-Signal auf 1 gesetzt und der Miss-Counter erhöht.
-\item[Write Cache – Line is Dirty] In dem zu schreibenden Cacheblock befinden sich bereits gültige Daten. Die Daten sind gegenüber dem Hauptspeicher geändert. Es wird nun erneut geschrieben, wobei die Tags unterschiedlich sind. Daher werden die Daten aus dem Cache zuvor in den Hauptspeicher zurückgeschrieben.
-\item[Write Cache – Line Is Not Dirty] Let's assume that there are already valid, clean data in a cache block/line. If we write new data to this cache block/line and the tags are different, then the valid, clean data will not be written back to the main memory. Instead of that, the correspondent block are read from memory to cache and the relevant offset block is replaced with the new data word. We expect, that the miss counter will be incremented.
-\item[Write Cache - Hit] Let's assume that there are already valid (clean or invalid) data in the cache block line. If we write new data to this cache block/line and the tags are equal, then then the old data will not be written back to the main memory. Instead of that, the correspondent cache block line is directly rewritten with the new data word. We expect, that the hit counter is incremented.
-\item[Write Cache - Check Values] In this test case we will check whether the new data word has been successfully written into the cache. Whatever the current status of the cache block/line is, we write new data into cache in the first step. After we have finished writing the cache, we can read the cache block line again. We expect, that we read the equal data from the cache, which we have written into the cache before.
+The testbench should verify the behavior of the cache. Therefore, we look at different test cases. In the following table \ref{tab:testCases} we describe some test cases.\\
+We have created the batch file \textit{test\_cacheTestbench.bat} to run the testbench with GHDL. Thus, we start the simulation by typing \textit{test\_cacheTestbench.bat} in the command-line user interface. Figure \ref{fig:simulationResult} shows that all test cases are successfully executed.\\
+When illustrating the simulation results in Gtkwave, the number of clock cycles needed for a cache hit and cache miss can be determined. As you can see in figure \ref{fig:simulationResultCacheHit}, circa 6 clock cycles are needed for a cache hit.
+\begin{figure}
+	\centering
+	\includegraphics[scale=.5]{pictures/simulationResult}
+	\caption{Result Simulation - Cache}
+	\label{fig:simulationResult}
+\end{figure}
+\begin{figure}
+	\centering
+	\includegraphics[scale=.4]{pictures/simulationResultGTKWaveCacheHit}
+	\caption{Result Simulation Gtkwave - Cache Hit}
+	\label{fig:simulationResultCacheHit}
+\end{figure}
 
-\end{description}
+\begin{table}
+\caption{Test Cases for Simulation}
+\label{tab:testCases}
+\begin{tabular}{rl}
+
+\rowTableTestCases{Test Case 1}{Reset Cache I}{If the cache is reset, then the miss counter and the hit counter are reset to zero.}
+
+\rowTableTestCases{Test Case 2}{Reset Cache II}{If the cache is reset, then all cache blocks lines are invalid.}
+
+\rowTableTestCases{Test Case 3}{Read Cache, Line Is Not Dirty}{Assume, that there are already valid data in the cache block lines. Also, the data are not modified against the main memory. Now we read again with different tag values. Thus, the data are directly read from main memory into the cache. We expect that the miss counter is incremented and the stall signal is set to one.}
+
+\rowTableTestCases{Test Case 4}{Read Cache, Different Offset}{In the first step, we are going to read the first word from a cache block line. Following we read another word from the same cache block line. Thus, the miss counter will be incremented.}
+
+\rowTableTestCases{Test Case 5}{Read Cache, Line is Dirty}{
+There are already valid data words in the cache block line. Also, the data words are modified compared to the main memory. Now, we are going to read again from cache while the tag values are differen. Thus, we expect that the modified data words are written back to the main memory first. Afterwards the block is read from main memory into the cache. Hence, the miss counter will be incremented.}
+
+\rowTableTestCases{Test Case 6}{Write Cache, Invalid Cacheblocks}{Initially all cache blocks are invalid. If a cache block line is read, then the equivalent block is read from the main memory to the cache. Appropriate the miss counter will be incremented and the stall signal is set to '1'.}
+
+\rowTableTestCases{Test Case 7}{Write Cache – Line is Dirty}{Assume, that there are already valid data words in the cache block line. The data words are modified compared to the main memory. We are going to write again into the cache block lines whereupon the tag values are different. Hence, the data from the cache are written back to the main memory first. After that the correspondent main memory block is load into the cache with the new written data given from CPU. We expect that the miss counter is incremented.}
+
+\rowTableTestCases{Test Case 8}{Write Cache, Line Is Not Dirty}{Let's assume that there are already valid, clean data in a cache block/line. If we write new data to this cache block/line and the tags are different, then the valid, clean data will not be written back to the main memory. Instead of that, the correspondent block are read from memory to cache and the relevant offset block is replaced with the new data word. We expect, that the miss counter will be incremented.}
+
+\rowTableTestCases{Test Case 9}{Write Cache - Hit}{Let's assume that there are already valid (clean or invalid) data in the cache block line. If we write new data to this cache block/line and the tags are equal, then then the old data will not be written back to the main memory. Instead of that, the correspondent cache block line is directly rewritten with the new data word. We expect, that the hit counter is incremented.}
+
+\rowTableTestCases{Test Case 10}{Write Cache - Check Values}{In this test case we will check whether the new data word has been successfully written into the cache. Whatever the current status of the cache block/line is, we write new data into cache in the first step. After we have finished writing the cache, we can read the cache block line again. We expect, that we read the equal data from the cache, which we have written into the cache before.}
+
+\end{tabular} 
+\end{table}

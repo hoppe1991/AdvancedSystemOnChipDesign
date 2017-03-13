@@ -3,7 +3,7 @@
 % -----------------------------------------------------
 %	Use packages.
 % -----------------------------------------------------
-\usepackage[german,ngerman,english]{babel}
+\usepackage[english]{babel}
 \usepackage[utf8]{inputenc}
 \usepackage{csquotes}
 \usepackage[left=2.5cm,right=3cm,top=3cm,bottom=3cm]{geometry}
@@ -103,6 +103,12 @@
 \end{tabular} 
 \end{table}
 }
+
+\newcommand{\rowTableTestCases}[3]{\textcolor{blue}{#1} & \textcolor{blue}{#2} \\
+\multicolumn{2}{l}{\parbox{15cm}{#3 \newline}} \\
+\hline}
+
+
 
 
 \input{circuitSettings}

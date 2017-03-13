@@ -8,4 +8,13 @@ Treffen 08.03.2017
 
 2. [Task 4, Cache] Wolfgang fragen, was ist mit n-way caches gemeint?
 
-3. [Task 4, Cache] Aktualisierung der Finite State Machine.
+3. [Task 4, Cache] Aktualisierung der Finite State Machine in der Dokumentation.
+
+4. [Task 4, Cache] Entwurf der Finite State Machine bzgl. 2-way set associative cache.
+	(a) Eine FSM für LRU-Strategie und eine FSM für Random Strategie.
+	(b) Eine einzige FSM für LRU-Strategie und für Random-Strategie zusammen.
+
+5. [Task 4, Cache] Verzögerung des Hauptspeichers, sodass dieser für eine Leseoperation bzw. Schreiboperation
+   von z.B. 4 einzelnen Datenwörter etwa 20 Taktzyklen benötigt. Ist es daher möglich, in der FSM des 
+   Hauptspeichers einen Delta-Zustand einzufügen, in dem eine bestimmte Anzahl an Taktzyklen vergeht, um die
+   Verzögerung zu simulieren.

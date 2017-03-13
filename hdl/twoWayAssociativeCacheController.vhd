@@ -54,13 +54,13 @@ entity twoWayAssociativeCacheController is
 		valid, dirty, setValid, setDirty   : out   STD_LOGIC_VECTOR(1 downto 0);
 		newCacheBlockLine1                 : out   STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0) := (others => '0');
 		newCacheBlockLine0                 : out   STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0) := (others => '0');
-		wrNewCBLine, writeMode             : out   STD_LOGIC_VECTOR(1 downto 0);
+		writeMode             			   : out   STD_LOGIC_VECTOR(1 downto 0);
 		addrCPU                            : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0); -- Memory address from CPU is divided into block address and block offset.
 		dataCPU                            : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
 		dataCPU0                           : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
 		dataCPU1                           : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
 
-		dataMEM                            : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0); -- Data from memory to cache or from cache to memory.
+		dataToMEM                            : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0); -- Data from memory to cache or from cache to memory.
 		readyMEM                           : in    STD_LOGIC; -- Signal identifies whether the main memory is ready.
 		stallCPU                           : out   STD_LOGIC; -- Signal identifies whether to stall the CPU or not.
 

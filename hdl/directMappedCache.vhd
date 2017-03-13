@@ -61,9 +61,8 @@ entity directMappedCache is
 		dataCPU       	 : inout    STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0); -- Data from CPU to cache or from cache to CPU.
 		
 		newCacheBlockLine : in STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0); -- New cache block line.
-		dataMEM          : inout STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0); -- Data to read from memory to cache or written from cache to memory.
+		dataToMEM         : out STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0); -- Data to read from memory to cache or written from cache to memory.
 
-		wrNewCBLine		 : in    STD_LOGIC; -- Control signal identifies whether a new cache block line should be written into cache.
 		wrCBLine		 : in    STD_LOGIC; -- Write signal identifies whether a complete cache block should be written into cache.
 		rdCBLine		 : in	 STD_LOGIC; -- Read signal identifies whether a complete cache block should be read from cache.
 		rdWord           : in    STD_LOGIC; -- Read signal identifies to read data from the cache.
@@ -149,7 +148,7 @@ begin
 		-- Ports regarding CPU and MEM.
 		addrCPU => addrCPU,
 		dataCPU => dataCPU,
-		dataMEM => dataMEM,
+		dataToMEM => dataToMEM,
 		newCacheBlockLine => newCacheBlockLine,
 		valid => valid,
 		dirty => dirty, 
@@ -158,7 +157,6 @@ begin
 		hit => hit,
 		
 		-- Ports defines how to read or write the data BRAM.
-		wrNewCBLine => wrNewCBLine,
 		wrCBLine => wrCBLine,
 		rdCBLine => rdCBLine,
 		rdWord => rdWord,

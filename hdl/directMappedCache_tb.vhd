@@ -60,7 +60,7 @@ architecture test of directMappedCache_tb is
 	signal hit            : STD_LOGIC                                              := '0';
 	
 	-- Data signal to main memory.
-	signal dataMem        : STD_LOGIC_VECTOR(CACHE_BLOCK_LINE_RANGE) := (others => '0');
+	signal dataToMem        : STD_LOGIC_VECTOR(CACHE_BLOCK_LINE_RANGE) := (others => '0');
 	
 	
 	-- Control signal to read a single word from cache.
@@ -77,9 +77,6 @@ architecture test of directMappedCache_tb is
 	
 	-- Write modus: '1' when writing, '0' when reading.
 	signal writeMode      : STD_LOGIC                                              := '0';
-	
-	-- Control signal identifies whether a new cache block line should be written into cache.
-	signal wrNewCBLine		 : STD_LOGIC := '0'; 
 	
 	-- Control signal to set the valid bits.
 	signal setValid       : STD_LOGIC                                              := '0';
@@ -177,7 +174,7 @@ begin
 			reset     => reset,
 			dataCPU   => dataCPU,
 			addrCPU   => addrCPU,
-			dataMem   => dataMem,
+			dataToMem   => dataToMem,
 			rdWord    => rdWord,
 			wrWord    => wrWord,
 			wrCBLine  => wrCBLine,
@@ -188,8 +185,7 @@ begin
 			setValid  => setValid,
 			setDirty  => setDirty,
 			hit       => hit,
-			newCacheBlockLine => newCacheBlockLine,
-			wrNewCBLine => wrNewCBLine
+			newCacheBlockLine => newCacheBlockLine
 		);
 
 	-- -----------------------------------------------------------------------------

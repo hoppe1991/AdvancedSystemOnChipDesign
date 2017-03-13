@@ -60,7 +60,7 @@ entity twoWayAssociativeCache is
 		addrCPU     : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0); -- Memory address from CPU is divided into block address and block offset.
 		dataCPU     : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
 
-		dataMEM     : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0); -- Data from memory to cache or from cache to memory.
+		dataToMEM     : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0); -- Data from memory to cache or from cache to memory.
 		readyMEM    : in    STD_LOGIC;  -- Signal identifies whether the main memory is ready.
 		stallCPU    : out   STD_LOGIC;  -- Signal identifies whether to stall the CPU or not.
 		wrCPU       : in    STD_LOGIC;  -- Write signal identifies whether a complete cache block should be written into cache.
@@ -96,7 +96,7 @@ architecture rtl of twoWayAssociativeCache is
 
 	signal newCacheBlockLine1     : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
 	signal newCacheBlockLine0     : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
-	signal wrNewCBLine, writeMode : STD_LOGIC_VECTOR(1 downto 0);
+	signal writeMode : STD_LOGIC_VECTOR(1 downto 0);
 	signal dataCPU0, dataCPU1     : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
 
 begin
@@ -128,12 +128,11 @@ begin
 			setValid           => setValid, setDirty => setDirty,
 			newCacheBlockLine1 => newCacheBlockLine1,
 			newCacheBlockLine0 => newCacheBlockLine0,
-			wrNewCBLine        => wrNewCBLine,
 			writeMode          => writeMode,
 			dataCPU0            => dataCPU0,
 			dataCPU1            => dataCPU1,
 			dataCPU            => dataCPU,
-			dataMEM            => dataMEM,
+			dataToMEM            => dataToMEM,
 			stallCPU           => stallCPU,
 			hitCounter         => hitCounter,
 			missCounter        => missCounter,
@@ -156,13 +155,12 @@ begin
 		)
 		port map(
 			newCacheBlockLine => newCacheBlockLine0,
-			wrNewCBLine       => wrNewCBLine(0),
 			writeMode         => writeMode(0),
 			clk               => clk,
 			reset             => reset,
 			addrCPU           => addrCPU,
 			dataCPU           => dataCPU0,
-			dataMEM           => dataMEM,
+			dataToMEM           => dataToMEM,
 			wrCBLine          => wrCBLine(0),
 			rdCBLine          => rdCBLine(0),
 			rdWord            => rdWord(0),
@@ -190,13 +188,12 @@ begin
 		)
 		port map(
 			newCacheBlockLine => newCacheBlockLine1,
-			wrNewCBLine       => wrNewCBLine(1),
 			writeMode         => writeMode(1),
 			clk               => clk,
 			reset             => reset,
 			addrCPU           => addrCPU,
 			dataCPU           => dataCPU1,
-			dataMEM           => dataMEM,
+			dataToMEM         => dataToMEM,
 			wrCBLine          => wrCBLine(1),
 			rdCBLine          => rdCBLine(1),
 			rdWord            => rdWord(1),

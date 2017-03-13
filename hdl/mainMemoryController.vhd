@@ -173,7 +173,7 @@ begin
 	
 	-- Write to BRAM.
 	writeToBRAM <= '1' when (state=WRITE and counter < BLOCKSIZE) else
-				   '1' when (state=IDLE and rdMEM='0' and wrMEM='1') else
+				   --'1' when (state=IDLE and rdMEM='0' and wrMEM='1') else
 				   '0' when (state=WRITE and counter >= BLOCKSIZE) else
 				   '0' when (state=READ and counter >= BLOCKSIZE) else
 				   '0' when (state=IDLE and rdMEM='1' and wrMEM='0') else

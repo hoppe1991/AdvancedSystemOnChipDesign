@@ -63,9 +63,6 @@ architecture rtl of cache is
 	-- Signal identifies whether to write or read from cache.
 	signal writeMode	    : STD_LOGIC := '0';
 	
-	-- Control signal identifies whether a new cache block line should be written into cache.
-	signal wrNewCBLine : STD_LOGIC := '0';
-	
 	-- Signal identifies whether a cache block line is dirty or not.
 	signal dirty            : STD_LOGIC := '0';
 	
@@ -83,6 +80,9 @@ architecture rtl of cache is
 	
 	-- New cache block line will be written into cache.
 	signal newCacheBlockLine : STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0) := (others=>'0');
+	
+	-- Cache block line to be written to main memory.
+	signal dataToMEM : STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0) := (others=>'0');
 begin
 	dataCPU <= (others=>'Z');
 	
@@ -102,11 +102,10 @@ begin
 			reset          => reset,
 			addrCPU        => addrCPU,
 			dataCPU        => dataCPU,
-			dataMEM        => dataMEM,
+			dataToMEM        => dataToMEM,
 			rdCBLine       => rdCBLine,
 			wrCBLine       => wrCBLine,
 			newCacheBlockLine => newCacheBlockLine,
-			wrNewCBLine	   => wrNewCBLine,
 			rdWord         => rdWord,
 			wrWord         => wrWord,
 			writeMode	   => writeMode,
@@ -132,7 +131,6 @@ begin
 			reset          => reset,
 
 			-- Ports regarding Direct Mapped Cache.
-			wrNewCBLine	   => wrNewCBLine,
 			rdWord         => rdWord,
 			wrWord         => wrWord,
 			wrCBLine       => wrCBLine,
@@ -144,6 +142,7 @@ begin
 			setDirty       => setDirty,
 			hitFromCache   => hit,
 			newCacheBlockLine => newCacheBlockLine,
+			dataToMEM        => dataToMEM,
 
 			-- Ports regarding CPU.
 			hitCounter     => hitCounter,

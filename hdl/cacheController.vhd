@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 -- filename : cacheController.vhd
--- author   : Hoppe
+-- author   : Meyer zum Felde, Püttjer, Hoppe
 -- company  : TUHH
 -- revision : 0.1
 -- date     : 24/01/17
@@ -70,9 +70,6 @@ architecture synth of cacheController is
 	
 	-- Definition of type BLOCK_LINE as an array of STD_LOGIC_VECTORs.
 	type BLOCK_LINE is array(0 to (BLOCKSIZE-1)) of STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
-	
-	
-	-- Definition of records.
 	
 	
 	-- 
@@ -200,14 +197,10 @@ architecture synth of cacheController is
 	end;
 
 	signal auxiliaryCounter : INTEGER := 1;
-	signal myTestSignal : STD_LOGIC := '0';
 begin
 	 
 	-- State register.
 	state <= IDLE when reset = '1' else nextstate when rising_edge(clk);
-	
-	myTestSignal <= '1' when hitFromCache='1' and valid='1' and auxiliaryCounter=0 else '0';
-	
 	
 	--------------------------------------------
 	-- TransitionLogic:
@@ -326,7 +319,7 @@ begin
 						   '1' when (state=IDLE and wrCPU='1') else 
 						   '1' when (state=IDLE and rdCPU='1') else
 						   '0' when (state=CHECK2 and hitFromCache='1' and auxiliaryCounter=0) else
-						   '0' when (state=CHECK1 and hitFromCache='1') else
+						   '0' when (state=CHECK1 and hitFromCache='1' and auxiliaryCounter=0) else
 						   '0' when (state=READ and readyMEM='1') else
 						   '0' when (state=TOCACHE2);
 	wrWord            	<= '0' when (state=IDLE) else
@@ -375,7 +368,7 @@ begin
 	dirty <= '1' when (state=CHECK1 and hitFromCache='1' and valid='1') else 
 	         '1' when (state=WRITE and readyMEM='1') else
 	         'Z';
-	setDirty <= '1' when (state=CHECK1 and hitFromCache='1' and valid = '1') else 
+	setDirty <= '1' when (state=CHECK1 and hitFromCache='1' and valid = '1' and auxiliaryCounter=0) else 
 	            '1' when (state = WRITE and readyMEM = '1') else 
 	            '0';
 	

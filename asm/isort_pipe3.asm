@@ -7,9 +7,12 @@ val:        .word 20, 30, 10, 40, 50, 60, 30, 25, 10, 5 # Liste
 
             .text                                       # Code segment
             .globl main                                 # Globaler Name
-            
+  nop
+  nop
+  nop
+  
 main:      jal isort
-           nop
+			nop
 		   
 end:       j end 
 		nop         

@@ -26,6 +26,8 @@ architecture struct of mips is
 
   signal zero,
          lez,
+         FOUNDJR ,
+  --TODO REMOVE
          ltz,
          gtz,
          branch, 
@@ -59,12 +61,13 @@ architecture struct of mips is
   signal wa,
          EX_Rd  : STD_LOGIC_VECTOR(4 downto 0) := "00000";
   signal MA_Rd  : STD_LOGIC_VECTOR(4 downto 0) := "00000";
-  signal pc, pcjump, pcbranch, nextpc, pc4, pcm8, a, signext, b, rd2imm, aluout,
+  signal pc, pcjump, pcbranch, nextpc, pc4, pcm12, pcm8, a, signext, b, rd2imm, aluout,
          wd, rd, rd1, rd2, aout, WB_wd, WB_rd,
          IF_ir : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
   signal forwardA,
          forwardB : ForwardType := FromREG;
-  signal WB_Opc     : STD_LOGIC_VECTOR(5 downto 0) := "000000";
+  signal WB_Opc  ,WB_Func   : STD_LOGIC_VECTOR(5 downto 0) := "000000";
+
   signal Stall_disablePC     : STD_LOGIC := '0';
   signal Stall_disablePC2     : STD_LOGIC := '0';
   signal JumpCommandOccuredKeepStalling     : STD_LOGIC_VECTOR(1 downto 0) := "00";
@@ -88,19 +91,31 @@ WB_jump   <= WB.c.jump    when rising_edge(clk);
 
   pc4       <= 	--to_slv(unsigned(pc) + 8) when Stall_disablePC  = '1' and WB_branch = '0' and WB_jump = '0' else
 	              to_slv(unsigned(pc) + 4) ;
-  pcm8 		<=  to_slv(unsigned(pc) - 12) ;
+  pcm12 		<=  to_slv(unsigned(pc) - 12) ;
+  pcm8 		<=  to_slv(unsigned(pc) - 4) ;
     --  CODE FOR ACHIEVING BNE TAKEN CORRECTLY
     --  pc4       <= 	to_slv(unsigned(pc) + 4) when (Stall_disablePC  = '1' and (EX.i.Opc = I_NOP.OPC) and (branch = '0')) else
     --                to_slv(unsigned(pc) + 0) when Stall_disablePC  = '1' else
 	  --                to_slv(unsigned(pc) + 4) ;
 
-    
+    FOUNDJR <= '1' when (i.mnem = JR);
+-- TODO REMOVE
     
   nextpc    <=
+
 	           MA.pcjump      when MA.c.jump  = '1' else -- j / jal jump addr
                MA.pcbranch  when branch     = '1' else -- branch (bne, beq) addr
                MA.a         when MA.c.jr    = '1' else -- jr addr
-               pcm8         when Stall_disablePC = '1' and (EX.i.Opc = I_BEQ.OPC or EX.i.Opc = I_BNE.OPC or EX.i.Opc = I_J.OPC or EX.i.Opc = I_JAL.OPC) else
+                pc         when (IF_ir(31 downto 26) = "100011")   else        
+                pc         when (IF_ir(31 downto 26) = "000011") or (i.mnem = JAL) or (EX.i.mnem = JAL) or (MA.i.mnem = JAL) else 
+                pc         when (IF_ir(31 downto 26) = "000101") or (i.mnem = BNE) or (EX.i.mnem = BNE) or (MA.i.mnem = BNE) else 
+                pc         when (IF_ir(31 downto 26) = "000100") or (i.mnem = BEQ) or (EX.i.mnem = BEQ) or (MA.i.mnem = BEQ) else 
+                pc         when (IF_ir(31 downto 26) = "000010") or (i.mnem = J) or (EX.i.mnem = J) or (MA.i.mnem = J)        else 
+                pc         when ((IF_ir(5 downto  0) = "001000") and (IF_ir(31 downto 26) = "000000" )) or (i.mnem = JR) or (EX.i.mnem = JR) or (MA.i.mnem = JR)        else 
+               --pcm12        when Stall_disablePC = '1' and (EX.i.Opc = I_BEQ.OPC or EX.i.Opc = I_BNE.OPC or EX.i.Opc = I_J.OPC or EX.i.Opc = I_JR.OPC or EX.i.Opc = I_JAL.OPC) else -- Stepping 3 steps back if jump or bne
+               --pcm8         when ((EX.c.mem2reg = '1') and (ForwardA = fromALUe  or ForwardB = fromALUe))   else
+
+
                pc4	;                                   -- pc + 4;
 
   imem:        entity work.bram  generic map ( INIT =>  (IFileName & ".imem"))
@@ -108,7 +123,7 @@ WB_jump   <= WB.c.jump    when rising_edge(clk);
 
 -------------------- IF/ID Pipeline Register -----------------------------------
                                                   -- comment below out for BNE TAKEN CORRECTLY!
-  ID        <=  (IF_ir, pc) when rising_edge(clk)
+  ID        <=  (IF_ir, pc) when rising_edge(clk) --and (Stall_disablePC = '0')
  ;-- else		      (IF_ir, nextpc) when rising_edge(clk) and Stall_disablePC  = '1' and (MA.i.Opc = I_BEQ.OPC) and (branch = '1') ;
 -- The second line in the code above make the code delete the command that was read in right after the bne command if a branch shall be taken.				   
 -- idea: if branch command arrived in MA phase 2 cock cycles later and a branch signal is set (branch will be taken) forget the instruction following the bne command.
@@ -169,6 +184,7 @@ ForwardB <= fromALUe when ( i.Rt /= "00000" and i.Rt = EX.wa and EX.c.regwr = '1
 				
 				
 WB_Opc <= 	MA.i.Opc when rising_edge(clk)			;
+WB_Func <= 	MA.i.funct when rising_edge(clk)			;
 
 
 -- The following logic looks for all kinds of jump comands and orders 3 stalls.
@@ -186,13 +202,14 @@ Stall_disablePC <=
       or ((EX.i.Opc = I_J.OPC)                                            or (MA.i.Opc = I_J.OPC)       or (WB_Opc = I_J.OPC))             --ok
       or ((EX.i.Opc = I_JAL.OPC)                                          or (MA.i.Opc = I_JAL.OPC)     or (WB_Opc = I_JAL.OPC))  
       or (((EX.i.Opc = I_JALR.OPC)      and (EX.i.funct = I_JALR.funct))  or ((MA.i.Opc = I_JALR.OPC)       and (MA.i.funct = I_JALR.funct)))    
-      or (((EX.i.Opc = I_JR.OPC)        and (EX.i.funct = I_JR.funct))    or ((MA.i.Opc = I_JR.OPC)         and (MA.i.funct = I_JR.funct))) 
+      or (((EX.i.Opc = I_JR.OPC)        and (EX.i.funct = I_JR.funct))    or ((MA.i.Opc = I_JR.OPC)         and (MA.i.funct = I_JR.funct))      or ((WB_Opc = I_JR.OPC) and WB_Func = I_JR.funct))
               
 -- Some commands have duplicate opc therefore additional information is needed. 
 -- TODO TOASK all commands? Or only the ones used in homework?
 
-		else	'0' when   		(ForwardA /= fromALUe)    and (ForwardB /= fromALUe) 
-      and (eX.i.Opc /= I_BEQ.OPC)                                         and (MA.i.Opc /= I_BEQ.OPC) 
+		else	'0' when   		(ForwardA /= fromALUe)    and (ForwardB /= fromALUe) and (MA.i.Opc = I_LW.OPC) else
+      '0' when
+          (EX.i.Opc /= I_BEQ.OPC)                                         and (MA.i.Opc /= I_BEQ.OPC) 
       and (EX.i.Opc /= I_BNE.OPC)                                         and (MA.i.Opc /= I_BNE.OPC) 
       and (EX.i.Opc /= I_BLEZ.OPC)                                        and (MA.i.Opc /= I_BLEZ.OPC) 
       and (EX.i.Opc /= I_BLTZ.OPC)                                        and (MA.i.Opc /= I_BLTZ.OPC) 
@@ -204,7 +221,8 @@ Stall_disablePC <=
  --   and ((EX.i.Opc /= I_JALR.OPC)     and (EX.i.funct /= I_JALR.funct))   and ((MA.i.Opc /= I_JALR.OPC)     and (MA.i.funct /= I_JALR.funct))
  --   and ((EX.i.Opc /= I_JR.OPC)       and (EX.i.funct /= I_JR.funct))     and ((MA.i.Opc /= I_JR.OPC)       and (MA.i.funct /= I_JR.funct))
 
-      and rising_edge(clk);
+      and rising_edge(clk)
+      ;
               
 -- TODO Check if special reset condition must be met for BLTZ like above also for the setback. 
 -- Assumption: It will never reach that state since other commands dont even put '1' on the Stall_disablePC signal

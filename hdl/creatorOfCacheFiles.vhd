@@ -50,7 +50,7 @@ entity creatorOfCacheFiles is
 end;
 
 architecture behav of creatorOfCacheFiles is
-	constant indexNrOfBits       : INTEGER := DETERMINE_NR_BITS(ADDRESSWIDTH);
+	constant indexNrOfBits       : INTEGER := DETERMINE_NR_BITS(ADDRESS_WIDTH);
 	constant offsetNrOfBits      : INTEGER := DETERMINE_NR_BITS(BLOCKSIZE * DATA_WIDTH / OFFSET);
 	constant offsetBlockNrOfBits : INTEGER := DETERMINE_NR_BITS(BLOCKSIZE);
 	constant offsetByteNrOfBits  : INTEGER := DETERMINE_NR_BITS(DATA_WIDTH / OFFSET);

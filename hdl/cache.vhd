@@ -18,7 +18,7 @@ entity cache is
 		OFFSET               : INTEGER := 8; -- Number of bits that can be selected in the cache.
 		TAG_FILENAME         : STRING  := "../imem/tagCache";
 		DATA_FILENAME        : STRING  := "../imem/dataCache";
-		FILE_EXTENSION       : STRING  := ".txt" -- File extension for BRAM.
+		FILE_EXTENSION       : STRING  := ".imem" -- File extension for BRAM.
 	);
 
 	port(
@@ -102,7 +102,7 @@ begin
 			reset          => reset,
 			addrCPU        => addrCPU,
 			dataCPU        => dataCPU,
-			dataToMEM        => dataToMEM,
+			dataToMEM      => dataToMEM,
 			rdCBLine       => rdCBLine,
 			wrCBLine       => wrCBLine,
 			newCacheBlockLine => newCacheBlockLine,

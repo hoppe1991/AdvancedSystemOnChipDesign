@@ -46,7 +46,7 @@ entity directMappedCache is
 		DATA_FILENAME         : STRING  := "../imem/dataFileName";
 
 		-- File extension for BRAM.
-		FILE_EXTENSION       : STRING  := ".txt"
+		FILE_EXTENSION       : STRING  := ".imem"
 	);
 
 	port(

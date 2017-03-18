@@ -29,8 +29,9 @@ echo ++++++++++ create an executable for the testbench ++++++++++
 ghdl -e -g -O3 --ieee=synopsys --workdir=workB creatorOfCacheFiles
 echo.
 echo ++++++++++ run the executable ++++++++++
-ghdl -r -g -O3 --ieee=synopsys --workdir=workB creatorOfCacheFiles -gTag_Filename="../imem/tag%1" -gData_Filename="../imem/data%1"
-
+ghdl -r -g -O3 --ieee=synopsys --workdir=workB creatorOfCacheFiles -gTag_Filename="../imem/tag%1" -gData_Filename="../imem/data%1" -gFILE_EXTENSION=".imem"
+echo "../imem/tag%1"
+echo "../imem/data%1"
 
 
 @echo off
@@ -42,4 +43,4 @@ echo ++++++++++ analyze automatically outdated files and create an executable ++
 ghdl -m -g -O3 --ieee=synopsys --workdir=workB cache_tb
 echo.
 echo ++++++++++ run the executable for 15us and save all waveforms ++++++++++
-ghdl -r -g -O3 --ieee=synopsys --workdir=workB cache_tb --stop-time=100000ns  --wave=../sim/cacheTestbench.ghw -gMAIN_MEMORY_FILENAME="../imem/%1"
+ghdl -r -g -O3 --ieee=synopsys --workdir=workB cache_tb --stop-time=100000ns  --wave=../sim/cacheTestbench.ghw -gMAIN_MEMORY_FILENAME="../imem/%1" -gData_Filename="../imem/data%1" -gTag_Filename="../imem/tag%1" -gFILE_EXTENSION=".imem"

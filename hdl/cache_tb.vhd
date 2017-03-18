@@ -289,7 +289,8 @@ begin
 			ADDRESSWIDTH         => ADDRESSWIDTH,
 			OFFSET               => OFFSET,
 			TAG_FILENAME         => TAG_FILENAME,
-			DATA_FILENAME        => DATA_FILENAME
+			DATA_FILENAME        => DATA_FILENAME,
+			FILE_EXTENSION		 => FILE_EXTENSION
 		)
 		port map(clk         => clk,
 			     reset       => reset,
@@ -353,7 +354,12 @@ begin
 		variable rand                : REAL;
 		variable dataCPU2 : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0) := (others=>'0');
 		variable expectedDataCPU : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0) := (others=>'0');
+		
+		variable activatedTest : STD_LOGIC_VECTOR(1 to 100) := (others=>'0');-- TODO Remove this variable.
 	begin
+		activatedTest := (others=>'1');
+		--activatedTest(3 to 10) := (others=>'0');
+		wait for 5 ns;
 		
 		-- --------------------------------------------------------------------------------------
 		-- Reset the cache.
@@ -370,14 +376,19 @@ begin
 		-- Test 1 - Reset Cache. Miss counter and Hit counter are zero.
 		-- At start the miss counter and hit counter should be zero.
 		-- =======================================================================================================================
-		PRINT_TEST_START(1); 
+		testCaseIndex := 1;
+		if activatedTest(testCaseIndex)='1' then
+		PRINT_TEST_START(testCaseIndex); 
 		VALIDATE_SIGNALS(stallCPU, '0', missCounter, 0, hitCounter, 0); 
-		PRINT_TEST_END(1);
+		PRINT_TEST_END(testCaseIndex);
+		end if;
 
 		-- =======================================================================================================================
 		-- Test 2 - Reset Cache. Invalid cache blocks.
 		-- =======================================================================================================================
-		PRINT_TEST_START(2);
+		testCaseIndex := testCaseIndex + 1;
+		if activatedTest(testCaseIndex)='1' then
+		PRINT_TEST_START(testCaseIndex);
 		addrCPU <= GET_MEMORY_ADDRESS( 0, 0, 0 ); 
 		expected_missCounter := missCounter;
 		expected_hitCounter := hitCounter;
@@ -410,18 +421,21 @@ begin
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			
 		end loop;
-		PRINT_TEST_END(2);
+		PRINT_TEST_END(testCaseIndex);
+		end if;
 		 
 		 
 		 
 		-- =======================================================================================================================
 		-- Test 3 - Read Cache. Line is not dirty.
 		-- =======================================================================================================================
+		testCaseIndex := testCaseIndex + 1;
 		rdCPU <= '0';
 		wait until rising_edge(clk);
 		wait until rising_edge(clk);
 		
-		PRINT_TEST_START(3); 
+		if activatedTest(testCaseIndex)='1' then
+		PRINT_TEST_START(testCaseIndex); 
 		for L in 0 to ADDRESSWIDTH-1 loop
 			tag_integer := 0;
 			addrCPU <= GET_MEMORY_ADDRESS( tag_integer, L, 0 ); 
@@ -451,13 +465,16 @@ begin
 			expected_stallCPU := '0';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 		end loop;
-		PRINT_TEST_END(3);
+		PRINT_TEST_END(testCaseIndex);
+		end if;
 		 
 		 
 		-- =======================================================================================================================
 		-- Test 4 - Read Cache. Different Offset.
 		-- =======================================================================================================================
-		PRINT_TEST_START(4);
+		testCaseIndex := testCaseIndex + 1;
+		if activatedTest(testCaseIndex)='1' then
+		PRINT_TEST_START(testCaseIndex);
 		for L in 0 to ADDRESSWIDTH-1 loop
 			for O in 0 to BLOCKSIZE-1 loop
 				rdCPU <= '1';
@@ -474,12 +491,14 @@ begin
 			    PRINT_HITCOUNTER( hitCounter, missCounter );
 			end loop;
 		end loop;
-		PRINT_TEST_END(4);
+		PRINT_TEST_END(testCaseIndex);
+		end if;
 		
 		-- =======================================================================================================================
 		-- Test 5 - Read Cache. Line is dirty.
 		-- =======================================================================================================================
-		testCaseIndex := 5;
+		testCaseIndex := testCaseIndex + 1;
+		if activatedTest(testCaseIndex)='1' then
 		PRINT_TEST_START(testCaseIndex);
 
 		-- Reset the cache.
@@ -509,6 +528,7 @@ begin
 				expected_missCounter := missCounter;
 				wait until rising_edge(clk);
 				PRINT_HITCOUNTER( stallCPU, hitCounter, missCounter);
+				report "L: " & INTEGER'IMAGE(I); -- TODO REMOVE this line.
 				VALIDATE_SIGNALS(L, I, stallCPU, '1', missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			end loop;  
 			VALIDATE_SIGNALS( stallCPU, '1', missCounter, expected_missCounter, hitCounter, expected_hitCounter);
@@ -570,7 +590,8 @@ begin
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			
 			wait until rising_edge(clk);
-			for I in 1 to 8 loop
+			for I in 1 to 14 loop
+				report "I := " & INTEGER'IMAGE(I); -- TODO REMOVE THIS LINE.
 				wait until rising_edge(clk);
 				expected_stallCPU := '1';
 				VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
@@ -581,7 +602,8 @@ begin
 			PRINT_HITCOUNTER( hitCounter, missCounter );
 			wait until rising_edge(clk);
 		end loop;
-		PRINT_TEST_END(5);
+		PRINT_TEST_END(testCaseIndex);
+		end if;
 		 
 		-- =======================================================================================================================
 		-- Test 6 - Write Cache - Invalid Cache blocks.
@@ -591,7 +613,9 @@ begin
 		-- 3. Finally, the miss counter is incremented and the correspondent control signal
 		--    is activated to stall the CPU.
 		-- =======================================================================================================================
-		PRINT_TEST_START(6); 
+		testCaseIndex := testCaseIndex + 1;
+		if activatedTest(testCaseIndex)='1' then
+		PRINT_TEST_START(testCaseIndex); 
 		
 		-- Reset the cache first.
 		reset <= '1';
@@ -641,8 +665,8 @@ begin
 			VALIDATE_SIGNALS( stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			PRINT_HITCOUNTER( hitCounter, missCounter );
 		end loop;
-		PRINT_TEST_END(6);
-		
+		PRINT_TEST_END(testCaseIndex);
+		end if;
 		
 		-- =======================================================================================================================
 		-- Test 7 - Write Cache. Line is Dirty.
@@ -653,7 +677,9 @@ begin
 		--    to the cache.
 		-- 4. Finally, the new data are written into the cache.
 		-- =======================================================================================================================
-		PRINT_TEST_START(7); 
+		testCaseIndex := testCaseIndex + 1;
+		if activatedTest(testCaseIndex)='1' then
+		PRINT_TEST_START(testCaseIndex); 
 		
 		-- Reset the cache.
 		reset <= '1';
@@ -756,7 +782,8 @@ begin
 			VALIDATE_SIGNALS( stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			PRINT_HITCOUNTER( hitCounter, missCounter );
 		end loop;
-		PRINT_TEST_END(7);
+		PRINT_TEST_END(testCaseIndex);
+		end if;
 		
 		-- =======================================================================================================================
 		-- Test 8 - Write Cache. Line is Not Dirty.
@@ -767,7 +794,9 @@ begin
 		-- 4. Finally, the new data are written into the cache.
 		-- 5. We expect, that the miss counter is incremented.
 		-- =======================================================================================================================
-		PRINT_TEST_START(8); 
+		testCaseIndex := testCaseIndex + 1;
+		if activatedTest(testCaseIndex)='1' then
+		PRINT_TEST_START(testCaseIndex); 
 		
 		-- Reset the cache.
 		reset <= '1';
@@ -862,7 +891,8 @@ begin
 			VALIDATE_SIGNALS( stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			PRINT_HITCOUNTER( hitCounter, missCounter );
 		end loop;
-		PRINT_TEST_END(8);
+		PRINT_TEST_END(testCaseIndex);
+		end if;
 		
 		-- =======================================================================================================================
 		-- Test 9 - Write Cache - Hit.
@@ -872,7 +902,9 @@ begin
 		-- 3. Instead of that, the correspondent cache block line is directly rewritten with the new data word.
 		-- 4. We expect, that the hit counter is incremented.
 		-- =======================================================================================================================
-		PRINT_TEST_START(9);
+		testCaseIndex := testCaseIndex + 1;
+		if activatedTest(testCaseIndex)='1' then
+		PRINT_TEST_START(testCaseIndex);
 		
 		-- Reset the cache.
 		reset <= '1';
@@ -959,7 +991,8 @@ begin
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter+1);
 			PRINT_HITCOUNTER( hitCounter, missCounter );
 		end loop;
-		PRINT_TEST_END(9);
+		PRINT_TEST_END(testCaseIndex);
+		end if;
 
 		-- =======================================================================================================================
 		-- Test 10 - Write Cache - Check Values.
@@ -968,7 +1001,9 @@ begin
 		-- 3. After we have finished writing the cache, we can read the cache block line again.
 		-- 4. We expect, that we read the equal data from the cache, which we have written into the cache before.
 		-- =======================================================================================================================
-		PRINT_TEST_START(10);
+		testCaseIndex := testCaseIndex + 1;
+		if activatedTest(testCaseIndex)='1' then
+		PRINT_TEST_START(testCaseIndex);
 		
 		-- Reset the cache.
 		reset <= '1';
@@ -1053,7 +1088,8 @@ begin
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter+1);
 			VALIDATE_SIGNAL( "dataCPU", dataCPU, expectedDataCPU );
 		end loop;
-		PRINT_TEST_END(10);
+		PRINT_TEST_END(testCaseIndex);
+		end if;
 
 		
 		
@@ -1064,7 +1100,8 @@ begin
 		-- 3. Because of read operation with different tag values, the modified data word must be written back to main memory.
 		-- 4. If we read again the written back data from main memory to cache, the data must be correct.
 		-- =======================================================================================================================
-		PRINT_TEST_START(11);
+		testCaseIndex := testCaseIndex + 1;
+		PRINT_TEST_START(testCaseIndex);
 		
 		-- Reset the cache.
 		reset <= '1';
@@ -1146,7 +1183,7 @@ begin
 			expected_missCounter := missCounter;
 			expected_stallCPU := '0';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
-			for I in 1 to 9 loop
+			for I in 1 to 15 loop
 				expected_missCounter := missCounter;
 				wait until rising_edge(clk);
 				expected_stallCPU := '1';
@@ -1162,6 +1199,7 @@ begin
 		
 		
 		report "[test11] Read data from main memory into cache."; -- TODO Remove this line.
+		dataCPU <= (others=>'Z');
 		-- Loop over all cache block lines and write the second time.
 		for L in 0 to ADDRESSWIDTH-1 loop
 		
@@ -1181,10 +1219,11 @@ begin
 			expected_missCounter := missCounter;
 			expected_stallCPU := '0';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
-			for I in 1 to 9 loop
+			for I in 1 to 15 loop
 				expected_missCounter := missCounter;
 				wait until rising_edge(clk);
 				expected_stallCPU := '1';
+				report "LLLLLLLLLLLLLLLLL: " & INTEGER'IMAGE(I); -- TODO Remove this line.
 				VALIDATE_SIGNALS(L, I, stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			end loop;  
 			wait until rising_edge(clk);
@@ -1197,7 +1236,7 @@ begin
 			VALIDATE_SIGNAL( "dataCPU", dataCPU, expectedDataCPU );
 		end loop;
 		report "[test11] Read data from main memory into cache finished."; -- TODO Remove this line.
-		PRINT_TEST_END(11);
+		PRINT_TEST_END(testCaseIndex);
 
 		report "Validation finished." severity FAILURE;
 		wait;

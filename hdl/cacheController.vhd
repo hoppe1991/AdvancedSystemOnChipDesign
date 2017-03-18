@@ -93,17 +93,6 @@ architecture synth of cacheController is
 		offsetAsInteger : in INTEGER
 	) return STD_LOGIC_VECTOR;
 		
-		
---	function REPLACE_OFFSET_DATA_IN_BLOCK_LINE( blockLine : in BLOCK_LINE;
---				   data : in STD_LOGIC_VECTOR(DATAWIDTH-1 downto 0); 
---				   offset : in STD_LOGIC_VECTOR(config.offsetNrOfBits-1 downto 0)
---	) return BLOCK_LINE;
---	function REPLACE_OFFSET_DATA_IN_BLOCK_LINE( blockLine : in STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0);
---		data : in STD_LOGIC_VECTOR(DATAWIDTH-1 downto 0);
---		offset : in STD_LOGIC_VECTOR(config.offsetNrOfBits-1 downto 0)
---	) return BLOCK_LINE;
---		
-		 
 	-- Declaration of states.
 	type statetype is (
 		IDLE,
@@ -114,6 +103,7 @@ architecture synth of cacheController is
 		TOCACHE1,
 		CHECK2,
 		WRITE_BACK2,
+		WRITE_BACK2_DELAY,
 		READ,
 		TOCACHE2
 	);
@@ -140,15 +130,14 @@ architecture synth of cacheController is
    
 	signal rHitCounter  : INTEGER := 0; -- Hit counter.
 	signal rMissCounter : INTEGER := 0; -- Miss counter. 
-	
-	signal directMappedCache_data_out : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0) := (others => '0');
 
 	-- Auxiliary signals.
 	signal lineIsInvalid  : STD_LOGIC := '0';
 	signal lineIsNotDirty : STD_LOGIC := '0';
 	signal lineIsDirty    : STD_LOGIC := '0';
 	
-	signal dirtyBit_tmp : STD_LOGIC := '0'; -- TODO What is the purpose of this signal? Can we remove this signal?
+	
+	signal newCacheBlockLine_tmp : STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0) := (others=>'0');
 
 	function GET_NEW_CACHE_BLOCK_LINE(
 		blockLine 		: in STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0);
@@ -272,16 +261,20 @@ begin
 
 			when WRITE_BACK2 =>
 				if readyMEM = '1' then
-					nextstate <= READ;
+					nextstate <= WRITE_BACK2_DELAY;
 				else
 					nextstate <= WRITE_BACK2;
 				end if;
+				
+			when WRITE_BACK2_DELAY =>
+				nextstate <= READ;
 
 		    -- Warning: Case statement contains all choices explicitly. You can safely remove redundant 'others'.
 			-- when others => nextstate <= IDLE;
 		end case;
 	end process;
 		 
+	-- Update the auxiliary counter regarding delays.
 	auxiliaryCounter <= 1 when state=IDLE and rdCPU='1' else
 						1 when state=IDLE and wrCPU='1' else
 						auxiliaryCounter-1 when state=CHECK1 and rising_edge(clk) else
@@ -290,10 +283,9 @@ begin
 	-- ------------------------------------------------------------------------------------
 	-- Handling of memory address.
 	-- ------------------------------------------------------------------------------------
-	addressCPU <= TO_MEMORY_ADDRESS( addrCPU );
+	addressCPU 	<= TO_MEMORY_ADDRESS( addrCPU );
 	addrMEM 	<= addrCPU;
 		 
- 
 	-- ------------------------------------------------------------------------------------
 	-- Increment or reset hit counter and miss counter.
 	-- ------------------------------------------------------------------------------------
@@ -315,6 +307,7 @@ begin
 	lineIsInvalid  		<= '1' when hitFromCache='0' and valid='0' else '0';
 	lineIsNotDirty 		<= '1' when hitFromCache='0' and valid='1' and dirty='0' else '0';
 	lineIsDirty    		<= '1' when hitFromCache='0' and valid='1' and dirty='1' else '0';
+	
 	rdWord	            <= '0' when (state=WRITE and readyMEM='1') else
 						   '1' when (state=IDLE and wrCPU='1') else 
 						   '1' when (state=IDLE and rdCPU='1') else
@@ -348,12 +341,14 @@ begin
 	rdMEM <= '1' when (state=CHECK1 and lineIsInvalid='1') else 
 			 '1' when (state=CHECK1 and lineIsNotDirty='1') else 
 			 '1' when (state=WRITE_BACK1_DELAY) else 
+			 '1' when (state=WRITE_BACK2_DELAY) else
 			 '1' when (state=CHECK2 and lineIsInvalid='1') else
 			 '1' when (state=CHECK2 and lineIsNotDirty='1') else
 			 '1' when (state=WRITE and readyMEM='0') else
 			 '0';
+			 
 	wrMEM <= 
-			 '1' when (state=CHECK1 and hitFromCache='0' and valid='1' and dirty='1' and auxiliaryCounter=0) else 
+			 '1' when (state=CHECK1 and lineIsDirty='1' and auxiliaryCounter=0) else 
 			 '1' when (state=CHECK2 and lineIsDirty='1' and auxiliaryCounter=0) else
 			 '0';
 			 
@@ -364,20 +359,21 @@ begin
 	            '1' when (state=READ and readyMEM = '1' and rising_edge(clk)) else 
 	            '0' when rising_edge(clk);
 	
-	dirtyBit_tmp <= dirty when state=IDLE and nextstate=CHECK2;
 	dirty <= '1' when (state=CHECK1 and hitFromCache='1' and valid='1') else 
 	         '1' when (state=WRITE and readyMEM='1') else
 	         'Z';
-	setDirty <= '1' when (state=CHECK1 and hitFromCache='1' and valid = '1' and auxiliaryCounter=0) else 
-	            '1' when (state = WRITE and readyMEM = '1') else 
+	         
+	setDirty <= '1' when (state=CHECK1 and hitFromCache='1' and valid='1' and auxiliaryCounter=0) else 
+	            '1' when (state=WRITE and readyMEM = '1') else 
 	            '0';
 	
+	newCacheBlockLine_tmp <= dataMEM;
 	newCacheBlockLine <= GET_NEW_CACHE_BLOCK_LINE( dataMEM, dataCPU, addressCPU.offsetAsInteger) when (state=WRITE and readyMEM='1') else
 						 dataMEM when (state=READ and readyMEM='1');
 	
 	-- Determine the data word to be written to Main Memory.
 	dataMEM           <= dataToMEM when (state=CHECK2 and hitFromCache='0' and valid='1' and dirty='1' and auxiliaryCounter=0) else
-						 dataMEM when (state=CHECK1 and lineIsDirty='1') else
+						 dataToMEM when (state=CHECK1 and lineIsDirty='1' and auxiliaryCounter=0) else
 						 (others=>'Z');
 	
 	-- Data CPU output.

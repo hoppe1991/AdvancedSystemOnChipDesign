@@ -83,6 +83,9 @@ architecture rtl of cache is
 	
 	-- Cache block line to be written to main memory.
 	signal dataToMEM : STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0) := (others=>'0');
+	
+	-- Memory address to Direct Mapped Cache.
+	signal addrDMC : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
 begin
 	dataCPU <= (others=>'Z');
 	
@@ -100,7 +103,7 @@ begin
 		port map(
 			clk            => clk,
 			reset          => reset,
-			addrCPU        => addrCPU,
+			addrCPU        => addrDMC,
 			dataCPU        => dataCPU,
 			dataToMEM      => dataToMEM,
 			rdCBLine       => rdCBLine,
@@ -143,6 +146,7 @@ begin
 			hitFromCache   => hit,
 			newCacheBlockLine => newCacheBlockLine,
 			dataToMEM        => dataToMEM,
+			addrDMC			=> addrDMC,
 
 			-- Ports regarding CPU.
 			hitCounter     => hitCounter,

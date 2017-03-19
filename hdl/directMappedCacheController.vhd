@@ -47,15 +47,15 @@ entity directMappedCacheController is
 		reset            : in    STD_LOGIC; -- Reset signal to reset the cache.
 		
 		-- Ports regarding CPU and MEM.
-		addrCPU          : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);	-- Memory address from CPU is divided into block address and block offset.
-		dataCPU       	 : inout STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0); 			-- Data from CPU to cache or from cache to CPU.
-		dataToMEM : out STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0); -- Data from memory to cache or from cache to memory
-		newCacheBlockLine : in STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0);
-		valid            : inout STD_LOGIC; -- Identify whether the cache block/line contains valid content.
-		dirty         	 : inout STD_LOGIC; -- Identify whether the cache block/line is changed as against the main memory.
-		setValid         : in    STD_LOGIC; -- Identify whether the valid bit should be set.
-		setDirty         : in    STD_LOGIC; -- Identify whether the dirty bit should be set.
-		hit 			 : out   STD_LOGIC; -- Signal identify whether data are available in the cache ('1') or not ('0').
+		addrCPU          	: in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);	-- Memory address from CPU is divided into block address and block offset.
+		dataCPU       	 	: inout STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0); 			-- Data from CPU to cache or from cache to CPU.
+		dataToMEM 		   	: out STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0); -- Data from memory to cache or from cache to memory
+		newCacheBlockLine 	: in STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0);
+		valid            	: inout STD_LOGIC; -- Identify whether the cache block/line contains valid content.
+		dirty         	 	: inout STD_LOGIC; -- Identify whether the cache block/line is changed as against the main memory.
+		setValid         	: in    STD_LOGIC; -- Identify whether the valid bit should be set.
+		setDirty         	: in    STD_LOGIC; -- Identify whether the dirty bit should be set.
+		hit 			 	: out   STD_LOGIC; -- Signal identify whether data are available in the cache ('1') or not ('0').
 		
 		-- Ports defines how to read or write the data BRAM.
 		wrCBLine 	: in   STD_LOGIC; -- Write signal identifies whether a complete cache block should be written into cache.

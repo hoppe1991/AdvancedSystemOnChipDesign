@@ -76,11 +76,15 @@ architecture synth of mainMemoryController is
 	type statetype is (
 		IDLE,
 		READ,
-		WRITE
+		WRITE,
+		DELAY
 	);
 	
 	-- Number of bits in a cache line.
 	constant cacheLineBits : INTEGER := BLOCKSIZE * DATA_WIDTH;
+	
+	-- The ready signal is activated after 20 cycles.
+	constant readySignalAfter : INTEGER := 20;
  
 	-- Signal contains the memory address.
 	signal addr : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0) := (others => '0');
@@ -97,8 +101,8 @@ architecture synth of mainMemoryController is
  	-- Auxiliary signal.
 	signal counter : integer := BLOCKSIZE + BLOCKSIZE;
 
-	-- Cache block line should be written into BRAM.
-	signal cacheBlockLine_tmp : STD_LOGIC_VECTOR( cacheLineBits-1 downto 0) := (others => '0');
+	-- Register cache block line should be written into BRAM.
+	signal regCacheBlockLine : STD_LOGIC_VECTOR( cacheLineBits-1 downto 0) := (others => '0');
 	
 	-- Bit string containing the input address modulo 16.
 	signal addrMEM_mod16 : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others => '0');
@@ -111,6 +115,9 @@ architecture synth of mainMemoryController is
 	
 	-- Next state of the FSM.
 	signal nextstate : statetype := IDLE;
+	
+	signal wrRequest : STD_LOGIC := '0';
+	signal rdRequest : STD_LOGIC := '0';
 	
 	-- Returns the given STD_LOGIC_VECTOR as a BLOCK_LINE.
 	function STD_LOGIC_VECTOR_TO_BLOCK_LINE(ARG : in STD_LOGIC_VECTOR(cacheLineBits - 1 downto 0)) return BLOCK_LINE is
@@ -140,6 +147,9 @@ architecture synth of mainMemoryController is
  
 begin
 	 
+	wrRequest <= '1' when wrMEM='1' and rdMEM='0' else '0';
+	rdRequest <= '1' when rdMEM='1' and wrMEM='0' else '0';
+
 	-- state register
 	state <= IDLE when reset = '1' else nextstate when rising_edge(clk);
 
@@ -147,9 +157,9 @@ begin
 	begin
 		case state is
 			when IDLE =>
-				if rdMEM = '0' and wrMEM = '1' then
+				if wrRequest='1' then
 					nextstate <= WRITE;
-				elsif rdMEM = '1' and wrMEM = '0' then
+				elsif rdRequest='1' then
 					nextstate <= READ;
 				end if;
 
@@ -157,17 +167,23 @@ begin
 				if counter <= BLOCKSIZE then
 					nextstate <= READ;
 				else
-					nextstate <= IDLE;
+					nextstate <= DELAY;
 				end if;
 
 			when WRITE =>
 				if counter < BLOCKSIZE then
 					nextstate <= WRITE;
 				else
+					nextstate <= DELAY;
+				end if;
+				
+			when DELAY => 
+				if counter < readySignalAfter then
+					nextstate <= DELAY;
+				else
 					nextstate <= IDLE;
 				end if;
-
-			--when others => nextstate <= IDLE;
+				
 		end case;
 	end process;
 	
@@ -180,17 +196,16 @@ begin
 				   '0';
 
 	-- Output logic.
-	readyMEM <= '1' when (state=WRITE and counter >= BLOCKSIZE) else
-				'0' when (state=READ and counter <= BLOCKSIZE) else
-				'1' when (state=READ and counter > BLOCKSIZE) else
+	readyMEM <= '1' when (state=IDLE and wrMEM/='1' and rdMEM='1') else
+				'1' when (state=DELAY and counter >= readySignalAfter) else
+				'0' when (state/=IDLE) else
 				'0' when (state=IDLE and wrMEM='1' and rdMEM='0') else
 				'0' when (state=IDLE and wrMEM='0' and rdMEM='1');
-
+				
 	-- Increment counter.
-	counter <= 0 when (state=IDLE and wrMEM='1' and rdMEM='0') else
-			   0 when (state=IDLE and wrMEM='0' and rdMEM='1') else
-			   counter+1 when (state=WRITE and counter < BLOCKSIZE and rising_edge(clk)) else
-			   counter+1 when (state=READ and counter <= BLOCKSIZE and rising_edge(clk));
+	counter <= 0 when (state=IDLE and wrRequest='1') else
+			   0 when (state=IDLE and rdRequest='1') else
+			   counter+1 when state/=IDLE and rising_edge(clk);
 
 	-- Store the read word.
 	addrMEM_mod16               <= addrMEM(MEMORY_ADDRESS_WIDTH - 1 downto 4) & "0000" when state = IDLE;
@@ -200,15 +215,16 @@ begin
 	addrBram <= addr( 11 downto 2 );
 
 	-- Determine the output.
-	cacheBlockLine_tmp <= dataMEM when state = IDLE;
-	cacheBlockLine_in  <= STD_LOGIC_VECTOR_TO_BLOCK_LINE(cacheBlockLine_tmp) when state = IDLE;
+	regCacheBlockLine <= dataMEM when state = IDLE;
+	cacheBlockLine_in  <= STD_LOGIC_VECTOR_TO_BLOCK_LINE(regCacheBlockLine) when state = IDLE;
 	dataToBRAM            <= cacheBlockLine_in(counter) when counter >= 0  and counter < BLOCKSIZE;
  
 	-- Determine the output.
-	--dataMEM_out <= BLOCK_LINE_TO_STD_LOGIC_VECTOR(cacheBlockLine_out);
 	dataMEM_out_tmp <= BLOCK_LINE_TO_STD_LOGIC_VECTOR( cacheBlockLine_out );
 	dataMEM <= dataMEM_out_tmp when state=WRITE AND counter>=BLOCKSIZE else
 			   dataMEM_out_tmp when state=READ AND counter>=BLOCKSIZE else
+			   dataMEM_out_tmp when state=DELAY else
+			   dataMEM_out_tmp when state=IDLE and wrMEM='0' else
 				(others=>'Z'); 
 
 end synth;

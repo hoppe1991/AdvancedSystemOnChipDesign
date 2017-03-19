@@ -27,7 +27,6 @@ entity cacheController is
 		clk         : in    STD_LOGIC;
 		reset       : in    STD_LOGIC;
 	
-
 		-- Ports regarding Direct Mapped Cache.
 		rdWord 		: out 	STD_LOGIC;	-- Signal indicates whether to write a complete block line from Direct Mapped Cache.
 		wrWord 		: out 	STD_LOGIC; 	-- Signal indicates whether to write to Direct Mapped Cache.
@@ -39,9 +38,10 @@ entity cacheController is
 		setValid 		: out 	STD_LOGIC;	-- Indicates whether to reset the valid bit of Direct Mapped Cache.
 		setDirty 		: out 	STD_LOGIC;	-- Indicates whether to set the dirty bit of Direct Mapped Cache.
 		hitFromCache 	: in 	STD_LOGIC; -- Indicates whether hit from direct mapped cache is reached.
-		dataToMEM : in STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0); -- Cache block line to be written to main memory.
+		addrDMC	: out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0); -- Memory address to Direct Mapped Cache.
 		
-		newCacheBlockLine : out STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0);
+		dataToMEM : in STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE-1 downto 0); -- Cache block line from main memory to be written to main memory.
+		newCacheBlockLine : out STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0); -- New cache block line to be written into cache.
 				   
 		-- Ports regarding to CPU.
 		hitCounter  : out   INTEGER; -- Counter stores the number of cache hits.
@@ -71,8 +71,7 @@ architecture synth of cacheController is
 	-- Definition of type BLOCK_LINE as an array of STD_LOGIC_VECTORs.
 	type BLOCK_LINE is array(0 to (BLOCKSIZE-1)) of STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
 	
-	
-	-- 
+	-- Memory address consists of tag, index and offset vector.
 	type MEMORY_ADDRESS is record
 		tag    : STD_LOGIC_VECTOR(config.tagNrOfBits - 1 downto 0);
 		index  : STD_LOGIC_VECTOR(config.indexNrOfBits - 1 downto 0);
@@ -81,11 +80,10 @@ architecture synth of cacheController is
 		offsetAsInteger : INTEGER;
 	end record;
  
-
 	-- Definition of auxiliary functions.
 	function STD_LOGIC_VECTOR_TO_BLOCK_LINE(ARG : in STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0)) return BLOCK_LINE;
-	function TO_MEMORY_ADDRESS(ARG : in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0)
-	) return MEMORY_ADDRESS;
+	function TO_MEMORY_ADDRESS(ARG : in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0)) return MEMORY_ADDRESS;
+	function TO_STD_LOGIC_VECTOR(ARG : in MEMORY_ADDRESS) return STD_LOGIC_VECTOR;
 	function BLOCK_LINE_TO_STD_LOGIC_VECTOR(ARG : in BLOCK_LINE) return STD_LOGIC_VECTOR;
 	function GET_NEW_CACHE_BLOCK_LINE(
 		blockLine 		: in STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0);
@@ -119,6 +117,14 @@ architecture synth of cacheController is
 		addr.offsetAsInteger := TO_INTEGER(UNSIGNED(addr.offset));
 		return addr;
 	end function;
+	
+	function TO_STD_LOGIC_VECTOR(ARG : in MEMORY_ADDRESS) return STD_LOGIC_VECTOR is
+		variable addr : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
+	begin
+		addr := ARG.tag & ARG.index & ARG.offset;
+		return addr;
+	end function;
+	
 	signal addrCPUZero : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
 	signal addressCPU : MEMORY_ADDRESS := TO_MEMORY_ADDRESS(addrCPUZero);
 	
@@ -127,18 +133,16 @@ architecture synth of cacheController is
 	
 	-- Next state of FSM.
 	signal nextstate : statetype := IDLE;
-   
-	signal rHitCounter  : INTEGER := 0; -- Hit counter.
-	signal rMissCounter : INTEGER := 0; -- Miss counter. 
+	
+	-- Hit and Miss counter registers are initialized with Zero on reset.
+	-- They counts the number of occurrences of cache hits and cache misses.
+	signal rHitCt, rMissCt  : INTEGER := 0;
 
 	-- Auxiliary signals.
 	signal lineIsInvalid  : STD_LOGIC := '0';
 	signal lineIsNotDirty : STD_LOGIC := '0';
 	signal lineIsDirty    : STD_LOGIC := '0';
 	
-	
-	signal newCacheBlockLine_tmp : STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0) := (others=>'0');
-
 	function GET_NEW_CACHE_BLOCK_LINE(
 		blockLine 		: in STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0);
 		data 	  		: in STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
@@ -186,6 +190,7 @@ architecture synth of cacheController is
 	end;
 
 	signal auxiliaryCounter : INTEGER := 1;
+	signal myBlockLine : BLOCK_LINE;
 begin
 	 
 	-- State register.
@@ -275,30 +280,33 @@ begin
 	end process;
 		 
 	-- Update the auxiliary counter regarding delays.
-	auxiliaryCounter <= 1 when state=IDLE and rdCPU='1' else
-						1 when state=IDLE and wrCPU='1' else
+	auxiliaryCounter <= 1 when state=IDLE and rdCPU='1' and wrCPU='0' else
+						1 when state=IDLE and wrCPU='1' and rdCPU='0' else
 						auxiliaryCounter-1 when state=CHECK1 and rising_edge(clk) else
 						auxiliaryCounter-1 when state=CHECK2 and rising_edge(clk);
 		 
 	-- ------------------------------------------------------------------------------------
 	-- Handling of memory address.
 	-- ------------------------------------------------------------------------------------
-	addressCPU 	<= TO_MEMORY_ADDRESS( addrCPU );
-	addrMEM 	<= addrCPU;
+	addressCPU 	<= TO_MEMORY_ADDRESS( addrCPU ) when state=IDLE and wrCPU='1' and rdCPU='0' else
+				   TO_MEMORY_ADDRESS( addrCPU ) when state=IDLE and wrCPU='0' and rdCPU='1';
+	addrMEM 	<= TO_STD_LOGIC_VECTOR( addressCPU );
+	addrDMC		<= TO_STD_LOGIC_VECTOR( addressCPU );
 		 
 	-- ------------------------------------------------------------------------------------
 	-- Increment or reset hit counter and miss counter.
 	-- ------------------------------------------------------------------------------------
-	rHitCounter  <= 0 when reset='1' else
-				    rHitCounter+1 when state=CHECK1 and hitFromCache='1' and rising_edge(clk) and valid='1' and auxiliaryCounter=0 else
-		            rHitCounter+1 when state=CHECK2 and hitFromCache='1' and rising_edge(clk) and auxiliaryCounter=0;
-	rMissCounter <= 0 when reset='1' else
-					--rMissCounter+1 when state=WRITE and readyMEM='1' and rising_edge(clk) else
-				    rMissCounter+1 when state=TOCACHE2 and rising_edge(clk) else
-				    rMissCounter+1 when state=TOCACHE1 and rising_edge(clk);
+	rHitCt  <= 0 when reset='1' else
+			   rHitCt+1 when state=CHECK1 and hitFromCache='1' and rising_edge(clk) and valid='1' and auxiliaryCounter=0 else
+		       rHitCt+1 when state=CHECK2 and hitFromCache='1' and rising_edge(clk) and auxiliaryCounter=0;
+		       
+	rMissCt <= 0 when reset='1' else
+			   rMissCt+1 when state=TOCACHE2 and rising_edge(clk) else
+			   rMissCt+1 when state=TOCACHE1 and rising_edge(clk);
+				    
 	-- Export the miss counter and hit counter.
-	missCounter <= rMissCounter;
-	hitCounter  <= rHitCounter;
+	missCounter <= rMissCt;
+	hitCounter  <= rHitCt;
 
  
 	-- ------------------------------------------------------------------------------------
@@ -308,24 +316,25 @@ begin
 	lineIsNotDirty 		<= '1' when hitFromCache='0' and valid='1' and dirty='0' else '0';
 	lineIsDirty    		<= '1' when hitFromCache='0' and valid='1' and dirty='1' else '0';
 	
-	rdWord	            <= '0' when (state=WRITE and readyMEM='1') else
-						   '1' when (state=IDLE and wrCPU='1') else 
-						   '1' when (state=IDLE and rdCPU='1') else
+	rdWord	            <= '1' when (state=IDLE and wrCPU='1' and rdCPU='0') else 
+						   '1' when (state=IDLE and wrCPU='0' and rdCPU='1') else
+						   '0' when (state=WRITE and readyMEM='1') else
 						   '0' when (state=CHECK2 and hitFromCache='1' and auxiliaryCounter=0) else
 						   '0' when (state=CHECK1 and hitFromCache='1' and auxiliaryCounter=0) else
 						   '0' when (state=READ and readyMEM='1') else
 						   '0' when (state=TOCACHE2);
+						   
 	wrWord            	<= '0' when (state=IDLE) else
 					       '0' when (state=IDLE and rdCPU='1') else
 						   '1' when (state=CHECK1 and hitFromCache='1') else
-						   --'1' when (state=WRITE and readyMEM='1') else
 						   '0';
 	
-	wrCBLine 		     <= '0' when (state=IDLE) else 
-							'1' when (state=WRITE and readyMEM='1') else
-							'1' when (state=READ and readyMEM='1') else
-							'0';
-	rdCBLine <= '0';
+	wrCBLine 		    <= '0' when (state=IDLE) else 
+						   '1' when (state=WRITE and readyMEM='1') else
+						   '1' when (state=READ and readyMEM='1') else
+						   '0';
+							
+	rdCBLine 			<= '0';
 	
 	-- ------------------------------------------------------------------------------------
 	-- Determine whether to stall the CPU.
@@ -367,7 +376,6 @@ begin
 	            '1' when (state=WRITE and readyMEM = '1') else 
 	            '0';
 	
-	newCacheBlockLine_tmp <= dataMEM;
 	newCacheBlockLine <= GET_NEW_CACHE_BLOCK_LINE( dataMEM, dataCPU, addressCPU.offsetAsInteger) when (state=WRITE and readyMEM='1') else
 						 dataMEM when (state=READ and readyMEM='1');
 	
@@ -376,8 +384,14 @@ begin
 						 dataToMEM when (state=CHECK1 and lineIsDirty='1' and auxiliaryCounter=0) else
 						 (others=>'Z');
 	
+	
+	
+	myBlockLine <= STD_LOGIC_VECTOR_TO_BLOCK_LINE(dataMEM) when state=TOCACHE2;
+	
 	-- Data CPU output.
-	dataCPU <= (others=>'Z') when (state=IDLE and wrCPU='1' and rdCPU='0') else
+	dataCPU <= myBlockLine(addressCPU.offsetAsInteger) when state=TOCACHE2 else
+			   (others=>'Z') when (state=IDLE and wrCPU='1' and rdCPU='0') else
 			   (others=>'Z') when (state=IDLE and rdCPU='1' and wrCPU='0') else
+			   dataCPU when (state=IDLE and rdCPU='0' and wrCPU='0') else
 			   dataCPU when (hitFromCache='1' and state = CHECK2 and auxiliaryCounter=0);
 end synth;

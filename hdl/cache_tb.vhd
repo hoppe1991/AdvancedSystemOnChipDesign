@@ -16,22 +16,20 @@ use work.cache_pkg.all;
 
 entity cache_tb is
 	generic(
-		MEMORY_ADDRESS_WIDTH : INTEGER := 32; -- Memory address is 32-bit wide.
-		DATA_WIDTH           : INTEGER := 32; -- Length of instruction/data words.
-		BLOCKSIZE            : INTEGER := 4; -- Number of words that a block contains.
-		ADDRESSWIDTH         : INTEGER := 256; -- Number of cache blocks.
-		OFFSET               : INTEGER := 8; -- Number of bits that can be selected in the cache.
-		BRAM_ADDR_WIDTH 	: INTEGER := 10; -- Number of bits defining the BRAM address wide.
-		TAG_FILENAME         : STRING  := "../imem/tagCache";
-		DATA_FILENAME        : STRING  := "../imem/dataCache";
-		MAIN_MEMORY_FILENAME : STRING  := "../imem/mainMemory";
-		FILE_EXTENSION       : STRING  := ".imem"
+		MEMORY_ADDRESS_WIDTH 	: INTEGER := 32; -- Memory address is 32-bit wide.
+		DATA_WIDTH           	: INTEGER := 32; -- Length of instruction/data words.
+		BLOCKSIZE            	: INTEGER := 4; -- Number of words that a block contains.
+		ADDRESSWIDTH         	: INTEGER := 256; -- Number of cache blocks.
+		OFFSET               	: INTEGER := 8; -- Number of bits that can be selected in the cache.
+		BRAM_ADDR_WIDTH 		: INTEGER := 10; -- Number of bits defining the BRAM address wide.
+		TAG_FILENAME         	: STRING  := "../imem/tagCache";
+		DATA_FILENAME        	: STRING  := "../imem/dataCache";
+		MAIN_MEMORY_FILENAME 	: STRING  := "../imem/mainMemory";
+		FILE_EXTENSION       	: STRING  := ".imem"
 	);
 end;
 
 architecture tests of cache_tb is
-	
-	signal my_test_test_test_signal : STD_LOGIC := '0';
 	
 	-- Constant object.
 	constant config : CONFIG_BITS_WIDTH := GET_CONFIG_BITS_WIDTH(MEMORY_ADDRESS_WIDTH, ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET);
@@ -277,7 +275,33 @@ architecture tests of cache_tb is
 		report "-------------------------------------------------------------------" severity NOTE;
 	end;
 	
+	
+	procedure VALIDATE( cycles : in INTEGER; 
+		expectedStallCPU_duringLoop : in STD_LOGIC;
+		expectedMissCounter_duringLoop : in INTEGER;
+		expectedHitCounter_duringLoop : in INTEGER;
+		
+		expectedStallCPU_afterLoop : in STD_LOGIC;
+		expectedMissCounter_afterLoop : in INTEGER;
+		expectedHitCounter_afterLoop : in INTEGER;
+		
+		expectedDataCPU : in STD_LOGIC_VECTOR
+	) is
+	begin
+			for I in 1 to cycles loop
+				VALIDATE_SIGNALS(stallCPU, expectedStallCPU_duringLoop, missCounter, expectedMissCounter_duringLoop, hitCounter, expectedHitCounter_duringLoop);
+				wait until rising_edge(clk);
+			end loop;
+			VALIDATE_SIGNALS(stallCPU, expectedStallCPU_afterLoop, missCounter, expectedMissCounter_afterLoop, hitCounter, expectedHitCounter_afterLoop);
+			VALIDATE_SIGNAL( "dataCPU", dataCPU, expectedDataCPU );
+			  
+	end;
+	
+	
+	signal indexMyTest : STD_LOGIC_VECTOR(config.indexNrOfBits-1 downto 0) := (others=>'0');
 begin
+	
+	indexMyTest <= addrCPU(config.indexIndexH downto config.indexIndexL);
 	-- ------------------------------------------------------------------------------------------
 	-- Create entity cache.
 	-- ------------------------------------------------------------------------------------------
@@ -358,7 +382,7 @@ begin
 		variable activatedTest : STD_LOGIC_VECTOR(1 to 100) := (others=>'0');-- TODO Remove this variable.
 	begin
 		activatedTest := (others=>'1');
-		--activatedTest(3 to 10) := (others=>'0');
+		--activatedTest(3 to 4) := (others=>'0');
 		wait for 5 ns;
 		
 		-- --------------------------------------------------------------------------------------
@@ -402,7 +426,7 @@ begin
 			addrCPU <= GET_MEMORY_ADDRESS( 0, L, 0 ); 
 			expected_hitCounter := hitCounter;
 			wait until rising_edge(clk);
-			for I in 1 to 8 loop
+			for I in 1 to 23 loop
 				rdCPU <= '1';
 				expected_missCounter := missCounter;
 				wait until rising_edge(clk);
@@ -423,8 +447,6 @@ begin
 		end loop;
 		PRINT_TEST_END(testCaseIndex);
 		end if;
-		 
-		 
 		 
 		-- =======================================================================================================================
 		-- Test 3 - Read Cache. Line is not dirty.
@@ -514,21 +536,23 @@ begin
 		offset_integer := 0;
 		dataCPU <= (others=>'0');
 		
+		wait until rising_edge(clk);
+		wait until rising_edge(clk);
+		
 		-- Read from cache block the first time.
 		for L in 0 to ADDRESSWIDTH-1 loop
 			wrCPU <= '0';
 			rdCPU <= '1';
 			expected_hitCounter := hitCounter;
 			expected_missCounter := missCounter;
+			addrCPU <= GET_MEMORY_ADDRESS( tag_integer, L, offset_integer );
 			wait until rising_edge(clk);
 			rdCPU <= '0';
-			addrCPU <= GET_MEMORY_ADDRESS( tag_integer, L, offset_integer );
 			PRINT_HITCOUNTER( missCounter, hitCounter );
-			for I in 1 to 8 loop
+			for I in 1 to 23 loop
 				expected_missCounter := missCounter;
 				wait until rising_edge(clk);
 				PRINT_HITCOUNTER( stallCPU, hitCounter, missCounter);
-				report "L: " & INTEGER'IMAGE(I); -- TODO REMOVE this line.
 				VALIDATE_SIGNALS(L, I, stallCPU, '1', missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			end loop;  
 			VALIDATE_SIGNALS( stallCPU, '1', missCounter, expected_missCounter, hitCounter, expected_hitCounter);
@@ -538,8 +562,11 @@ begin
 			PRINT_HITCOUNTER( hitCounter, missCounter );
 		end loop;
 		
-		-- Change data in cache blocks.
-		report "change data in cache blocks..." severity NOTE;
+		-- Wait some clock cycles.
+		wait until rising_edge(clk);
+		wait until rising_edge(clk);
+		
+		-- Change data in cache blocks
 		dataCPU <= (others=>'1');
 		for L in 0 to ADDRESSWIDTH-1 loop
 			wrCPU <= '1';
@@ -558,10 +585,12 @@ begin
 			PRINT_HITCOUNTER( hitCounter, missCounter );
 		end loop;
 		
+		wait until rising_edge(clk);
+		wait until rising_edge(clk);
+		
 		-- ---------------------------------------------------------------
 		-- Read from dirty cache blocks, where tags are not equal.
 		-- ---------------------------------------------------------------
-		report "read data from cache blocks with different tags..." severity NOTE;
 		wrCPU <= '0';
 		rdCPU <= '0';
 		
@@ -590,8 +619,7 @@ begin
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			
 			wait until rising_edge(clk);
-			for I in 1 to 14 loop
-				report "I := " & INTEGER'IMAGE(I); -- TODO REMOVE THIS LINE.
+			for I in 1 to 45 loop
 				wait until rising_edge(clk);
 				expected_stallCPU := '1';
 				VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
@@ -654,7 +682,7 @@ begin
 			expected_missCounter	:= missCounter;
 			PRINT_HITCOUNTER( missCounter, hitCounter );
 			VALIDATE_SIGNALS(stallCPU, '0', missCounter, expected_missCounter, hitCounter, expected_hitCounter);
-			for I in 1 to 8 loop
+			for I in 1 to 23 loop
 				wait until rising_edge(clk);
 				expected_stallCPU := '1';
 				VALIDATE_SIGNALS(L, I, stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
@@ -719,7 +747,7 @@ begin
 			expected_missCounter := missCounter;
 			PRINT_HITCOUNTER( missCounter, hitCounter );
 			--VALIDATE_SIGNALS(stallCPU, '0', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
-			for I in 1 to 8 loop
+			for I in 1 to 23 loop
 				expected_missCounter := missCounter;
 				wait until rising_edge(clk);
 				expected_stallCPU := '1';
@@ -733,11 +761,9 @@ begin
 		
 		
 		report "wait for some clock cycles.";
-		my_test_test_test_signal <= '1';
 		wait until rising_edge(clk);
 		wait until rising_edge(clk);
 		wait until rising_edge(clk);
-		
 		
 		-- Loop over all cache block lines and write the second time.
 		for L in 0 to ADDRESSWIDTH-1 loop
@@ -770,7 +796,7 @@ begin
 			PRINT_HITCOUNTER( missCounter, hitCounter );
 			expected_stallCPU := '0';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
-			for I in 1 to 15 loop
+			for I in 1 to 46 loop
 				expected_missCounter := missCounter;
 				wait until rising_edge(clk);
 				expected_stallCPU := '1';
@@ -830,11 +856,10 @@ begin
 			expected_hitCounter 	:= hitCounter;
 			expected_missCounter 	:= missCounter;
 			expected_stallCPU 		:= '1';
-			for I in 1 to 8 loop
-				expected_missCounter := missCounter;
+			for I in 1 to 23 loop
 				wait until rising_edge(clk);
 				VALIDATE_SIGNALS(L, I, stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
-			end loop;  
+			end loop;
 			wait until rising_edge(clk);
 			expected_stallCPU := '0';
 			VALIDATE_SIGNALS( stallCPU, expected_stallCPU, missCounter, expected_missCounter+1, hitCounter, expected_hitCounter);
@@ -843,7 +868,6 @@ begin
 		
 		-- Wait some clock cycles.
 		report "wait for some clock cycles.";
-		my_test_test_test_signal <= '1';
 		wait until rising_edge(clk);
 		wait until rising_edge(clk);
 		wait until rising_edge(clk);
@@ -879,7 +903,7 @@ begin
 			expected_missCounter 	:= missCounter;
 			expected_stallCPU 		:= '0';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
-			for I in 1 to 8 loop
+			for I in 1 to 23 loop
 				expected_missCounter := missCounter;
 				wait until rising_edge(clk);
 				expected_stallCPU := '1';
@@ -944,7 +968,7 @@ begin
 			expected_missCounter := missCounter;
 			PRINT_HITCOUNTER( missCounter, hitCounter );
 			--VALIDATE_SIGNALS(stallCPU, '0', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
-			for I in 1 to 8 loop
+			for I in 1 to 23 loop
 				expected_missCounter := missCounter;
 				wait until rising_edge(clk);
 				expected_stallCPU := '1';
@@ -957,7 +981,6 @@ begin
 		end loop;
 		
 		-- Wait some clock cycles.
-		my_test_test_test_signal <= '1'; -- TODO Remove this line.
 		wait until rising_edge(clk);
 		wait until rising_edge(clk);
 		wait until rising_edge(clk);
@@ -1044,7 +1067,7 @@ begin
 			expected_missCounter := missCounter;
 			PRINT_HITCOUNTER( missCounter, hitCounter );
 			--VALIDATE_SIGNALS(stallCPU, '0', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
-			for I in 1 to 8 loop
+			for I in 1 to 23 loop
 				expected_missCounter := missCounter;
 				wait until rising_edge(clk);
 				expected_stallCPU := '1';
@@ -1057,7 +1080,6 @@ begin
 		end loop;
 		
 		-- Wait some clock cycles.
-		my_test_test_test_signal <= '1'; -- TODO Remove this line.
 		wait until rising_edge(clk);
 		wait until rising_edge(clk);
 		dataCPU <= (others=>'Z');
@@ -1142,7 +1164,7 @@ begin
 			expected_missCounter := missCounter;
 			PRINT_HITCOUNTER( missCounter, hitCounter );
 			--VALIDATE_SIGNALS(stallCPU, '0', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
-			for I in 1 to 8 loop
+			for I in 1 to 23 loop
 				expected_missCounter := missCounter;
 				wait until rising_edge(clk);
 				expected_stallCPU := '1';
@@ -1183,7 +1205,7 @@ begin
 			expected_missCounter := missCounter;
 			expected_stallCPU := '0';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
-			for I in 1 to 15 loop
+			for I in 1 to 46 loop
 				expected_missCounter := missCounter;
 				wait until rising_edge(clk);
 				expected_stallCPU := '1';
@@ -1219,11 +1241,10 @@ begin
 			expected_missCounter := missCounter;
 			expected_stallCPU := '0';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
-			for I in 1 to 15 loop
+			for I in 1 to 46 loop
 				expected_missCounter := missCounter;
 				wait until rising_edge(clk);
 				expected_stallCPU := '1';
-				report "LLLLLLLLLLLLLLLLL: " & INTEGER'IMAGE(I); -- TODO Remove this line.
 				VALIDATE_SIGNALS(L, I, stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			end loop;  
 			wait until rising_edge(clk);

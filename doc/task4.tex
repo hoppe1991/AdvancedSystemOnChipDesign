@@ -105,12 +105,65 @@ Of course, the clock signal \textit{clk} is used to handle the behavior of this 
 
 \newpage
 \subsubsection{Design a Finite State Machine for the Main Memory Controller}
-The main memory controller has the purpose to either write a given cache block/line to the main memory or to read multiple words from the main memory and return these words as a cache block/line. This main memory controller will be connected with the cache controller. Thus, the main memory controller will send a read cache block/line from the main memory to the cache controller. Also the main memory will get a cache block/line from the cache controller, which should be written into the main memory. Consider that a single data word has a certain wide of bits and a whole cache block/line contains several data words. Furthermore, the main memory could be implemented as a BlockRAM (BRAM). At first, the main memory controller is implemented as a finite state machine of type Mealy. The sketch of the finite state machine is given in figure~\ref{fig:sketchMealyAutomataMainMemoryController}.
+The main memory controller has the purpose to either write a given cache block/line to the main memory or to read multiple words from the main memory and return these words as a cache block/line. This main memory controller will be connected with the cache controller. Thus, the main memory controller will send a read cache block/line from the main memory to the cache controller. Also the main memory will get a cache block/line from the cache controller, which should be written into the main memory. Consider that a single data word has a certain wide of bits and a whole cache block/line contains several data words. Furthermore, the main memory could be implemented as a BlockRAM (BRAM). At first, the main memory controller is implemented as a finite state machine of type Mealy. The sketch of the finite state machine is given in figure~\ref{tik:FSM_MainMemory}.
+
+
+\newpage
 \begin{figure}
 	\centering
-	\includegraphics[scale=.5,angle=270]{pictures/sketch_mealyAutomata_mainMemoryController}
 	\caption{Sketch of Mealy Automata - Main Memory Controller}
-	\label{fig:sketchMealyAutomataMainMemoryController}
+    \label{tik:FSM_MainMemory}
+	\begin{tikzpicture}[->,>=stealth',shorten >=1pt,auto,semithick,/tikz/initial text=Reset]
+                    
+	% ------------------------------------------------------------------------------
+    % Definition of tikz styles.       
+	% ------------------------------------------------------------------------------
+	\tikzstyle{vertex}=[state,fill=mycolor,text=white,minimum width=1cm]
+	\tikzstyle{edge}  =[draw,thick,->, midway, above, sloped, font=\tiny]
+	\tikzset{invisible/.style={minimum width=0mm,inner sep=0mm,outer sep=0mm}}
+	
+	% ------------------------------------------------------------------------------
+	% Definition of nodes.
+	% ------------------------------------------------------------------------------
+	[align=center,xscale=1,node distance=2cm and 4cm]
+	\node[initial,vertex]	(A)                    		{\tiny $IDLE$};
+  	\node[vertex]         	(B) [below  left=5cm of A] 	{\tiny $READ$};
+  	\node[vertex]			(C) [below right=5cm of A]	{\tiny $WRITE$};
+  	\node[vertex]         	(D) [below =10cm of A] 		{\tiny $DELAY$};
+
+	% ------------------------------------------------------------------------------
+	% Definition of paths.
+	% ------------------------------------------------------------------------------
+	\path (A) [edge] 	edge node  {rdRequest / counter=0} 	(B)
+	      (A) [edge]	edge node  {wrRequest / counter=0}	(C)
+	      (B) [edge]	edge node  { counter$>$BLOCKSIZE /  } (D)
+	      (C) [edge]	edge node  { counter$\geq$BLOCKSIZE / } (D)
+	      (D) [edge]    edge node  { counter$\geq$20 / } (A)
+		  (B) [edge,loop left] edge	  node  { counter$\leq$BLOCKSIZE / counter++ } (B)	
+		  (C) [edge,loop right] edge	  node  { counter$<$BLOCKSIZE / counter++} (C)
+		  (D) [edge,loop below] edge	  node  { counter$<$20 / counter++} (D)	      
+	      
+	      ;
+	      
+	      
+%	      (B) [edge]    edge [bend right] node  {lineIsInvalid / rdMEM='1'} (F)
+%	      (B) [edge]	edge			  node	{lineIsDirty / cacheLine2MEM} (D)
+%	      (D) [edge]	edge 			  node	{readyMEM / rdMEM='1'} (F)
+%	      (F) [edge]	edge			  node	{readyMEM / wrNewCBLine} (H)
+%	      (H) [edge] 	edge [bend right] node 	{- / rMissCt++, data2Cache} (J)
+%	      (C) [edge]	edge 			  node  {lineIsDirty / cacheLine2MEM} (E)
+%	      (C) [edge]	edge [bend right] node  {lineIsInvalid / rdMEM='1'} (G)
+%	      (C) [edge]	edge [bend left ] node  {lineIsNotDirty / rdMEM='1'} (G)
+%	      (E) [edge]	edge 			  node	{readyMEM / -} (G)
+%	      (I) [edge]	edge [bend left ] node	{- / rMissCt++, data2CPU} (J)
+%	      (G) [edge]	edge 			  node  {readyMEM / -} (I)
+%	      (J) [edge]	edge 			  node  {} (A)
+%	      (E) [edge,loop right] edge	  node  {!readyMEM / -} (E)
+%	      (G) [edge,loop left]  edge	  node  {!readyMEM / -} (G)
+%	      (D) [edge,loop left] edge 	  node	{!readyMEM / -} (D)
+%	      (F) [edge,loop right] edge	  node  {!readyMEM / -} (F);
+	      		
+\end{tikzpicture}
 \end{figure}
 
 

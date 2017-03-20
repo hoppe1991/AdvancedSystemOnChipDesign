@@ -7,7 +7,7 @@
 %				https://martin-thoma.com/how-to-draw-a-finite-state-machine/
 % -----------------------------------------------------------------
 In the following section we describe an implementation of an instruction cache and a data cache. We develop a \textit{Direct Mapped Cache} using as the instruction cache and a \textit{2-way set associative cache} using as the data cache.\\
-In the following subsection \ref{sec:introductionToMemories} we give a short introduction to memories. After that, we simulate the efficiency of a cache with MARS in subsection \ref{sec:cacheSimulation}.
+At first we give a short introduction to memories \ref{sec:introductionToMemories}. After that, we simulate the efficiency of a cache with MARS in subsection \ref{sec:cacheSimulation} and compare different kinds of cache organizations. Afterwards, we design and implement a direct mapped cache in subsection \ref{sec:designDirectMappedCache}. This direct mapped cache will be used to develop a complete cache used as an instruction cache. Therefore, we design a finite state machine representing the behavior of this cache in \ref{sec:designFSMCache} and finally we write a testbench to verify the implementation in \ref{sec:testbenchSimulationCache}. 
 
 
 \subsection{Introduction to Memories}
@@ -69,6 +69,7 @@ Direct Mapping & 16 & 240 & 16 & 94  \\
 
 \newpage
 \subsection{Design a direct mapped cache}
+\label{sec:designDirectMappedCache}
 To develop an instruction cache and a data cache, we first implement a direct mapped cache. Thus, in figure \ref{fig:entityDirectMappedCache} we illustrate the entity of the direct mapped cache with all input and output ports.\\
 Of course, the clock signal \textit{clk} is used to handle the behavior of this entity. The \textit{reset} signal is used to reset the direct mapped cache. When the direct mapped cache is reset, all cache block lines will become invalid. The input port \textit{addrCPU} stores the address given from the CPU to the cache. This address determines the cache block line to be read or to be written. The two inout ports \textit{dataCPU} and \textit{dataMEM} are needed to pass data word between the CPU and the cache as well as between the main memory and the cache. The input signal \textit{newCacheBlockLine} stores the new cache block line to be written into the direct mapped cache. Also, there are several control signals to specify, whether the direct mapped cache should be written or read. The signals \textit{wrCBLine} and \textit{rdCBLine} states whether a whole cache block line should be written or read. Accordingly, the signals \textit{rdWord} and \textit{wrWord} satisfy whether a single word should be written or read in the direct mapped cache. The control signal \textit{wrNewCBLine} says, whether a new cache block line should be written into the direct mapped cache. Furthermore, the input ports \textit{setValid} and \textit{setDirty} controls whether the dirty bit and the valid bit should be reset. The inout port \textit{dirty} stores the new value of the dirty bit or the returns the current value of the dirty bit regarding the current cache block line. Finally, the out port \textit{hit} signalises whether a cache hit or a cache miss is achieved during a read/write operation.
 
@@ -101,6 +102,7 @@ Of course, the clock signal \textit{clk} is used to handle the behavior of this 
 
 \newpage
 \subsection{Design a Finite State Machine for the Cache}
+\label{sec:designFSMCache}
 \input{task4_stateMachine_writeAllocatePolicy}
 
 \newpage
@@ -169,6 +171,7 @@ The main memory controller has the purpose to either write a given cache block/l
 
 \newpage
 \subsection{Design a testbench and simulate the Cache}
+\label{sec:testbenchSimulationCache}
 After implementation of the Cache with \textit{Write Back Policy} and \textit{Write Allocate Policy} we write a testbench and simulate a system with the following properties:
 \begin{itemize} 
 	\item Main memory using a BlockRAM with ready signal.

@@ -108,7 +108,7 @@ architecture synth of twoWayAssociativeCacheController is
 	-- Next state of FSM.
 	signal nextstate 		: statetype := IDLE;
 	-- Least recently used bit = not(use bit)
-	signal LRU, LRU_neg 				: INTEGER	:= 0;
+	signal LRU, LRU_neg, USE_BIT, USE_BIT_neg	: INTEGER	:= 0;
 	-- Hit and Miss counter registers are initialized with Zero on reset.
 	-- They counts the number of occurrences of cache hits and cache misses.
 	signal rHitCt, rMissCt  : INTEGER := 0;
@@ -194,7 +194,13 @@ begin
 	end process;	
 	
 
-	LRU_neg <= 1 when LRU = 1 else 0; 			-- Needed for the not(LRU) operations 
+
+	-- Generating USE_BIT and LRU
+	USE_BIT 	<= 1 when state = CHECK and delay_Counter = 1 and hit(1) = '1' else
+		 		   0 when state = CHECK and delay_Counter = 1 and hit(0) = '1' ;
+
+	USE_BIT_neg <= 0 when USE_BIT = 1 else 1; 	-- Needed for the not(USE_BIT) operations 
+	LRU_neg 	<= 0 when LRU = 1 else 1; 			-- Needed for the not(LRU) operations 
 	
 	-- Update the auxiliary counter regarding delays.
 	delay_Counter <= 1 when state=IDLE and rdCPU='1' and wrCPU='0' else
@@ -209,35 +215,29 @@ begin
 		       
 	rMissCt <= 0 when reset='1' else
 			   rMissCt+1 when state=CACHE_MISS and rising_edge(clk);
-				    
+
+	-- CHECK + CACHE_HIT				    
+	wrWord(USE_BIT_neg)        	<= '0'when REPLACEMENT_STRATEGY="LRU" and (state = CHECK and delay_Counter = 0);	
+	rdWord(USE_BIT_neg)	       	<= '0'when REPLACEMENT_STRATEGY="LRU" and (state = CHECK and delay_Counter = 0); 
+	wrWord(USE_BIT)  <= not(RD_NOTWR) when REPLACEMENT_STRATEGY="LRU" and (state=CHECK and delay_Counter = 0) else 
+						          '0' when REPLACEMENT_STRATEGY="LRU" and state=CACHE_HIT;
+	rdWord(USE_BIT)	      <= RD_NOTWR when REPLACEMENT_STRATEGY="LRU" and (state=CHECK and delay_Counter = 0) else 
+					              '0' when REPLACEMENT_STRATEGY="LRU" and (state=CACHE_HIT);
+
+	-- Block at top right
+	dirty(USE_BIT) 				<= '1' when (RD_NOTWR = '0' ) and state = CACHE_HIT;
+	valid(USE_BIT) 				<= '1' when (RD_NOTWR = '0' ) and state = CACHE_HIT;	
+	
+	-- BLOCK_TO_CACHE
+	wrWord(LRU_neg)        		<= '0'when REPLACEMENT_STRATEGY="LRU" and state = BLOCK_TO_CACHE;
+	rdWord(LRU_neg)	       		<= '0'when REPLACEMENT_STRATEGY="LRU" and state = BLOCK_TO_CACHE; 
+	wrWord(LRU)      <= not(RD_NOTWR) when REPLACEMENT_STRATEGY="LRU" and (state=BLOCK_TO_CACHE ) else
+						          '0' when REPLACEMENT_STRATEGY="LRU" and (state=WRITE_TO_CACHE); 
+	rdWord(LRU)           <= RD_NOTWR when REPLACEMENT_STRATEGY="LRU" and  (state=BLOCK_TO_CACHE ) else
+						          '0' when REPLACEMENT_STRATEGY="LRU" and (state=WRITE_TO_CACHE); 						          						   
 
 
 
-	rdWord(LRU)	   <= RD_NOTWR when REPLACEMENT_STRATEGY="LRU" and  ((state=CHECK and delay_Counter = 0)) else 
-						   '0' when REPLACEMENT_STRATEGY="LRU" and (state=CACHE_HIT) else
-					  RD_NOTWR when REPLACEMENT_STRATEGY="LRU" and  (state=BLOCK_TO_CACHE ) else
-						   '0' when REPLACEMENT_STRATEGY="LRU" and (state=WRITE_TO_CACHE); 
-						   
-	wrWord(LRU) <= not(RD_NOTWR) when REPLACEMENT_STRATEGY="LRU" and (state=CHECK and delay_Counter = 0) else 
-						     '0' when REPLACEMENT_STRATEGY="LRU" and state=CACHE_HIT else
-				   not(RD_NOTWR) when REPLACEMENT_STRATEGY="LRU" and (state=BLOCK_TO_CACHE ) else
-						     '0' when REPLACEMENT_STRATEGY="LRU" and (state=WRITE_TO_CACHE); 
-
-	rdWord(LRU_neg)	       <= '0'when REPLACEMENT_STRATEGY="LRU" and ((state = CHECK and delay_Counter = 0) or state = BLOCK_TO_CACHE); 
-						   
-	wrWord(LRU_neg)        <= '0'when REPLACEMENT_STRATEGY="LRU" and ((state = CHECK and delay_Counter = 0) or state = BLOCK_TO_CACHE);
-	
-	
-	
-	
-	
-		
-	wrCBLine 		    <= '0' when (state=IDLE) else 
-						   '1' when (state=WRITE and readyMEM='1') else
-						   '1' when (state=READ and readyMEM='1') else
-						   '0';
-							
-	rdCBLine 			<= '0';
 	
 
 

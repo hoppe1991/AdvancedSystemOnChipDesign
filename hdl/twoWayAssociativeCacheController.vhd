@@ -195,17 +195,19 @@ begin
 	
 
 
-	-- Generating USE_BIT and LRU
+	-- Generating USE_BIT and LRU at CHECK
 	USE_BIT 	<= 1 when state = CHECK and delay_Counter = 1 and hit(1) = '1' else
 		 		   0 when state = CHECK and delay_Counter = 1 and hit(0) = '1' ;
-
 	USE_BIT_neg <= 0 when USE_BIT = 1 else 1; 	-- Needed for the not(USE_BIT) operations 
+
+	LRU 		<= 0 when state = CHECK and delay_Counter = 1 and hit(1) = '1' else
+		 		   1 when state = CHECK and delay_Counter = 1 and hit(0) = '1' ;
 	LRU_neg 	<= 0 when LRU = 1 else 1; 			-- Needed for the not(LRU) operations 
 	
 	-- Update the auxiliary counter regarding delays.
-	delay_Counter <= 1 when state=IDLE and rdCPU='1' and wrCPU='0' else
-					1 when state=IDLE and wrCPU='1' and rdCPU='0' else
-					delay_Counter-1 when state=CHECK and rising_edge(clk);
+	delay_Counter 	<= 1 when state=IDLE and rdCPU='1' and wrCPU='0' else
+					   1 when state=IDLE and wrCPU='1' and rdCPU='0' else
+					   delay_Counter-1 when state=CHECK and rising_edge(clk);
 		  
 	-- ------------------------------------------------------------------------------------
 	-- Increment or reset hit counter and miss counter.
@@ -223,7 +225,6 @@ begin
 						          '0' when REPLACEMENT_STRATEGY="LRU" and state=CACHE_HIT;
 	rdWord(USE_BIT)	      <= RD_NOTWR when REPLACEMENT_STRATEGY="LRU" and (state=CHECK and delay_Counter = 0) else 
 					              '0' when REPLACEMENT_STRATEGY="LRU" and (state=CACHE_HIT);
-
 	-- Block at top right
 	dirty(USE_BIT) 				<= '1' when (RD_NOTWR = '0' ) and state = CACHE_HIT;
 	valid(USE_BIT) 				<= '1' when (RD_NOTWR = '0' ) and state = CACHE_HIT;	
@@ -236,6 +237,24 @@ begin
 	rdWord(LRU)           <= RD_NOTWR when REPLACEMENT_STRATEGY="LRU" and  (state=BLOCK_TO_CACHE ) else
 						          '0' when REPLACEMENT_STRATEGY="LRU" and (state=WRITE_TO_CACHE); 						          						   
 
+	-- Generating USE_BIT and LRU at CACHE_MISS
+	USE_BIT 	<= 0 when state = CACHE_MISS and valid(0) = '0' and valid(1) = '1' else 		--!valid(0) and valid(1) => USE_BIT = 1
+		 		   0 when state = CACHE_MISS and valid(0) = '1' and valid(1) = '0' else 		--valid(0) and !valid(1) => USE_BIT = 0
+		 		   1 when state = CACHE_MISS and valid(0) = '0' and valid(1) = '0' ; 			--!valid(0) and !valid(1) => USE_BIT = 1
+		 		   
+	LRU 	    <= 1 when state = CACHE_MISS and valid(0) = '0' and valid(1) = '1' else 		--!valid(0) and valid(1) => LRU = 0
+		 		   1 when state = CACHE_MISS and valid(0) = '1' and valid(1) = '0' else 		--valid(0) and !valid(1) => LRU = 1
+		 		   0 when state = CACHE_MISS and valid(0) = '0' and valid(1) = '0' ; 			--!valid(0) and !valid(1) => LRU = 0
+		 		   
+	-- WRITE_TO_CACHE
+	dirty(LRU)	<= NOT(RD_NOTWR) 	when state = UPDATE_LRU_BIT;
+	valid(LRU) 	<= RD_NOTWR			when state = UPDATE_LRU_BIT;	 		   
+	USE_BIT		<= USE_BIT_neg 		when state = UPDATE_LRU_BIT;	
+	LRU 		<= LRU_neg 			when state = UPDATE_LRU_BIT;			 		   
+		 		   
+	--IDLE 		 		   
+	USE_BIT		<= 1 		when state = IDLE and reset = '1';	
+	LRU 		<= 0 		when state = IDLE and reset = '1';	
 
 
 	

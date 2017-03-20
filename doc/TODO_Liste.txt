@@ -2,19 +2,70 @@ TODO Liste
 Treffen 08.03.2017
 --------------------------------------------
 
-1. [Task 4, Cache] Beantwortung der Fragen 2.1 in der Dokumentation.
-	a) Why are there so many different stoarage types?
-	b) What are the advantages and disadvantages of different cache organization forms?
+2017-03-20	[Task 4]		Skript zum Ausführen der Testbench bzgl. Aufgabe 2.5 (Design a testbench and simulate the Cache) für
+							- Windows
+							- Linux
+							- ...
+							
+2017-03-20	[master]		Zusammenmergen der Branches.
+							
+2017-03-20	[Task 4]		Was bedeutet "main memory: BlockRAM (4K x 128) with ready signal after 20 cycles"?
 
-2. [Task 4, Cache] Wolfgang fragen, was ist mit n-way caches gemeint?
+2017-03-08	[MIPS - Bug]	Wolfgang hat einen Bug in der MIPS gefunden (siehe Nachricht in StudIP).
+							Wolfgang hat die Lösung in der Nachricht bereits beschrieben. Die Lösung muss daher in den Code eingefügt werden.
+							
+2017-03-08	[Task 4, Doku]	Beantwortung der Frage 2.1 in der Dokumentation. "Why are there so many different storage types?"
 
-3. [Task 4, Cache] Aktualisierung der Finite State Machine in der Dokumentation.
+2017-03-08	[Task 4, Doku]	Beantwortung der Frage 2.1 in der Dokumentation. "What are the advantages and disadvantages of different cache organization forms?"
 
-4. [Task 4, Cache] Entwurf der Finite State Machine bzgl. 2-way set associative cache.
-	(a) Eine FSM für LRU-Strategie und eine FSM für Random Strategie.
-	(b) Eine einzige FSM für LRU-Strategie und für Random-Strategie zusammen.
+2017-03-08	[Task 4]		Wolfgang fragen, was ist mit n-way caches gemeint?
 
-5. [Task 4, Cache] Verzögerung des Hauptspeichers, sodass dieser für eine Leseoperation bzw. Schreiboperation
-   von z.B. 4 einzelnen Datenwörter etwa 20 Taktzyklen benötigt. Ist es daher möglich, in der FSM des 
-   Hauptspeichers einen Delta-Zustand einzufügen, in dem eine bestimmte Anzahl an Taktzyklen vergeht, um die
-   Verzögerung zu simulieren.
+2017-03-08	[Task 4, Doku]	Aktualisierung der Finite State Machine in der Dokumentation und Anpassung an die Implementierung.
+
+2017-03-08	[Task 4] 		Entwurf der Finite State Machine bzgl. 2-way set associative cache.
+							(a) Eine FSM für LRU-Strategie und eine FSM für Random Strategie.	ODER
+							(b) Eine einzige FSM für LRU-Strategie und für Random-Strategie zusammen.
+
+2017-03-08	[Task 4]		Einfügen der Direct Mapped Caches in die MIPS. Wie können wir das am besten verifizieren?s
+
+2017-03-08	[Task 5]		Überlegung, wie die Aufgabe 5 implementiert werden kann.
+							
+2017-03-08	[Task 3]		Implementierung Aufgabe 3.
+
+2017-03-08	[Task 3]		Besprechung der Lösung bzgl. Aufgabe 3.
+
+2017-03-08	[Task 4]		Besprechung der Implementierung der Caches.
+
+2017-03-08	[Task 3]		Code-Review.
+
+2017-03-08	[Task 4]		Code-Review und Optimierung.
+
+2017-03-20	[Task 3, Doku]	Die Lösung der Aufgabe 3 muss in der Dokumentation beschrieben werden.
+	
+2017-03-20	[Task 4, Doku]	Korrekturlesen Kapitel "Task 4 - Caches".
+
+2017-03-20	[Task 4, Doku]	Korrekturlesen Kapitel "3.1 Introduction to Memories"
+
+2017-03-20	[Task 4, Doku]	Korrekturlesen Kapitel "3.2 Cache Simulation - Results"
+
+2017-03-20	[Task 4, Doku]	Korrekturlesen Kapitel "3.3 Design a direct mapped cache"
+
+2017-03-20	[Task 4, Doku]	Korrekturlesen Kapitel "3.4 Design a Finite State Machine for the Cache"
+
+2017-03-20	[Task 4, Doku]	Korrekturlesen Kapitel "3.5 Design a testbench and simulate the Cache"
+
+2017-03-20	[Doku]			Beschreibung, welche ausführbaren Daten wie auszuführen sind und wofür.
+
+2017-03-20	[Task 5]		Implementierung der Aufgabe 5.
+
+2017-03-20	[Task 5, Doku]	Beschreibung der Lösung bzgl. Aufgabe 5.
+
+2017-03-20	[all]			Zusammenmergen aller Lösungen auf den master-Branch.
+
+2017-03-20	[Doku]			Korrekturlesen und Abschluss der Dokumentation.
+
+
+Erledigt
+--------------------------------------------
+2017-03-08	[Task 4, MMU]	Das ready-Signal des Hauptspeichers soll erst nach 20 Taktzyklen auf '1' gesetzt werden (vgl. Anforderung in Aufgabenstellung).
+   

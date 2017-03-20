@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 -- filename : cacheController.vhd
--- author   : Meyer zum Felde, Püttjer, Hoppe
+-- author   : Meyer zum Felde, Pï¿½ttjer, Hoppe
 -- company  : TUHH
 -- revision : 0.1
 -- date     : 24/01/17
@@ -339,10 +339,14 @@ begin
 	-- ------------------------------------------------------------------------------------
 	-- Determine whether to stall the CPU.
 	-- ------------------------------------------------------------------------------------
-	stallCPU <= '0' when (state=IDLE) else
-			    '1' when (valid='0') else
-			    '1' when (hitFromCache='0' and valid='1' and dirty='0') else 
-		        '1' when (hitFromCache='0' and valid='1' and dirty='1');
+	stallCPU <= '1' when (state=IDLE and wrCPU='1' and rdCPU = '0') else
+		        '1' when (state=IDLE and wrCPU='0' and rdCPU = '1') else
+		        '0' when (state=IDLE);
+				
+		        
+		        
+		        
+		        
 	
 	-- ------------------------------------------------------------------------------------
 	-- Determine whether to read or to write from the Main Memory.

@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 -- filename : twoWayAssociativeCacheController.vhd
--- author   : Meyer zum Felde, Püttjer, Hoppe
+-- author   : Meyer zum Felde, Pï¿½ttjer, Hoppe
 -- company  : TUHH
 -- revision : 0.1
 -- date     : 21/02/17
@@ -12,6 +12,7 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use work.cache_pkg.ALL;
+use IEEE.NUMERIC_STD.all;
 
 -- =============================================================================
 -- Define the generic variables and ports of the entity.
@@ -43,15 +44,17 @@ entity twoWayAssociativeCacheController is
 
 		-- File extension for BRAM.
 		FILE_EXTENSION       : STRING  := ".txt";
-		REPLACEMENT_STRATEGY : replacementStrategy
+		REPLACEMENT_STRATEGY : STRING := "LRU" --TODO eigentlich Datentyp hierfÃ¼r vorhanden
 	);
 
 	port(
 		-- Clock signal is used for BRAM.
 		clk                                : in    STD_LOGIC;
+		reset                              : in    STD_LOGIC;
 		hit                                : out   STD_LOGIC_VECTOR(1 downto 0);
 		wrCBLine, rdCBLine, rdWord, wrWord : out   STD_LOGIC_VECTOR(1 downto 0);
-		valid, dirty, setValid, setDirty   : out   STD_LOGIC_VECTOR(1 downto 0);
+		valid, setValid, setDirty   	   : out   STD_LOGIC_VECTOR(1 downto 0);
+		dirty 							   : inout   STD_LOGIC_VECTOR(1 downto 0);
 		newCacheBlockLine1                 : out   STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0) := (others => '0');
 		newCacheBlockLine0                 : out   STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0) := (others => '0');
 		writeMode             			   : out   STD_LOGIC_VECTOR(1 downto 0);
@@ -78,7 +81,187 @@ end;
 -- Definition of architecture.
 -- =============================================================================
 architecture synth of twoWayAssociativeCacheController is
+
+		
+	-- Declaration of states.
+	type statetype is (
+		IDLE,
+		CHECK,
+		CACHE_HIT,
+		CACHE_MISS, 	-- Stall CPU
+		DIRTY_CHECK, 	--check LRU bit
+		WRITE_BACK, 	--Write cash line in main memory
+		EVICTION, 
+		WRITE_TO_CACHE, 
+		DELAY_WB, 		--Delay after Writeback
+		UPDATE_LRU_BIT, 
+		BLOCK_TO_CACHE	-- Writing a new cash line
+	
+	);
+
+
+
+
+	-- Current state of FSM.
+	signal state     		: statetype := IDLE;
+	
+	-- Next state of FSM.
+	signal nextstate 		: statetype := IDLE;
+	-- Least recently used bit = not(use bit)
+	signal LRU, LRU_neg 				: INTEGER	:= 0;
+	-- Hit and Miss counter registers are initialized with Zero on reset.
+	-- They counts the number of occurrences of cache hits and cache misses.
+	signal rHitCt, rMissCt  : INTEGER := 0;
+	-- Counts down like a delay function
+	signal delay_Counter  	: INTEGER := 0;
+	signal RD_NOTWR 		: std_logic:= '0'; 	
+
+
 begin
 	
-	-- TODO Implementation of FSM.
+	-- State register.
+	state <= IDLE when reset = '1' else nextstate when rising_edge(clk);
+	
+	--------------------------------------------
+	-- TransitionLogic:
+	-- Transition logic of FSM.
+	--------------------------------------------
+	TransitionLogic : process( state, wrCPU, rdCPU, dirty, readyMEM, valid)
+	begin
+		case state is
+			when IDLE =>
+				if (wrCPU /= rdCPU) and (reset = '0') then
+					nextstate <= CHECK;
+				elsif reset = '1' then
+					nextstate <= IDLE;
+				end if;
+
+			when CHECK =>
+				if hit(0)='0' and hit(1)= '0' and (delay_Counter = 0) then
+					nextstate <= CACHE_MISS;
+				elsif delay_Counter= 0 and hit(0) = '1' then
+					nextstate <= CACHE_HIT;
+				elsif delay_Counter= 0 and hit(1) = '1' then
+					nextstate <= CACHE_HIT;
+				end if;
+				
+						
+			when CACHE_HIT =>
+				nextstate <= IDLE;
+			
+			when CACHE_MISS =>
+				if (valid(0)='1') and (valid(1) = '1' ) then
+					nextstate <= DIRTY_CHECK;
+				else
+					nextstate <= EVICTION;
+				end if;
+
+			when DIRTY_CHECK =>
+				if dirty(LRU) = '1'  then
+					nextstate <= WRITE_BACK;
+				elsif (dirty(LRU) = '0') then
+					nextstate <= EVICTION;
+				end if;
+							
+
+			when WRITE_BACK =>
+				if readyMEM = '0' then
+					nextstate <= WRITE_BACK;
+				elsif (readyMEM = '1') then
+					nextstate <= DELAY_WB;
+				end if;
+				
+			when DELAY_WB=>
+				nextstate <= EVICTION;
+				
+			when EVICTION=> 
+				nextstate <= BLOCK_TO_CACHE;
+				
+			when BLOCK_TO_CACHE =>
+				if readyMEM = '1' then
+					nextstate <= WRITE_TO_CACHE;
+				end if;
+				
+			when WRITE_TO_CACHE =>
+				nextstate <= UPDATE_LRU_BIT;
+				
+			when UPDATE_LRU_BIT =>
+				nextstate <= IDLE;
+				
+		    -- Warning: Case statement contains all choices explicitly. You can safely remove redundant 'others'.
+			-- when others => nextstate <= IDLE;
+		end case;
+	end process;	
+	
+
+	LRU_neg <= 1 when LRU = 1 else 0; 			-- Needed for the not(LRU) operations 
+	
+	-- Update the auxiliary counter regarding delays.
+	delay_Counter <= 1 when state=IDLE and rdCPU='1' and wrCPU='0' else
+					1 when state=IDLE and wrCPU='1' and rdCPU='0' else
+					delay_Counter-1 when state=CHECK and rising_edge(clk);
+		  
+	-- ------------------------------------------------------------------------------------
+	-- Increment or reset hit counter and miss counter.
+	-- ------------------------------------------------------------------------------------
+	rHitCt  <= 0 when reset='1' else
+			   rHitCt+1 when state=CACHE_HIT and rising_edge(clk);
+		       
+	rMissCt <= 0 when reset='1' else
+			   rMissCt+1 when state=CACHE_MISS and rising_edge(clk);
+				    
+
+
+
+	rdWord(LRU)	   <= RD_NOTWR when REPLACEMENT_STRATEGY="LRU" and  ((state=CHECK and delay_Counter = 0)) else 
+						   '0' when REPLACEMENT_STRATEGY="LRU" and (state=CACHE_HIT) else
+					  RD_NOTWR when REPLACEMENT_STRATEGY="LRU" and  (state=BLOCK_TO_CACHE ) else
+						   '0' when REPLACEMENT_STRATEGY="LRU" and (state=WRITE_TO_CACHE); 
+						   
+	wrWord(LRU) <= not(RD_NOTWR) when REPLACEMENT_STRATEGY="LRU" and (state=CHECK and delay_Counter = 0) else 
+						     '0' when REPLACEMENT_STRATEGY="LRU" and state=CACHE_HIT else
+				   not(RD_NOTWR) when REPLACEMENT_STRATEGY="LRU" and (state=BLOCK_TO_CACHE ) else
+						     '0' when REPLACEMENT_STRATEGY="LRU" and (state=WRITE_TO_CACHE); 
+
+	rdWord(LRU_neg)	       <= '0'when REPLACEMENT_STRATEGY="LRU" and ((state = CHECK and delay_Counter = 0) or state = BLOCK_TO_CACHE); 
+						   
+	wrWord(LRU_neg)        <= '0'when REPLACEMENT_STRATEGY="LRU" and ((state = CHECK and delay_Counter = 0) or state = BLOCK_TO_CACHE);
+	
+	
+	
+	
+	
+		
+	wrCBLine 		    <= '0' when (state=IDLE) else 
+						   '1' when (state=WRITE and readyMEM='1') else
+						   '1' when (state=READ and readyMEM='1') else
+						   '0';
+							
+	rdCBLine 			<= '0';
+	
+
+
+
+
+	rMissCt <= 0 when reset='1' else
+			   rMissCt+1 when state=CACHE_HIT and rising_edge(clk);
+				    
+
+
+
+	-- Export the miss counter and hit counter.
+	missCounter <= rMissCt;
+	hitCounter  <= rHitCt;
+	
+	
+	
+	-- ------------------------------------------------------------------------------------
+	-- Determine whether to stall the CPU.
+	-- ------------------------------------------------------------------------------------
+	stallCPU <= '1' when (state=IDLE and wrCPU/= rdCPU) else
+		        '0' when (state=IDLE);
+				
+		        
+		        
+		        
 end synth;

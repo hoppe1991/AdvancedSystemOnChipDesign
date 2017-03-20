@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 -- filename : cache_tb.vhd
--- author   : Meyer zum Felde, Püttjer, Hoppe
+-- author   : Meyer zum Felde, Pï¿½ttjer, Hoppe
 -- company  : TUHH
 -- revision : 0.1
 -- date     : 24/01/17
@@ -483,6 +483,9 @@ begin
 			expected_missCounter := missCounter;
 			expected_hitCounter := hitCounter;
 			expected_missCounter := expected_missCounter + 1;
+			wait until rising_edge(clk);
+			rdCPU <= '0';
+			wait until rising_edge(clk);
 			wait until stallCPU='0';
 			expected_stallCPU := '0';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
@@ -582,6 +585,10 @@ begin
 			wait until rising_edge(clk);
 			expected_hitCounter := expected_hitCounter + 1;
 			VALIDATE_SIGNALS(stallCPU, '0', missCounter, expected_missCounter, hitCounter, expected_hitCounter);
+	
+							report "11111111111";
+	
+	
 			PRINT_HITCOUNTER( hitCounter, missCounter );
 		end loop;
 		
@@ -615,18 +622,26 @@ begin
 			expected_hitCounter  := hitCounter;
 			expected_missCounter := missCounter;
 			PRINT_HITCOUNTER( expected_missCounter, expected_hitCounter );
-			expected_stallCPU := '0';
+			expected_stallCPU := '1';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
+			
+						report "---------";
+			
 			
 			wait until rising_edge(clk);
 			for I in 1 to 45 loop
 				wait until rising_edge(clk);
 				expected_stallCPU := '1';
 				VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
+						report "%%%%%%%%%";
+			
 			end loop;
 			wait until rising_edge(clk);
 			expected_stallCPU := '0';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter+1, hitCounter, expected_hitCounter);
+			
+									report "00000000";
+			
 			PRINT_HITCOUNTER( hitCounter, missCounter );
 			wait until rising_edge(clk);
 		end loop;

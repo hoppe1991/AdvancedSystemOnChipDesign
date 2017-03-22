@@ -19,8 +19,8 @@ package cache_pkg is
 	-- 1. Random replacement.
 	-- 2. Least Recently Used (LRU) replacement. 	
 	type replacementStrategy is (
-		RANDOM,
-		LRU
+		RANDOM_t,
+		LRU_t
 	);
  
 	-- -----------------------------------------------------------------------------------------

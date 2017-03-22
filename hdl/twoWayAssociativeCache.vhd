@@ -19,7 +19,7 @@ use work.cache_pkg.ALL;
 entity twoWayAssociativeCache is
 	generic(
 		-- Replacement strategy of the cache.
-		REPLACEMENT_STRATEGY : replacementStrategy := LRU;
+		REPLACEMENT_STRATEGY : replacementStrategy := LRU_t;
 
 		-- Memory address is 32-bit wide.
 		MEMORY_ADDRESS_WIDTH : INTEGER             := 32;

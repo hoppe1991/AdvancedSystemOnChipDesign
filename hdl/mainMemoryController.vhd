@@ -153,7 +153,7 @@ begin
 	-- state register
 	state <= IDLE when reset = '1' else nextstate when rising_edge(clk);
 
-	transition_logic : process(counter, rdMEM, state, wrMEM)
+	transition_logic : process(counter, rdRequest, state, wrRequest)
 	begin
 		case state is
 			when IDLE =>

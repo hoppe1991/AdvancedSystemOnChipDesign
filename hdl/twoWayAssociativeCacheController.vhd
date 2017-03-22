@@ -44,14 +44,14 @@ entity twoWayAssociativeCacheController is
 
 		-- File extension for BRAM.
 		FILE_EXTENSION       : STRING  := ".txt";
-		REPLACEMENT_STRATEGY : STRING := "LRU" --TODO eigentlich Datentyp hierfür vorhanden
+		REPLACEMENT_STRATEGY : replacementStrategy :=  LRU_t
 	);
 
 	port(
 		-- Clock signal is used for BRAM.
 		clk                                : in    STD_LOGIC;
 		reset                              : in    STD_LOGIC;
-		hit                                : out   STD_LOGIC_VECTOR(1 downto 0);
+		hit                                : in   STD_LOGIC_VECTOR(1 downto 0);
 		wrCBLine, rdCBLine, rdWord, wrWord : out   STD_LOGIC_VECTOR(1 downto 0);
 		valid, setValid, setDirty   	   : out   STD_LOGIC_VECTOR(1 downto 0);
 		dirty 							   : inout   STD_LOGIC_VECTOR(1 downto 0);
@@ -72,6 +72,8 @@ entity twoWayAssociativeCacheController is
 
 		hitCounter                         : out   INTEGER; -- Signal counts the number of cache hits.
 		missCounter                        : out   INTEGER; -- Signal counts the number of cache misses.
+		
+		-- Ports regarding MEM.
 		wrMEM                              : out   STD_LOGIC; -- Read signal identifies to read data from the cache.
 		rdMEM                              : out   STD_LOGIC -- Write signal identifies to write data into the cache.
 	);
@@ -99,22 +101,29 @@ architecture synth of twoWayAssociativeCacheController is
 	
 	);
 
-
-
-
 	-- Current state of FSM.
 	signal state     		: statetype := IDLE;
 	
 	-- Next state of FSM.
 	signal nextstate 		: statetype := IDLE;
+	
 	-- Least recently used bit = not(use bit)
 	signal LRU, LRU_neg, USE_BIT, USE_BIT_neg	: INTEGER	:= 0;
+	
 	-- Hit and Miss counter registers are initialized with Zero on reset.
 	-- They counts the number of occurrences of cache hits and cache misses.
 	signal rHitCt, rMissCt  : INTEGER := 0;
-	-- Counts down like a delay function
+	
+	-- Counts down like a delay function.
 	signal delay_Counter  	: INTEGER := 0;
-	signal RD_NOTWR 		: std_logic:= '0'; 	
+	
+	-- Read (not write) signal is set to '1' when the CPU reads the Cache. It is set to '0', when the CPU writes to Cache.
+	signal RD_NOTWR 		: std_logic:= '0';
+	
+	-- Flip flop used for Random strategy. This flip flop is toggled in case of cache miss.
+	signal flipFlop : STD_LOGIC := '0';
+	
+	signal MY_USE_BIT, MY_NOT_USE_BIT : INTEGER := 0;
 
 
 begin
@@ -123,10 +132,9 @@ begin
 	state <= IDLE when reset = '1' else nextstate when rising_edge(clk);
 	
 	--------------------------------------------
-	-- TransitionLogic:
 	-- Transition logic of FSM.
 	--------------------------------------------
-	TransitionLogic : process( state, wrCPU, rdCPU, dirty, readyMEM, valid)
+	TransitionLogic : process( state, wrCPU, rdCPU, dirty, readyMEM, valid, LRU, delay_Counter, hit(0), hit(1), reset)
 	begin
 		case state is
 			when IDLE =>
@@ -192,17 +200,37 @@ begin
 			-- when others => nextstate <= IDLE;
 		end case;
 	end process;	
+
+	-- ------------------------------------------------------------------------------------
+	-- LRU logic
+	-- ------------------------------------------------------------------------------------
+	LRU_FLIPFLOP_LOGIC: block
+	begin
 	
-
-
-	-- Generating USE_BIT and LRU at CHECK
-	USE_BIT 	<= 1 when state = CHECK and delay_Counter = 1 and hit(1) = '1' else
+		MY_USE_BIT     <= 0 when REPLACEMENT_STRATEGY=LRU_t and LRU=1 else
+					  1 when REPLACEMENT_STRATEGY=LRU_t and LRU=0 else
+					  0 when REPLACEMENT_STRATEGY=RANDOM_t and flipFlop='0' else
+					  1 when REPLACEMENT_STRATEGY=RANDOM_t and flipFlop='1';
+					  
+		MY_NOT_USE_BIT <= 1 when MY_USE_BIT=0 else 
+					  0;
+					  
+		-- Generating USE_BIT and LRU at CHECK
+		USE_BIT 	<= 1 when state = CHECK and delay_Counter = 1 and hit(1) = '1' else
 		 		   0 when state = CHECK and delay_Counter = 1 and hit(0) = '1' ;
-	USE_BIT_neg <= 0 when USE_BIT = 1 else 1; 	-- Needed for the not(USE_BIT) operations 
+		USE_BIT_neg <= 0 when USE_BIT = 1 else 1; 	-- Needed for the not(USE_BIT) operations 
 
-	LRU 		<= 0 when state = CHECK and delay_Counter = 1 and hit(1) = '1' else
-		 		   1 when state = CHECK and delay_Counter = 1 and hit(0) = '1' ;
-	LRU_neg 	<= 0 when LRU = 1 else 1; 			-- Needed for the not(LRU) operations 
+		LRU 		<= 0 when state = CHECK and delay_Counter = 1 and hit(1) = '1' else
+		 		   1 when state = CHECK and delay_Counter = 1 and hit(0) = '1' else
+		 		   0 when state = UPDATE_LRU_BIT and rising_edge(clk) and LRU=1 else
+		 		   1 when state = UPDATE_LRU_BIT and rising_edge(clk) and LRU=0;
+		 		   
+		LRU_neg 	<= 0 when LRU = 1 else 1; 			-- Needed for the not(LRU) operations
+		
+		-- Toggle flip flop in case of cache miss.		
+		flipFlop	<= not(flipFlop) when state=CACHE_MISS and hit(0)='0' and hit(1)='0' and rising_edge(clk);
+		
+	end block LRU_FLIPFLOP_LOGIC;
 	
 	-- Update the auxiliary counter regarding delays.
 	delay_Counter 	<= 1 when state=IDLE and rdCPU='1' and wrCPU='0' else
@@ -210,32 +238,16 @@ begin
 					   delay_Counter-1 when state=CHECK and rising_edge(clk);
 		  
 	-- ------------------------------------------------------------------------------------
-	-- Increment or reset hit counter and miss counter.
+	-- LRU logic
 	-- ------------------------------------------------------------------------------------
-	rHitCt  <= 0 when reset='1' else
-			   rHitCt+1 when state=CACHE_HIT and rising_edge(clk);
-		       
-	rMissCt <= 0 when reset='1' else
-			   rMissCt+1 when state=CACHE_MISS and rising_edge(clk);
-
-	-- CHECK + CACHE_HIT				    
-	wrWord(USE_BIT_neg)        	<= '0'when REPLACEMENT_STRATEGY="LRU" and (state = CHECK and delay_Counter = 0);	
-	rdWord(USE_BIT_neg)	       	<= '0'when REPLACEMENT_STRATEGY="LRU" and (state = CHECK and delay_Counter = 0); 
-	wrWord(USE_BIT)  <= not(RD_NOTWR) when REPLACEMENT_STRATEGY="LRU" and (state=CHECK and delay_Counter = 0) else 
-						          '0' when REPLACEMENT_STRATEGY="LRU" and state=CACHE_HIT;
-	rdWord(USE_BIT)	      <= RD_NOTWR when REPLACEMENT_STRATEGY="LRU" and (state=CHECK and delay_Counter = 0) else 
-					              '0' when REPLACEMENT_STRATEGY="LRU" and (state=CACHE_HIT);
+	VALID_DIRTY_LOGIC: block
+	begin
+		
 	-- Block at top right
 	dirty(USE_BIT) 				<= '1' when (RD_NOTWR = '0' ) and state = CACHE_HIT;
-	valid(USE_BIT) 				<= '1' when (RD_NOTWR = '0' ) and state = CACHE_HIT;	
+	valid(USE_BIT) 				<= '1' when (RD_NOTWR = '0' ) and state = CACHE_HIT;
 	
-	-- BLOCK_TO_CACHE
-	wrWord(LRU_neg)        		<= '0'when REPLACEMENT_STRATEGY="LRU" and state = BLOCK_TO_CACHE;
-	rdWord(LRU_neg)	       		<= '0'when REPLACEMENT_STRATEGY="LRU" and state = BLOCK_TO_CACHE; 
-	wrWord(LRU)      <= not(RD_NOTWR) when REPLACEMENT_STRATEGY="LRU" and (state=BLOCK_TO_CACHE ) else
-						          '0' when REPLACEMENT_STRATEGY="LRU" and (state=WRITE_TO_CACHE); 
-	rdWord(LRU)           <= RD_NOTWR when REPLACEMENT_STRATEGY="LRU" and  (state=BLOCK_TO_CACHE ) else
-						          '0' when REPLACEMENT_STRATEGY="LRU" and (state=WRITE_TO_CACHE); 						          						   
+	end block VALID_DIRTY_LOGIC;			          						   
 
 	-- Generating USE_BIT and LRU at CACHE_MISS
 	USE_BIT 	<= 0 when state = CACHE_MISS and valid(0) = '0' and valid(1) = '1' else 		--!valid(0) and valid(1) => USE_BIT = 1
@@ -258,22 +270,71 @@ begin
 
 
 	
+	LRU_STATEMENTS: if REPLACEMENT_STRATEGY=LRU_t generate
+	begin
 
-
-
-
-	rMissCt <= 0 when reset='1' else
-			   rMissCt+1 when state=CACHE_HIT and rising_edge(clk);
-				    
-
-
-
-	-- Export the miss counter and hit counter.
-	missCounter <= rMissCt;
-	hitCounter  <= rHitCt;
+		-- CHECK + CACHE_HIT				    
+		wrWord(MY_NOT_USE_BIT)	<= '0' when (state = CHECK and delay_Counter = 0);	
+		rdWord(MY_NOT_USE_BIT)	<= '0' when (state = CHECK and delay_Counter = 0);
+		
+		wrWord(MY_USE_BIT)		<= not(RD_NOTWR) when (state=CHECK and delay_Counter = 0) else 
+						           '0' when state=CACHE_HIT;
+		rdWord(MY_USE_BIT)		<= RD_NOTWR when (state=CHECK and delay_Counter = 0) else 
+					               '0' when REPLACEMENT_STRATEGY=LRU_t and (state=CACHE_HIT);
+					               
+					               
+		-- BLOCK_TO_CACHE
+		wrWord(LRU_neg)        		<= '0' when state = BLOCK_TO_CACHE;
+		rdWord(LRU_neg)	       		<= '0' when state = BLOCK_TO_CACHE; 
+		wrWord(LRU)                 <= not(RD_NOTWR) when (state=BLOCK_TO_CACHE ) else
+						          '0' when (state=WRITE_TO_CACHE); 
+		rdWord(LRU)                 <= RD_NOTWR when (state=BLOCK_TO_CACHE ) else
+						          '0' when (state=WRITE_TO_CACHE); 		
+	end generate LRU_STATEMENTS;
+		
+	RANDOM_STATEMENTS: if REPLACEMENT_STRATEGY=RANDOM_t generate
+	begin
+		USE_BIT <= 0;
+	end generate RANDOM_STATEMENTS;
 	
 	
 	
+	-- ------------------------------------------------------------------------------------
+	-- Control logic regarding Main Memory. Controls whether the Main Memory
+	-- should be written or read.
+	-- ------------------------------------------------------------------------------------
+	MEM_CONTROL: block
+	begin
+		
+		wrMEM <= '1' when state=DIRTY_CHECK and dirty(LRU)='1' else '0';
+		
+		rdMEM <= '1' when state=DIRTY_CHECK and dirty(LRU)='0' else
+				 '1' when state=DELAY_WB else
+				 '1' when state=CACHE_MISS and valid(0)/='1' and valid(1)/='1' else
+				 '0';
+	end block MEM_CONTROL;
+	
+	
+	-- ------------------------------------------------------------------------------------
+	-- Control logic regarding the hit counter and miss counter.
+	-- ------------------------------------------------------------------------------------
+	HITCOUNTER_LOGIC: block
+	begin
+	
+		-- Increment or reset hit counter.
+		rHitCt  <= 0 when reset='1' else
+			       rHitCt+1 when state=CACHE_HIT and rising_edge(clk);
+			       
+		-- Increment or reset miss counter.
+		rMissCt <= 0 when reset='1' else
+			       rMissCt+1 when state=CACHE_MISS and rising_edge(clk);
+	
+		-- Export the miss counter and hit counter.
+		missCounter <= rMissCt;
+		hitCounter  <= rHitCt;
+	
+	end block HITCOUNTER_LOGIC;
+		
 	-- ------------------------------------------------------------------------------------
 	-- Determine whether to stall the CPU.
 	-- ------------------------------------------------------------------------------------

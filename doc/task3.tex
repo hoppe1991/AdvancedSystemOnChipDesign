@@ -4,4 +4,53 @@
 % Author    :	Carsten Hoppe
 % Date		:	30. January 2017
 % -----------------------------------------------------------------
-\blindtext
+
+
+
+\subsection{Introduction to the MIPS Enhancements}
+\label{sec:introductionToEnhancements}
+
+The aim of this exercise was to add multiple functionalities to a given CPU called „MIPS“. In the beginning there was no pipelining activated and several adjustments had to be maid.
+
+TODO insert when rising edge
+From Exercise 3-3.3 „The register file must be read in decode stage and written in write back stage within a single cycle. This is possible only if the register file is written in the first part of a cycle and read in the second part. Means, that the data to be written in register file have to be sampled with the negative clock edge.“
+
+
+\subsubsection{Activating Pipelining}
+\label{sec:activatingPipelining}
+
+Conveniently predefined registers which could save and pass on memory instructions at each phase of the pipeline could be inserted by changing the code belonging to each of the registers at the ID (Instruction / Decode) phase, at the EX (Execution) phase, the MA (Memory Access) phase, as well as the WB (Write Back) phase.
+In order to make sure that no mistakes occured and all steps were taken according to the modification plan precise testing had to take place. Small simple programs were executed and examined using GTKWAVE, a visualization tool for vhdl code executions. 
+
+\subsubsection{Installing Forwarding}
+\label{sec:installingForwarding}
+
+After making sure that pipelining was running the next step at hand was to install a forwarding logic which implements the following behaviour:
+\texttt{``Forwarding logic functional graph from FEC \– Pipelined\_Processor\_Design.pdf Slide 38''}
+The aim was to let instructions that were using registers that were written to in one instruction step earlier use the calculated information directly out of the ALU instead of having to wait until the calculation was written back into a register at WB phase.
+The same procedure applies to instructions that needed a calculated result 2 or 3 cock cycles later.
+ 
+\subsubsection{Implementing Stalling}
+\label{sec:implementingStalling}
+
+We needed to implement the functionality of the processor to „freeze“ certain processing steps. If an access of a cache or a command like „load word“ takes more than one clock cycle then consequent instructions needed to wait for the corresponding time delay. 
+Our implementation basically uses a new signal called „“TODO Insert StallingSignal name which is to be called whenever such a delay occurs. It has three consequences:
+\begin{itemize} 
+	\item The PC (Program Counter) is kept the same.
+	\item The instruction registers in EX phase are overwritten with a nop command. This nop will be passed on to next instruction registers like MA and WB.
+	\item The Stalling signal will remain activated until the command which called the Stalling signal reaches the EX, MA, or WB phase. The phase in which the signal is deactivated again depends on the command. Load word for instance only needs a delay of one stalling command. Whereas other commands like conditional branches where the result of the instruction has an impact on the stalling time need more cycles.
+\end{itemize}
+
+Testing the functionalities TODO
+
+\subsection{Activating BRAM}
+\label{sec:activatingBRAM}
+
+Using BRAM instead or DRAM  TODO check plz resulted in a  
+	
+4 Nops instead of 3
+
+PC needs to be read of before ID phase
+
+Stalling needed to be adapted.
+

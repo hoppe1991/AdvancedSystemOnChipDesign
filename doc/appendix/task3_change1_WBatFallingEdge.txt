@@ -1,0 +1,3 @@
+-------------------- MA/WB Pipeline Register --------------------
+from   WB  <= (MA.c, MA.wa, MA.pc4, aout) when rising_edge(clk); 
+to     WB  <= (MA.c, MA.wa, MA.pc4, aout) when falling_edge(clk);

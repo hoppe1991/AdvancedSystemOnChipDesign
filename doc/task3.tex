@@ -10,16 +10,23 @@
 \subsection{Introduction to the MIPS Enhancements}
 \label{sec:introductionToEnhancements}
 
-The aim of this exercise was to add multiple functionalities to a given CPU called „MIPS“. In the beginning there was no pipelining activated and several adjustments had to be maid.
+The aim of this exercise was to add multiple functionalities to a given CPU called „MIPS“. In the beginning there was no pipelining activated and several adjustments had to be maid. In this chapter each of the enhancements are introduced in principle and afterwards its concrete implementation is explained in detail.
 
-TODO insert when rising edge
-From Exercise 3-3.3 „The register file must be read in decode stage and written in write back stage within a single cycle. This is possible only if the register file is written in the first part of a cycle and read in the second part. Means, that the data to be written in register file have to be sampled with the negative clock edge.“
+For each enhancement a corresponding assemble instruction file was adapted and its execution was carefully observed. Only one enhancement at a time was changed at a time to reduce the space of errors that need to be handled at once.
 
 
 \subsubsection{Activating Pipelining}
 \label{sec:activatingPipelining}
+The first wanted improvement of the mips was the activation of pipelining. The following adjustments were made:
 
-Conveniently predefined registers which could save and pass on memory instructions at each phase of the pipeline could be inserted by changing the code belonging to each of the registers at the ID (Instruction / Decode) phase, at the EX (Execution) phase, the MA (Memory Access) phase, as well as the WB (Write Back) phase.
+Exercise 3-3.3 gave a hint about the writing of data back into a register at a negative clock edge ``The register file must be read in decode stage and written in write back stage within a single cycle.'' TODO Footnote
+
+\lstinputlisting[caption={Change1\_WBatFallingEdge.txt}]{appendix/task3_change1_WBatFallingEdge.txt}
+
+Afterwards conveniently predefined registers which could save and pass on memory instructions at each phase of the pipeline could be inserted by changing the code belonging to each of the registers at the ID (Instruction / Decode) phase, at the EX (Execution) phase, the MA (Memory Access) phase, as well as the WB (Write Back) phase.
+
+\lstinputlisting[caption={Change2\_activatingPipelineRegisters.txt}]{appendix/task3_change2_activatingPipelineRegs.txt}
+
 In order to make sure that no mistakes occured and all steps were taken according to the modification plan precise testing had to take place. Small simple programs were executed and examined using GTKWAVE, a visualization tool for vhdl code executions. 
 
 \subsubsection{Installing Forwarding}

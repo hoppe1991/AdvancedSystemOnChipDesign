@@ -70,9 +70,9 @@ begin
                '1'        when others; 
                
                           with i.Mnem select
-  c.signext <= '1'        when ADDIU | ADDI | SLTI | SLTIU,
+  c.signext <= '1'        when ADDIU | ADDI | SLTI | SLTIU | BEQ | BNE | BLEZ | BGTZ | BLTZ,
                '0'        when others; 
-                           
+
                           -- instructions that uses rs 
                           with i.Mnem select   
   c.rs      <= '1'        when  ADD   | ADDU  | ADDI | ADDIU | ANDop | ANDI  | 

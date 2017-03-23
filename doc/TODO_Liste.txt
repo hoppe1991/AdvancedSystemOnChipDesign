@@ -3,9 +3,6 @@ Treffen 08.03.2017
 --------------------------------------------					
 2017-03-20	[Task 4]		Was bedeutet "main memory: BlockRAM (4K x 128) with ready signal after 20 cycles"?
 
-2017-03-08	[MIPS - Bug]	Wolfgang hat einen Bug in der MIPS gefunden (siehe Nachricht in StudIP).
-							Wolfgang hat die Lösung in der Nachricht bereits beschrieben. Die Lösung muss daher in den Code eingefügt werden.
-							
 2017-03-08	[Task 4, Doku]	Beantwortung der Frage 2.1 in der Dokumentation. "Why are there so many different storage types?"
 Hendrik 
 2017-03-08	[Task 4, Doku]	Beantwortung der Frage 2.1 in der Dokumentation. "What are the advantages and disadvantages of different cache organization forms?"
@@ -63,7 +60,11 @@ Leonard Hendrik
 
 Erledigt
 --------------------------------------------
-	
+
+
+2017-03-08	[MIPS - Bug]	Wolfgang hat einen Bug in der MIPS gefunden (siehe Nachricht in StudIP).
+							Wolfgang hat die Lösung in der Nachricht bereits beschrieben. Die Lösung muss daher in den Code eingefügt werden.
+
 2017-03-08	[Task 3]		Code-Review.
 							- unnötige Signale rauskicken
 							

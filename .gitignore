@@ -27,3 +27,9 @@ doc/*.toc
 Backup/
 Literature/
 RemoteSystemsTempFiles/       
+
+
+# Ignore work directories.
+hdl/workA
+hdl/workB
+hdl/workC

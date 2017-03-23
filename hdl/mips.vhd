@@ -88,18 +88,18 @@ begin
    FOUNDJR <= '1' when (i.mnem = JR);
 -- TODO REMOVE
     
-  nextpc    <= 	MA.pcjump      when MA.c.jump  = '1' else -- j / jal jump addr
-               	MA.pcbranch  when branch     = '1' else -- branch (bne, beq) addr
-               	MA.a         when MA.c.jr    = '1' else -- jr addr
-				        -- The conditions below cause the program counter to stop increasing (freezing the PC)   
-                pc         when (IF_ir(31 downto 26) = "100011")   else --LW
-                pc         when (IF_ir(31 downto 26) = "000011") or (i.mnem = JAL) or (EX.i.mnem = JAL) or (MA.i.mnem = JAL) else --JAL
-                pc         when (IF_ir(31 downto 26) = "000101") or (i.mnem = BNE) or (EX.i.mnem = BNE) or (MA.i.mnem = BNE) else --BNE
-                pc         when (IF_ir(31 downto 26) = "000100") or (i.mnem = BEQ) or (EX.i.mnem = BEQ) or (MA.i.mnem = BEQ) else --BEQ
-                pc         when (IF_ir(31 downto 26) = "000010") or (i.mnem = J) or (EX.i.mnem = J) or (MA.i.mnem = J)       else --J
-                pc         when ((IF_ir(5 downto  0) = "001000") and 
-								                 (IF_ir(31 downto 26) = "000000" )) or (i.mnem = JR) or (EX.i.mnem = JR) or (MA.i.mnem = JR) else 
-               	pc4	; -- standard case: pc + 4, take following instruction;
+  nextpc    <= 	  MA.pcjump   when MA.c.jump  = '1' else -- j / jal jump addr
+                  MA.pcbranch when branch     = '1' else -- branch (bne, beq) addr
+                  MA.a        when MA.c.jr    = '1' else -- jr addr
+                  -- The conditions below cause the program counter to stop increasing (freezing the PC)   
+                  pc          when (IF_ir(31 downto 26) = "100011")   else --LW
+                  pc          when (IF_ir(31 downto 26) = "000011") or (i.mnem = JAL) or (EX.i.mnem = JAL) or (MA.i.mnem = JAL) else --JAL
+                  pc          when (IF_ir(31 downto 26) = "000101") or (i.mnem = BNE) or (EX.i.mnem = BNE) or (MA.i.mnem = BNE) else --BNE
+                  pc          when (IF_ir(31 downto 26) = "000100") or (i.mnem = BEQ) or (EX.i.mnem = BEQ) or (MA.i.mnem = BEQ) else --BEQ
+                  pc          when (IF_ir(31 downto 26) = "000010") or (i.mnem = J)   or (EX.i.mnem = J)   or (MA.i.mnem = J)   else --J
+                  pc          when ((IF_ir(5 downto  0) = "001000") and (IF_ir(31 downto 26) = "000000" )) or						  --JR
+                                    (i.mnem = JR) or (EX.i.mnem = JR) or (MA.i.mnem = JR)  else 
+                  pc4	; -- standard case: pc + 4, take following instruction;
 
   imem:        entity work.bram  generic map ( INIT =>  (IFileName & ".imem"))
                port map (clk, '0', pc(11 downto 2), (others=>'0'), IF_ir);

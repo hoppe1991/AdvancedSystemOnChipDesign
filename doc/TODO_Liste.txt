@@ -1,9 +1,6 @@
 TODO Liste
 Treffen 08.03.2017
---------------------------------------------
-
-2017-03-20	[master]		Zusammenmergen der Branches.
-							
+--------------------------------------------					
 2017-03-20	[Task 4]		Was bedeutet "main memory: BlockRAM (4K x 128) with ready signal after 20 cycles"?
 
 2017-03-08	[MIPS - Bug]	Wolfgang hat einen Bug in der MIPS gefunden (siehe Nachricht in StudIP).
@@ -29,17 +26,11 @@ Hendrik
 							- Wolfgang nochmal sicherheitshalber fragen ob nur der Instruction Cache eingearbeitet soll aber beide Caches entwickelt werden sollen
 							
 2017-03-08	[Task 5]		Überlegung, wie die Aufgabe 5 implementiert werden kann.
-							
-2017-03-08	[Task 3]		Implementierung Aufgabe 3.
-Hendrik						- Code schön machen, Kommentare etc verständlich
-							
+						
 2017-03-08	[Task 3]		Besprechung der Lösung bzgl. Aufgabe 3.
 
 2017-03-08	[Task 4]		Besprechung der Implementierung der Caches.
-
-2017-03-08	[Task 3]		Code-Review.
-							- unnötige Signale rauskicken
-							
+						
 2017-03-08	[Task 4]		Code-Review und Optimierung.
 
 2017-03-20	[Task 3, Doku]	Die Lösung der Aufgabe 3 muss in der Dokumentation beschrieben werden.
@@ -72,6 +63,15 @@ Leonard Hendrik
 
 Erledigt
 --------------------------------------------
+	
+2017-03-08	[Task 3]		Code-Review.
+							- unnötige Signale rauskicken
+							
+2017-03-08	[Task 3]		Implementierung Aufgabe 3.
+Hendrik						- Code schön machen, Kommentare etc verständlich
+	
+2017-03-20	[master]		Zusammenmergen der Branches.
+
 2017-03-08	[Task 4, MMU]	Das ready-Signal des Hauptspeichers soll erst nach 20 Taktzyklen auf '1' gesetzt werden (vgl. Anforderung in Aufgabenstellung).
 
 2017-03-20	[Task 4]		Skript zum Ausführen der Testbench bzgl. Aufgabe 2.5 (Design a testbench and simulate the Cache) für

@@ -1,0 +1,4 @@
+-------------------- ID/EX Pipeline Register with Multiplexer Stalling--
+from:EX     <= (c, i, wa, a, b, signext, ID.pc4, rd2) when rising_edge(clk);
+to:  EX  	<= Bubble when Stall_disablePC = '1' and rising_edge(clk) else
+         	   (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);

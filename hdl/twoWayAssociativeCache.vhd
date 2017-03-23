@@ -60,7 +60,7 @@ entity twoWayAssociativeCache is
 		addrCPU     : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0); -- Memory address from CPU is divided into block address and block offset.
 		dataCPU     : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
 
-		dataToMEM     : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0); -- Data from memory to cache or from cache to memory.
+		dataToMEM     : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE/2 - 1 downto 0); -- Data from memory to cache or from cache to memory.
 		readyMEM    : in    STD_LOGIC;  -- Signal identifies whether the main memory is ready.
 		stallCPU    : out   STD_LOGIC;  -- Signal identifies whether to stall the CPU or not.
 		wrCPU       : in    STD_LOGIC;  -- Write signal identifies whether a complete cache block should be written into cache.
@@ -94,8 +94,8 @@ architecture rtl of twoWayAssociativeCache is
 	signal wrCBLine, rdCBLine, rdWord, wrWord : STD_LOGIC_VECTOR(1 downto 0);
 	signal valid, dirty, setValid, setDirty   : STD_LOGIC_VECTOR(1 downto 0);
 
-	signal newCacheBlockLine1     : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
-	signal newCacheBlockLine0     : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0) := (others => '0');
+	signal newCacheBlockLine1     : STD_LOGIC_VECTOR(BLOCKSIZE_CACHE*DATA_WIDTH- 1 downto 0) := (others => '0');
+	signal newCacheBlockLine0     : STD_LOGIC_VECTOR(BLOCKSIZE_CACHE*DATA_WIDTH- 1 downto 0) := (others => '0');
 	signal writeMode : STD_LOGIC_VECTOR(1 downto 0);
 	signal dataCPU0, dataCPU1     : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
 
@@ -115,6 +115,7 @@ begin
 		)
 		port map(
 			addrCPU            => addrCPU,
+			reset			   => reset,
 			readyMEM           => readyMEM,
 			wrCPU              => wrCPU,
 			rdCPU              => rdCPU,
@@ -124,15 +125,17 @@ begin
 			rdCBLine           => rdCBLine,
 			rdWord             => rdWord,
 			wrWord             => wrWord,
-			valid              => valid, dirty => dirty,
-			setValid           => setValid, setDirty => setDirty,
+			valid              => valid,
+			dirty              => dirty,
+			setValid           => setValid,
+			setDirty 		   => setDirty,
 			newCacheBlockLine1 => newCacheBlockLine1,
 			newCacheBlockLine0 => newCacheBlockLine0,
 			writeMode          => writeMode,
-			dataCPU0            => dataCPU0,
-			dataCPU1            => dataCPU1,
+			dataCPU0           => dataCPU0,
+			dataCPU1           => dataCPU1,
 			dataCPU            => dataCPU,
-			dataToMEM            => dataToMEM,
+			dataToMEM          => dataToMEM,
 			stallCPU           => stallCPU,
 			hitCounter         => hitCounter,
 			missCounter        => missCounter,
@@ -160,7 +163,7 @@ begin
 			reset             => reset,
 			addrCPU           => addrCPU,
 			dataCPU           => dataCPU0,
-			dataToMEM           => dataToMEM,
+			dataToMEM         => dataToMEM,
 			wrCBLine          => wrCBLine(0),
 			rdCBLine          => rdCBLine(0),
 			rdWord            => rdWord(0),

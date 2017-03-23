@@ -53,17 +53,18 @@ entity twoWayAssociativeCacheController is
 		reset                              : in    STD_LOGIC;
 		hit                                : in   STD_LOGIC_VECTOR(1 downto 0);
 		wrCBLine, rdCBLine, rdWord, wrWord : out   STD_LOGIC_VECTOR(1 downto 0);
-		valid, setValid, setDirty   	   : out   STD_LOGIC_VECTOR(1 downto 0);
+		setValid, setDirty   	   : out   STD_LOGIC_VECTOR(1 downto 0);
+		valid							   : inout STD_LOGIC_VECTOR(1 downto 0);
 		dirty 							   : inout   STD_LOGIC_VECTOR(1 downto 0);
-		newCacheBlockLine1                 : out   STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0) := (others => '0');
-		newCacheBlockLine0                 : out   STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0) := (others => '0');
+		newCacheBlockLine1                 : out   STD_LOGIC_VECTOR(BLOCKSIZE/2*DATA_WIDTH - 1 downto 0) := (others => '0');
+		newCacheBlockLine0                 : out   STD_LOGIC_VECTOR(BLOCKSIZE/2*DATA_WIDTH - 1 downto 0) := (others => '0');
 		writeMode             			   : out   STD_LOGIC_VECTOR(1 downto 0);
 		addrCPU                            : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0); -- Memory address from CPU is divided into block address and block offset.
 		dataCPU                            : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
 		dataCPU0                           : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
 		dataCPU1                           : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
 
-		dataToMEM                            : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE - 1 downto 0); -- Data from memory to cache or from cache to memory.
+		dataToMEM                            : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE/2 - 1 downto 0); -- Data from memory to cache or from cache to memory.
 		readyMEM                           : in    STD_LOGIC; -- Signal identifies whether the main memory is ready.
 		stallCPU                           : out   STD_LOGIC; -- Signal identifies whether to stall the CPU or not.
 
@@ -218,12 +219,26 @@ begin
 		-- Generating USE_BIT and LRU at CHECK
 		USE_BIT 	<= 1 when state = CHECK and delay_Counter = 1 and hit(1) = '1' else
 		 		   0 when state = CHECK and delay_Counter = 1 and hit(0) = '1' ;
+		-- USE_BIT		<= 1 		when state = IDLE and reset = '1';	-- TODO Remove this line?
+	
+	-- Generating USE_BIT and LRU at CACHE_MISS
+	--USE_BIT 	<= 0 when state = CACHE_MISS and valid(0) = '0' and valid(1) = '1' else 		--!valid(0) and valid(1) => USE_BIT = 1
+	--	 		   0 when state = CACHE_MISS and valid(0) = '1' and valid(1) = '0' else 		--valid(0) and !valid(1) => USE_BIT = 0
+	--	 		   1 when state = CACHE_MISS and valid(0) = '0' and valid(1) = '0' ; 			--!valid(0) and !valid(1) => USE_BIT = 1		   
+	--USE_BIT		<= USE_BIT_neg 		when state = UPDATE_LRU_BIT;	
+	
+	
 		USE_BIT_neg <= 0 when USE_BIT = 1 else 1; 	-- Needed for the not(USE_BIT) operations 
 
 		LRU 		<= 0 when state = CHECK and delay_Counter = 1 and hit(1) = '1' else
 		 		   1 when state = CHECK and delay_Counter = 1 and hit(0) = '1' else
 		 		   0 when state = UPDATE_LRU_BIT and rising_edge(clk) and LRU=1 else
 		 		   1 when state = UPDATE_LRU_BIT and rising_edge(clk) and LRU=0;
+--	LRU 	    <= 1 when state = CACHE_MISS and valid(0) = '0' and valid(1) = '1' else 		--!valid(0) and valid(1) => LRU = 0
+--		 		   1 when state = CACHE_MISS and valid(0) = '1' and valid(1) = '0' else 		--valid(0) and !valid(1) => LRU = 1
+--		 		   0 when state = CACHE_MISS and valid(0) = '0' and valid(1) = '0' ; 			--!valid(0) and !valid(1) => LRU = 0
+--	LRU 		<= LRU_neg 			when state = UPDATE_LRU_BIT;		 		   
+--	LRU 		<= 0 		when state = IDLE and reset = '1';	
 		 		   
 		LRU_neg 	<= 0 when LRU = 1 else 1; 			-- Needed for the not(LRU) operations
 		
@@ -249,24 +264,13 @@ begin
 	
 	end block VALID_DIRTY_LOGIC;			          						   
 
-	-- Generating USE_BIT and LRU at CACHE_MISS
-	USE_BIT 	<= 0 when state = CACHE_MISS and valid(0) = '0' and valid(1) = '1' else 		--!valid(0) and valid(1) => USE_BIT = 1
-		 		   0 when state = CACHE_MISS and valid(0) = '1' and valid(1) = '0' else 		--valid(0) and !valid(1) => USE_BIT = 0
-		 		   1 when state = CACHE_MISS and valid(0) = '0' and valid(1) = '0' ; 			--!valid(0) and !valid(1) => USE_BIT = 1
 		 		   
-	LRU 	    <= 1 when state = CACHE_MISS and valid(0) = '0' and valid(1) = '1' else 		--!valid(0) and valid(1) => LRU = 0
-		 		   1 when state = CACHE_MISS and valid(0) = '1' and valid(1) = '0' else 		--valid(0) and !valid(1) => LRU = 1
-		 		   0 when state = CACHE_MISS and valid(0) = '0' and valid(1) = '0' ; 			--!valid(0) and !valid(1) => LRU = 0
 		 		   
 	-- WRITE_TO_CACHE
 	dirty(LRU)	<= NOT(RD_NOTWR) 	when state = UPDATE_LRU_BIT;
-	valid(LRU) 	<= RD_NOTWR			when state = UPDATE_LRU_BIT;	 		   
-	USE_BIT		<= USE_BIT_neg 		when state = UPDATE_LRU_BIT;	
-	LRU 		<= LRU_neg 			when state = UPDATE_LRU_BIT;			 		   
+	valid(LRU) 	<= RD_NOTWR			when state = UPDATE_LRU_BIT;	 	 		   
 		 		   
-	--IDLE 		 		   
-	USE_BIT		<= 1 		when state = IDLE and reset = '1';	
-	LRU 		<= 0 		when state = IDLE and reset = '1';	
+	--IDLE 		
 
 
 	

@@ -54,6 +54,10 @@ Leonard Hendrik
 
 Erledigt
 --------------------------------------------
+2017-03-20	[Task 4]		Das Stall-Signal wird vom Cache direkt nach einem neuen Lese-/Schreibbefehl auf '1' gesetzt. Erst, wenn der Startzustand 'idle'
+Carsten						der zugehörigen FSM wieder erreicht wurde und somit der auszuführende Lese-/Schreibbefehl beendet wurde, wird das Stall-Signal
+							zurück auf '0' gesetzt.
+							Demnach muss die Testbench des Caches angepasst werden, damit diese auf richtige Weise das Stall-Signal in der Simulation überprüft.
 
 2017-03-20	[Task 3, Doku]	Die Lösung der Aufgabe 3 muss in der Dokumentation beschrieben werden.
 Hendrik	

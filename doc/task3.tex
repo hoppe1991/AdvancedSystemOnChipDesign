@@ -86,7 +86,8 @@ TODO insert Mips pkg instruction forward information.
 \lstinputlisting[caption={FreezingPC.txt}]{appendix/task3_change5_freezingPC.txt}
 
 
-\subsection{Additional Details}
+\subsection{Additional Details - One Nop at the Beginning Needed}
+After our logic was implemented and the test runs were successfull it was interesting to see that some odd behaviour occured at the beginning of the program. It might be important to mention this behaviour in order to clearify   the situation and make bug hunting easier. The first command that is processed by the modified mips is a nop command due to the initialized state.  But it turned out that the second command will be executed twice in a row. In order to bypass this strange behaviour we simply inserted a nop at the beginning of each asm program. The consequence was a doubled nop command, which has no impact on the program at all.
 
 \subsection{Lessons Learned so Far}
 Besides the normal lessons like 

@@ -298,37 +298,38 @@ begin
 		signal wrCBLine0 		: STD_LOGIC := '0';
 	begin
 		
-		wrWord0 <= '1' when (state=CHECK and delay_counter=0) and RD_NOTWR='0' else
-						   '0' when (state=CHECK and delay_counter=0) and RD_NOTWR='1';
+		wrWord0 <= '1' when (state=CHECK and delay_counter=0 and hit(0)='1' and hit(1)='0') and RD_NOTWR='0' else
+				   '1' when (state=CHECK and delay_counter=0 and hit(0)='0' and hit(1)='1') and RD_NOTWR='0' else
+				   '0' when (state=CHECK and delay_counter=0) and RD_NOTWR='1';
 						   
 		wrWord1 <= '0' when (state=CHECK and delay_counter=0);
 		
-		wrWord <= (wrWord0, wrWord1) when (use_bit=0) else
-				  (wrWord1, wrWord0) when (use_bit=1);
+		wrWord <= (wrWord0, wrWord1) when (use_bit=1) else
+				  (wrWord1, wrWord0) when (use_bit=0);
 		 
 		 
 		 
 		 
 		rdWord0 <= '1' when (state=IDLE and wrCPU='1' and rdCPU='0') else
-						   '1' when (state=IDLE and wrCPU='0' and rdCPU='1') else
-						   '1' when (state=CHECK and delay_counter=0) and RD_NOTWR='1' else
-						   '0' when (state=CHECK and delay_counter=0) and RD_NOTWR='0' else
-						   '0' when (state=IDLE and wrCPU='1' and rdCPU='1') else
-						   '0' when (state=IDLE and wrCPU='0' and rdCPU='0');
+				   '1' when (state=IDLE and wrCPU='0' and rdCPU='1') else
+				   '1' when (state=CHECK and delay_counter=0) and RD_NOTWR='1' else
+				   '0' when (state=CHECK and delay_counter=0) and RD_NOTWR='0' else
+				   '0' when (state=IDLE and wrCPU='1' and rdCPU='1') else
+				   '0' when (state=IDLE and wrCPU='0' and rdCPU='0');
 						   		
 		rdWord1 <= '1' when (state=IDLE and wrCPU='1' and rdCPU='0') else
 							   '1' when (state=IDLE and wrCPU='0' and rdCPU='1') else
 							   '0' when (state=CHECK and delay_counter=0);
 							   
-		rdWord <= (rdWord0, rdWord1) when (use_bit=0) else
-				  (rdWord1, rdWord0) when (use_bit=1);
+		rdWord <= (rdWord0, rdWord1) when (use_bit=1) else
+				  (rdWord1, rdWord0) when (use_bit=0);
 		
 		
 							   
 		wrCBLine0 <= '1' when (state=EVICTION and readyMEM='1') else
 					 '0' when (state=BLOCK_TO_CACHE);
-		wrCBLine <= (wrCBLine0, '0') when (use_bit=0) else
-					('0', wrCBLine0) when (use_bit=1);
+		wrCBLine <= (wrCBLine0, '0') when (use_bit=1) else
+					('0', wrCBLine0) when (use_bit=0);
 		
 		rdCBLine <= "00";
 	end block CONTROL_SIGNALS;
@@ -391,7 +392,8 @@ begin
 	dataCPU1 <= dataCPU       when (state=CHECK and delay_counter=0) and RD_NOTWR='1' and use_bit=1 else
 				(others=>'Z') when (state=CHECK and delay_counter=0) and RD_NOTWR='0' and use_bit=1;
 
-		        
+	newCacheBlockLine1 <= dataToMEM when (state=EVICTION and readyMEM='1' and use_bit=1);
+	newCacheBlockLine0 <= dataToMEM when (state=EVICTION and readyMEM='1' and use_bit=0);
 end synth;
 
 

@@ -176,6 +176,9 @@ begin
 	testProcess : process
 	begin
 		wait for 20 ns;
+		dataCPU <= (others=>'1');
+		addrCPU(MEMORY_ADDRESS_WIDTH-1) <= '1';
+		wait until rising_edge(clk);
 		rdCPU <= '1';
 		wait for 200 ns;
 		report "End of test bench." severity FAILURE;

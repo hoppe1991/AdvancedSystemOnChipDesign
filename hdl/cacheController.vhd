@@ -128,6 +128,8 @@ architecture synth of cacheController is
 	signal addrCPUZero : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
 	signal addressCPU : MEMORY_ADDRESS := TO_MEMORY_ADDRESS(addrCPUZero);
 	
+	signal toCacheState : STD_LOGIC := '0';
+	
 	-- Current state of FSM.
 	signal state     : statetype := IDLE;
 	
@@ -339,10 +341,13 @@ begin
 	-- ------------------------------------------------------------------------------------
 	-- Determine whether to stall the CPU.
 	-- ------------------------------------------------------------------------------------
-	stallCPU <= '1' when (state=IDLE and wrCPU='1' and rdCPU = '0') else
+	toCacheState <= '1' when state=TOCACHE1 or state=TOCACHE2 else
+					'0' when state=IDLE and rising_edge(clk);
+	
+	stallCPU <= --'0' when (state=IDLE and toCacheState='1') else
+				'1' when (state=IDLE and wrCPU='1' and rdCPU = '0') else
 		        '1' when (state=IDLE and wrCPU='0' and rdCPU = '1') else
-		        '0' when (state=TOCACHE1) else
-		        '0' when (state=TOCACHE2) else
+		        '0' when (state=TOCACHE1 or state=TOCACHE2) else
 		        '0' when (state=CHECK1 and hitFromCache='1' and valid='1' and auxiliaryCounter=0) else
 		        '0' when (state=CHECK2 and hitFromCache='1' and valid='1' and auxiliaryCounter=0);
 	
@@ -391,7 +396,7 @@ begin
 	myBlockLine <= STD_LOGIC_VECTOR_TO_BLOCK_LINE(dataMEM) when state=TOCACHE2;
 	
 	-- Data CPU output.
-	dataCPU <= myBlockLine(addressCPU.offsetAsInteger) when state=TOCACHE2 else
+	dataCPU <= myBlockLine(addressCPU.offsetAsInteger) when state=TOCACHE2 else-- (state=READ and readyMEM='1') else --
 			   (others=>'Z') when (state=IDLE and wrCPU='1' and rdCPU='0') else
 			   (others=>'Z') when (state=IDLE and rdCPU='1' and wrCPU='0') else
 			   dataCPU when (state=IDLE and rdCPU='0' and wrCPU='0') else

@@ -192,7 +192,7 @@ architecture synth of cacheController is
 	end;
 
 	signal auxiliaryCounter : INTEGER := 1;
-	signal myBlockLine : BLOCK_LINE;
+	signal myBlockLine : BLOCK_LINE; 
 begin
 	 
 	-- State register.
@@ -385,18 +385,17 @@ begin
 	
 	newCacheBlockLine <= GET_NEW_CACHE_BLOCK_LINE( dataMEM, dataCPU, addressCPU.offsetAsInteger) when (state=WRITE and readyMEM='1') else
 						 dataMEM when (state=READ and readyMEM='1');
-	
+						 
 	-- Determine the data word to be written to Main Memory.
 	dataMEM           <= dataToMEM when (state=CHECK2 and hitFromCache='0' and valid='1' and dirty='1' and auxiliaryCounter=0) else
 						 dataToMEM when (state=CHECK1 and lineIsDirty='1' and auxiliaryCounter=0) else
 						 (others=>'Z');
 	
-	
-	
-	myBlockLine <= STD_LOGIC_VECTOR_TO_BLOCK_LINE(dataMEM) when state=TOCACHE2;
+	myBlockLine <= STD_LOGIC_VECTOR_TO_BLOCK_LINE(dataMEM) when state=TOCACHE2 else
+			       STD_LOGIC_VECTOR_TO_BLOCK_LINE(dataMEM) when state=READ and readyMEM='1';
 	
 	-- Data CPU output.
-	dataCPU <= myBlockLine(addressCPU.offsetAsInteger) when state=TOCACHE2 else-- (state=READ and readyMEM='1') else --
+	dataCPU <= myBlockLine(addressCPU.offsetAsInteger) when (state=READ and readyMEM='1') else --state=TOCACHE2
 			   (others=>'Z') when (state=IDLE and wrCPU='1' and rdCPU='0') else
 			   (others=>'Z') when (state=IDLE and rdCPU='1' and wrCPU='0') else
 			   dataCPU when (state=IDLE and rdCPU='0' and wrCPU='0') else

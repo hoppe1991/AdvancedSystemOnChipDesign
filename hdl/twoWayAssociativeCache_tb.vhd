@@ -34,6 +34,9 @@ entity twoWayAssociativeCache_tb is
 			
 			OFFSET               : INTEGER := 8;
 			
+			-- Number of bits defining the BRAM address wide.
+			BRAM_ADDR_WIDTH 	 : INTEGER := 10; 
+			
 			-- Filename of data BRAM regarding cache 1.
 			DATA_FILENAME_CACHE1 : STRING := "../imem/dataCache1";
 			
@@ -45,6 +48,8 @@ entity twoWayAssociativeCache_tb is
 			
 			-- Filename of tag BRAM regarding cache 2.
 			TAG_FILENAME_CACHE2  : STRING := "../imem/tagCache2";
+			
+			MAIN_MEMORY_FILENAME 	: STRING  := "../imem/mainMemory";
 			
 			-- File extension of BRAMs.
 			FILE_EXTENSION       : STRING := ".imem"
@@ -92,6 +97,8 @@ architecture tests of twoWayAssociativeCache_tb is
 	
 	-- Signal indicates to read the main memory or not.
 	signal rdMEM : STD_LOGIC := '0';
+	
+	signal addrMEM : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
 
 begin
 	
@@ -110,6 +117,7 @@ begin
 			FILE_EXTENSION       => FILE_EXTENSION
 		)
 		port map(
+			reset 		=> reset,
 			clk         => clk,
 			addrCPU     => addrCPU,
 			dataCPU     => dataCPU,
@@ -121,10 +129,32 @@ begin
 			hitCounter  => hitCounter,
 			missCounter => missCounter,
 			wrMEM       => wrMEM,
+			addrMEM     => addrMEM,
 			rdMEM       => rdMEM
 		);
 	
 	
+	-- ------------------------------------------------------------------------------------------
+	-- Create main memory.
+	-- ------------------------------------------------------------------------------------------
+	mainMemoryController : entity work.mainMemory
+		generic map(
+			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
+			BLOCKSIZE            => BLOCKSIZE/2,
+			DATA_WIDTH           => DATA_WIDTH,
+			BRAM_ADDR_WIDTH		 => BRAM_ADDR_WIDTH,
+			DATA_FILENAME        => MAIN_MEMORY_FILENAME,
+			FILE_EXTENSION       => FILE_EXTENSION
+		)
+		port map(
+			clk         => clk,
+			readyMEM    => readyMEM,
+			addrMEM     => addrMEM,
+			rdMEM       => rdMEM,
+			wrMEM       => wrMEM,
+			dataMEM  	=> dataToMEM,
+			reset       => reset
+		);
 	
 	
 	
@@ -146,6 +176,8 @@ begin
 	testProcess : process
 	begin
 		wait for 20 ns;
+		rdCPU <= '1';
+		wait for 200 ns;
 		report "End of test bench." severity FAILURE;
 	end process;
 		

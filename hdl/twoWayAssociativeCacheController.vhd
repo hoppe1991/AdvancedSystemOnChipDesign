@@ -18,6 +18,9 @@ use IEEE.NUMERIC_STD.all;
 -- Define the generic variables and ports of the entity.
 -- =============================================================================
 entity twoWayAssociativeCacheController is
+	
+	
+	
 	generic(
 		-- Memory address is 32-bit wide.
 		MEMORY_ADDRESS_WIDTH : INTEGER := 32;
@@ -46,7 +49,7 @@ entity twoWayAssociativeCacheController is
 		FILE_EXTENSION       : STRING  := ".txt";
 		REPLACEMENT_STRATEGY : replacementStrategy :=  LRU_t
 	);
-
+ 
 	port(
 		-- Clock signal is used for BRAM.
 		clk                                : in    STD_LOGIC;
@@ -61,8 +64,8 @@ entity twoWayAssociativeCacheController is
 		dirty 							   : inout   STD_LOGIC_VECTOR(1 downto 0);
 		dataCPU0                           : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
 		dataCPU1                           : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
-		dataToMEM0						   : in STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE/2 downto 0);
-		dataToMEM1						   : in STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE/2 downto 0);		
+		dataToMEM0						   : in STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE/2-1 downto 0);
+		dataToMEM1						   : in STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE/2-1 downto 0);		
 		newCacheBlockLine1                 : inout   STD_LOGIC_VECTOR(BLOCKSIZE/2*DATA_WIDTH - 1 downto 0) := (others => '0');
 		newCacheBlockLine0                 : inout   STD_LOGIC_VECTOR(BLOCKSIZE/2*DATA_WIDTH - 1 downto 0) := (others => '0');
 		
@@ -78,6 +81,7 @@ entity twoWayAssociativeCacheController is
 		missCounter                        : out   INTEGER; -- Signal counts the number of cache misses.
 		
 		-- Ports regarding MEM.
+		addrMEM							   : out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
 		dataToMEM                          : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE/2 - 1 downto 0); -- Data from memory to cache or from cache to memory.
 		readyMEM                           : in    STD_LOGIC; -- Signal identifies whether the main memory is ready.
 		wrMEM                              : out   STD_LOGIC; -- Read signal identifies to read data from the cache.
@@ -137,9 +141,8 @@ architecture synth of twoWayAssociativeCacheController is
 	
 	signal flipFlopI : INTEGER := 0;
 
-
 begin
-	
+	 
 	-- State register.
 	state <= IDLE when reset = '1' else nextstate when rising_edge(clk);
 	
@@ -195,12 +198,12 @@ begin
 				nextstate <= EVICTION;
 				
 			when EVICTION=> 
+				if readyMEM='1' then
 				nextstate <= BLOCK_TO_CACHE;
+				end if;
 				
 			when BLOCK_TO_CACHE =>
-				if readyMEM = '1' then
-					nextstate <= WRITE_TO_CACHE;
-				end if;
+				nextstate <= WRITE_TO_CACHE;
 				
 			when WRITE_TO_CACHE =>
 				nextstate <= UPDATE_LRU_BIT;
@@ -268,33 +271,66 @@ begin
 	VALID_DIRTY_LOGIC: block
 	begin
 		
-	-- Block at top right
-	dirty(USE_BIT) 				<= '1' when (RD_NOTWR = '0' ) and state = CACHE_HIT;
-	valid(USE_BIT) 				<= '1' when (RD_NOTWR = '0' ) and state = CACHE_HIT;
+		setValid(use_bit) <= '1' when (state=WRITE_TO_CACHE and rising_edge(clk)) else
+					         '0' when (state=UPDATE_LRU_BIT);
+					 
+		setDirty(use_bit) <= RD_NOTWR when (state=WRITE_TO_CACHE and rising_edge(clk)) else
+					              '0' when (state=UPDATE_LRU_BIT);
+
+		dirty(use_bit) <= '1' when (RD_NOTWR='1' and state=WRITE_TO_CACHE and rising_edge(clk)) else
+						  '0' when (RD_NOTWR='0' and state=WRITE_TO_CACHE and rising_edge(clk)) else
+						  '1' when (RD_NOTWR='1' and state=CACHE_HIT);
+
+		valid(use_bit) <= '1' when (state=WRITE_TO_CACHE and rising_edge(clk)) else
+						  '1' when (state=CACHE_HIT);
+
 	
 	end block VALID_DIRTY_LOGIC;			          						   
 
-	-- WRITE_TO_CACHE
-	dirty(LRU)	<= NOT(RD_NOTWR) 	when state = UPDATE_LRU_BIT;
-	valid(LRU) 	<= RD_NOTWR			when state = UPDATE_LRU_BIT;	 	 		   
 
 
 	-- ------------------------------------------------------------------------------------
 	-- Control logic to controls the two direct mapped caches.
 	-- ------------------------------------------------------------------------------------
 	CONTROL_SIGNALS: block
+		signal rdWord0, rdWord1 : STD_LOGIC := '0';
+		signal wrWord0, wrWord1 : STD_LOGIC := '0';
+		signal wrCBLine0 		: STD_LOGIC := '0';
 	begin
 		
-		wrWord(use_bit) <= '1' when (state=CHECK and delay_counter=0) and RD_NOTWR='0' else
+		wrWord0 <= '1' when (state=CHECK and delay_counter=0) and RD_NOTWR='0' else
 						   '0' when (state=CHECK and delay_counter=0) and RD_NOTWR='1';
 						   
-		wrWord(not_use_bit) <= '0' when (state=CHECK and delay_counter=0);
+		wrWord1 <= '0' when (state=CHECK and delay_counter=0);
 		
-		rdWord(use_bit) <= '1' when (state=CHECK and delay_counter=0) and RD_NOTWR='1' else
-						   '0' when (state=CHECK and delay_counter=0) and RD_NOTWR='0';
+		wrWord <= (wrWord0, wrWord1) when (use_bit=0) else
+				  (wrWord1, wrWord0) when (use_bit=1);
+		 
+		 
+		 
+		 
+		rdWord0 <= '1' when (state=IDLE and wrCPU='1' and rdCPU='0') else
+						   '1' when (state=IDLE and wrCPU='0' and rdCPU='1') else
+						   '1' when (state=CHECK and delay_counter=0) and RD_NOTWR='1' else
+						   '0' when (state=CHECK and delay_counter=0) and RD_NOTWR='0' else
+						   '0' when (state=IDLE and wrCPU='1' and rdCPU='1') else
+						   '0' when (state=IDLE and wrCPU='0' and rdCPU='0');
+						   		
+		rdWord1 <= '1' when (state=IDLE and wrCPU='1' and rdCPU='0') else
+							   '1' when (state=IDLE and wrCPU='0' and rdCPU='1') else
+							   '0' when (state=CHECK and delay_counter=0);
+							   
+		rdWord <= (rdWord0, rdWord1) when (use_bit=0) else
+				  (rdWord1, rdWord0) when (use_bit=1);
 		
-		rdWord(not_use_bit) <= '0' when (state=CHECK and delay_counter=0);		
-
+		
+							   
+		wrCBLine0 <= '1' when (state=EVICTION and readyMEM='1') else
+					 '0' when (state=BLOCK_TO_CACHE);
+		wrCBLine <= (wrCBLine0, '0') when (use_bit=0) else
+					('0', wrCBLine0) when (use_bit=1);
+		
+		rdCBLine <= "00";
 	end block CONTROL_SIGNALS;
 		
 		

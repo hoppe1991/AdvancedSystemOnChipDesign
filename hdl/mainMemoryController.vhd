@@ -196,11 +196,12 @@ begin
 				   '0';
 
 	-- Output logic.
-	readyMEM <= '1' when (state=IDLE and wrMEM/='1' and rdMEM='1') else
+	readyMEM <= 
 				'1' when (state=DELAY and counter >= readySignalAfter) else
 				'0' when (state/=IDLE) else
 				'0' when (state=IDLE and wrMEM='1' and rdMEM='0') else
 				'0' when (state=IDLE and wrMEM='0' and rdMEM='1');
+				--'1' when (state=IDLE and wrMEM/='1' and rdMEM='1') else
 				
 	-- Increment counter.
 	counter <= 0 when (state=IDLE and wrRequest='1') else

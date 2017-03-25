@@ -114,7 +114,7 @@ architecture synth of cacheController is
 		addr.index  := ARG(config.IndexIndexH downto config.IndexIndexL);
 		addr.offset := ARG(config.offsetIndexH downto config.offsetIndexL);
 		addr.indexAsInteger := TO_INTEGER(UNSIGNED(addr.index));
-		addr.offsetAsInteger := TO_INTEGER(UNSIGNED(addr.offset));
+		addr.offsetAsInteger := TO_INTEGER(UNSIGNED(addr.offset(3 downto 2)));
 		return addr;
 	end function;
 	
@@ -341,12 +341,10 @@ begin
 	-- ------------------------------------------------------------------------------------
 	stallCPU <= '1' when (state=IDLE and wrCPU='1' and rdCPU = '0') else
 		        '1' when (state=IDLE and wrCPU='0' and rdCPU = '1') else
-		        '0' when (state=IDLE);
-				
-		        
-		        
-		        
-		        
+		        '0' when (state=TOCACHE1) else
+		        '0' when (state=TOCACHE2) else
+		        '0' when (state=CHECK1 and hitFromCache='1' and valid='1' and auxiliaryCounter=0) else
+		        '0' when (state=CHECK2 and hitFromCache='1' and valid='1' and auxiliaryCounter=0);
 	
 	-- ------------------------------------------------------------------------------------
 	-- Determine whether to read or to write from the Main Memory.

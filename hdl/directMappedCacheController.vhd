@@ -109,7 +109,16 @@ architecture synth of directMappedCacheController is
 		addr.index  := ARG(config.IndexIndexH downto config.IndexIndexL);
 		addr.offset := ARG(config.offsetIndexH downto config.offsetIndexL);
 		addr.indexAsInteger := TO_INTEGER(UNSIGNED(addr.index));
-		addr.offsetAsInteger := TO_INTEGER(UNSIGNED(addr.offset));
+		addr.offsetAsInteger := TO_INTEGER(UNSIGNED(addr.offset(3 downto 2)));
+		
+		if (addr.offsetAsInteger > 3 or addr.offsetAsInteger < 0) then
+			report "offset as integer is false. " & INTEGER'IMAGE(addr.offsetAsInteger) severity FAILURE; 
+		end if;
+	
+		if (addr.indexAsInteger > 256 or addr.indexAsInteger < 0) then
+			report "index as integer is false. " & INTEGER'IMAGE(addr.indexAsInteger) severity FAILURE;
+		end if;
+		
 		return addr;
 	end function;
 
@@ -304,7 +313,7 @@ begin
 		       (others=>'Z');
  	
 	dataCPU <= (others=>'Z') when writeMode='1' else
-			   blockLineFromBRAM(memoryAddress.offsetAsInteger) when myCacheMode=READ_DATA else
+			   (blockLineFromBRAM(memoryAddress.offsetAsInteger)) when myCacheMode=READ_DATA else
 		       (others=>'Z');
 
 

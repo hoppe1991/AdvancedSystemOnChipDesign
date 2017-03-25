@@ -14,8 +14,12 @@ use work.mips_pkg.all;
 use work.casts.all;
 
 entity mips is -- Pipelined MIPS processor
-  generic ( DFileName : STRING := "../dmem/isort_pipe";
-            IFileName : STRING := "../imem/isort_pipe");
+  generic ( DFileName 			: STRING := "../dmem/isort_pipe";
+            IFileName 			: STRING := "../imem/isort_pipe";
+	        TAG_FILENAME 		: STRING := "../imem/tagCache";
+			DATA_FILENAME		: STRING := "../imem/dataCache";
+			FILE_EXTENSION		: STRING := ".imem"
+            );
   port ( clk, reset        : in  STD_LOGIC;
          writedata, dataadr: out STD_LOGIC_VECTOR(31 downto 0);
          memwrite          : out STD_LOGIC
@@ -23,6 +27,25 @@ entity mips is -- Pipelined MIPS processor
 end;
 
 architecture struct of mips is
+
+	-- Signals regarding instruction cache.
+	signal MEMORY_ADDRESS_WIDTH : INTEGER := 32;
+	signal DATA_WIDTH 			: INTEGER := 32;
+	signal BLOCKSIZE 			: INTEGER := 4;
+	signal ADDRESSWIDTH         : INTEGER := 256;
+	signal OFFSET               : INTEGER := 8;
+	signal BRAM_ADDR_WIDTH		: INTEGER := 10; -- (11 downto 2) pc
+
+	-- Hit and miss counter.
+	signal hitCounter, missCounter : INTEGER := 0;
+	
+	-- Signals regarding main memory.
+	signal readyMEM 	: STD_LOGIC := '0';
+	signal addrMEM      : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');	
+	signal rdMEM, wrMEM : STD_LOGIC := '0';
+	signal dataMEM		: STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
+	
+	signal stallFromCache : STD_LOGIC := '0';
 
   signal zero,
          lez,
@@ -101,8 +124,62 @@ begin
                                     (i.mnem = JR) or (EX.i.mnem = JR) or (MA.i.mnem = JR)  else 
                   pc4	; -- standard case: pc + 4, take following instruction;
 
-  imem:        entity work.bram  generic map ( INIT =>  (IFileName & ".imem"))
-               port map (clk, '0', pc(11 downto 2), (others=>'0'), IF_ir);
+
+	-- ------------------------------------------------------------------------------------------
+	-- Instruction cache.
+	-- ------------------------------------------------------------------------------------------
+	imemCache: entity work.cache
+		generic map(
+			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
+			DATA_WIDTH           => DATA_WIDTH,
+			BLOCKSIZE            => BLOCKSIZE,
+			ADDRESSWIDTH         => ADDRESSWIDTH,
+			OFFSET               => OFFSET,
+			TAG_FILENAME         => TAG_FILENAME,
+			DATA_FILENAME        => DATA_FILENAME,
+			FILE_EXTENSION       => FILE_EXTENSION
+		)
+		port map(
+			clk         => clk,
+			reset       => reset,
+			hitCounter  => hitCounter,
+			missCounter => missCounter,
+			stallCPU    => stallFromCache, --Stall_disablePC,
+			rdCPU       => '1',
+			wrCPU       => '0',
+			addrCPU     => pc,
+			dataCPU     => IF_ir,
+			readyMEM    => readyMEM,
+			rdMEM       => rdMEM,
+			wrMEM       => wrMEM,
+			addrMEM     => addrMEM,
+			dataMEM     => dataMEM
+		);
+
+	-- ------------------------------------------------------------------------------------------
+	-- Create main memory.
+	-- ------------------------------------------------------------------------------------------
+	mainMemoryController : entity work.mainMemory
+		generic map(
+			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
+			BLOCKSIZE            => BLOCKSIZE,
+			DATA_WIDTH           => DATA_WIDTH,
+			BRAM_ADDR_WIDTH		 => BRAM_ADDR_WIDTH,
+			DATA_FILENAME        => IFileName,
+			FILE_EXTENSION       => FILE_EXTENSION
+		)
+		port map(
+			clk         => clk,
+			readyMEM    => readyMEM,
+			addrMEM     => addrMEM,
+			rdMEM       => rdMEM,
+			wrMEM       => wrMEM,
+			dataMEM  	=> dataMEM,
+			reset       => reset
+		);
+
+--  imem:        entity work.bram  generic map ( INIT =>  (IFileName & ".imem"))
+--               port map (clk, '0', pc(11 downto 2), (others=>'0'), IF_ir);
 
 -------------------- IF/ID Pipeline Register -----------------------------------
                                                  

@@ -1,12 +1,7 @@
 TODO Liste
 Treffen 08.03.2017
 --------------------------------------------
-2017-03-24	[All]			Dateien aus Repositority löschen, die nicht benötigt werden:
-							- mips.o
-							- mips.vhd~
-							- ghdl01hendrik.sh~
-							- bram.vhd_modifiedBRAMON
-							- mipsModified.vhd
+
 							
 2017-03-20	[Task 4]		Was bedeutet "main memory: BlockRAM (4K x 128) with ready signal after 20 cycles"?
 
@@ -61,6 +56,13 @@ Leonard Hendrik
 
 Erledigt
 --------------------------------------------
+2017-03-24	[All]			Dateien aus Repositority löschen, die nicht benötigt werden:
+							- mips.o
+							- mips.vhd~
+							- ghdl01hendrik.sh~
+							- bram.vhd_modifiedBRAMON
+							- mipsModified.vhd
+
 2017-03-20	[Task 4]		Das Stall-Signal wird vom Cache direkt nach einem neuen Lese-/Schreibbefehl auf '1' gesetzt. Erst, wenn der Startzustand 'idle'
 Carsten						der zugehörigen FSM wieder erreicht wurde und somit der auszuführende Lese-/Schreibbefehl beendet wurde, wird das Stall-Signal
 							zurück auf '0' gesetzt.

@@ -12,10 +12,19 @@ At first we give a short introduction to memories \ref{sec:introductionToMemorie
 
 \subsection{Introduction to Memories}
 \label{sec:introductionToMemories}
-TODO
-Why are there so many different storage types?
+
+\subsubsection{The Need for Different Storage Types}
+\label{sec:needForDifferentStorageTypes}
+In the world of computer science not all memory storage types have the same properties and abilities. Major distinctions can simply be made by looking at price and performance information. For instance cache memory is extremely fast compared to hard disk storage or even tape libraries but on the other hand its storage space is highly limited compared to hdd or tape storage due to its small physical space. Another big difference is of course the price. Buying tape which is able to store TBs of data might cost less than 50 euros. Extremely fast storage types like caches or RAM would cost thousands of euros if one wanted to use a TB of RAM.
+
+It often occurs that a computer doesn't simply need one type of storage but several different ones for different tasks. That is why storage that has few space but high access times (Caches) were developed as well as moderate access times with more space (SSD, HDD). The same applies for the higher levels of the memory hierarchy with Registers, Level 1 Caches, Level 2 Caches and Main Memory. Storing all information in Registers would be too expensive. Additional levels inbetween magnetic or flash discs and registers are needed as well.
+
+The problem of fitting all needs can be managed by letting the different storage types interact with each other whenenver required. If data is accessed extremely often a cache can be used or even registers, whereas rare use can easily be stored in memory that is less expensive and less fast. The more types of storage are available, the easier it is so handle problems needing multiple demands at once.
 
 
+
+\subsubsection{Classifying Caches - Advantages and Disadvantages}
+\label{sec:classifyingCaches}
 A cache is a faster but smaller storage system which is placed nearby the CPU. In the Harvard architecture there is one cache for instructions and one cache for data. There are diverse modes to organize the caches. Primary, the caches are organized by answering the following four questions:
 \begin{enumerate}
 	\item \textit{Block Placement} - Where can a block be placed in the cache?

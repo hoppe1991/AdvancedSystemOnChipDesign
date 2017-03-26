@@ -18,6 +18,9 @@ use IEEE.NUMERIC_STD.all;
 -- Define the generic variables and ports of the entity.
 -- =============================================================================
 entity twoWayAssociativeCacheController is
+	
+	
+	
 	generic(
 		-- Memory address is 32-bit wide.
 		MEMORY_ADDRESS_WIDTH : INTEGER := 32;
@@ -46,35 +49,41 @@ entity twoWayAssociativeCacheController is
 		FILE_EXTENSION       : STRING  := ".txt";
 		REPLACEMENT_STRATEGY : replacementStrategy :=  LRU_t
 	);
-
+ 
 	port(
 		-- Clock signal is used for BRAM.
 		clk                                : in    STD_LOGIC;
 		reset                              : in    STD_LOGIC;
+		
+		-- Ports regarding the two direct mapped caches.
 		hit                                : in   STD_LOGIC_VECTOR(1 downto 0);
 		wrCBLine, rdCBLine, rdWord, wrWord : out   STD_LOGIC_VECTOR(1 downto 0);
-		setValid, setDirty   	   : out   STD_LOGIC_VECTOR(1 downto 0);
+		writeMode             			   : out   STD_LOGIC_VECTOR(1 downto 0);
+		setValid, setDirty   	   		   : out   STD_LOGIC_VECTOR(1 downto 0);
 		valid							   : inout STD_LOGIC_VECTOR(1 downto 0);
 		dirty 							   : inout   STD_LOGIC_VECTOR(1 downto 0);
-		newCacheBlockLine1                 : out   STD_LOGIC_VECTOR(BLOCKSIZE/2*DATA_WIDTH - 1 downto 0) := (others => '0');
-		newCacheBlockLine0                 : out   STD_LOGIC_VECTOR(BLOCKSIZE/2*DATA_WIDTH - 1 downto 0) := (others => '0');
-		writeMode             			   : out   STD_LOGIC_VECTOR(1 downto 0);
-		addrCPU                            : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0); -- Memory address from CPU is divided into block address and block offset.
-		dataCPU                            : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
 		dataCPU0                           : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
 		dataCPU1                           : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
-
-		dataToMEM                            : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE/2 - 1 downto 0); -- Data from memory to cache or from cache to memory.
-		readyMEM                           : in    STD_LOGIC; -- Signal identifies whether the main memory is ready.
-		stallCPU                           : out   STD_LOGIC; -- Signal identifies whether to stall the CPU or not.
-
+		dataToMEM0						   : in STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE/2-1 downto 0);
+		dataToMEM1						   : in STD_LOGIC_VECTOR(DATA_WIDTH*BLOCKSIZE/2-1 downto 0);		
+		newCacheBlockLine1                 : inout   STD_LOGIC_VECTOR(BLOCKSIZE/2*DATA_WIDTH - 1 downto 0) := (others => '0');
+		newCacheBlockLine0                 : inout   STD_LOGIC_VECTOR(BLOCKSIZE/2*DATA_WIDTH - 1 downto 0) := (others => '0');
+		
+		-- Ports regarding CPUs.
+		dataCPU                            : inout STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0); -- Data from CPU to cache or from cache to CPU.
+		addrCPU                            : in    STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0); -- Memory address from CPU is divided into block address and block offset.
 		wrCPU                              : in    STD_LOGIC; -- Write signal identifies whether a complete cache block should be written into cache.
 		rdCPU                              : in    STD_LOGIC; -- Read signal identifies whether a complete cache block should be read from cache.
+		stallCPU                           : out   STD_LOGIC; -- Signal identifies whether to stall the CPU or not.
 
+		-- Hit and miss counter.
 		hitCounter                         : out   INTEGER; -- Signal counts the number of cache hits.
 		missCounter                        : out   INTEGER; -- Signal counts the number of cache misses.
 		
 		-- Ports regarding MEM.
+		addrMEM							   : out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
+		dataToMEM                          : inout STD_LOGIC_VECTOR(DATA_WIDTH * BLOCKSIZE/2 - 1 downto 0); -- Data from memory to cache or from cache to memory.
+		readyMEM                           : in    STD_LOGIC; -- Signal identifies whether the main memory is ready.
 		wrMEM                              : out   STD_LOGIC; -- Read signal identifies to read data from the cache.
 		rdMEM                              : out   STD_LOGIC -- Write signal identifies to write data into the cache.
 	);
@@ -109,7 +118,13 @@ architecture synth of twoWayAssociativeCacheController is
 	signal nextstate 		: statetype := IDLE;
 	
 	-- Least recently used bit = not(use bit)
-	signal LRU, LRU_neg, USE_BIT, USE_BIT_neg	: INTEGER	:= 0;
+	signal LRU, LRU_neg : INTEGER	:= 0;
+	
+	-- Use bit identifies which cache is used. 0, when the first cache is used. 1, otherwise.
+	signal use_bit : INTEGER := 0;
+	
+	-- Not Use bit identifies which cache is not used. 0, when the first cache is not used. 1, otherwise.
+	signal not_use_bit : INTEGER := 0; 
 	
 	-- Hit and Miss counter registers are initialized with Zero on reset.
 	-- They counts the number of occurrences of cache hits and cache misses.
@@ -124,11 +139,10 @@ architecture synth of twoWayAssociativeCacheController is
 	-- Flip flop used for Random strategy. This flip flop is toggled in case of cache miss.
 	signal flipFlop : STD_LOGIC := '0';
 	
-	signal MY_USE_BIT, MY_NOT_USE_BIT : INTEGER := 0;
-
+	signal flipFlopI : INTEGER := 0;
 
 begin
-	
+	 
 	-- State register.
 	state <= IDLE when reset = '1' else nextstate when rising_edge(clk);
 	
@@ -184,12 +198,12 @@ begin
 				nextstate <= EVICTION;
 				
 			when EVICTION=> 
+				if readyMEM='1' then
 				nextstate <= BLOCK_TO_CACHE;
+				end if;
 				
 			when BLOCK_TO_CACHE =>
-				if readyMEM = '1' then
-					nextstate <= WRITE_TO_CACHE;
-				end if;
+				nextstate <= WRITE_TO_CACHE;
 				
 			when WRITE_TO_CACHE =>
 				nextstate <= UPDATE_LRU_BIT;
@@ -207,29 +221,23 @@ begin
 	-- ------------------------------------------------------------------------------------
 	LRU_FLIPFLOP_LOGIC: block
 	begin
-	
-		MY_USE_BIT     <= 0 when REPLACEMENT_STRATEGY=LRU_t and LRU=1 else
-					  1 when REPLACEMENT_STRATEGY=LRU_t and LRU=0 else
-					  0 when REPLACEMENT_STRATEGY=RANDOM_t and flipFlop='0' else
-					  1 when REPLACEMENT_STRATEGY=RANDOM_t and flipFlop='1';
-					  
-		MY_NOT_USE_BIT <= 1 when MY_USE_BIT=0 else 
-					  0;
-					  
-		-- Generating USE_BIT and LRU at CHECK
-		USE_BIT 	<= 1 when state = CHECK and delay_Counter = 1 and hit(1) = '1' else
-		 		   0 when state = CHECK and delay_Counter = 1 and hit(0) = '1' ;
-		-- USE_BIT		<= 1 		when state = IDLE and reset = '1';	-- TODO Remove this line?
-	
-	-- Generating USE_BIT and LRU at CACHE_MISS
-	--USE_BIT 	<= 0 when state = CACHE_MISS and valid(0) = '0' and valid(1) = '1' else 		--!valid(0) and valid(1) => USE_BIT = 1
-	--	 		   0 when state = CACHE_MISS and valid(0) = '1' and valid(1) = '0' else 		--valid(0) and !valid(1) => USE_BIT = 0
-	--	 		   1 when state = CACHE_MISS and valid(0) = '0' and valid(1) = '0' ; 			--!valid(0) and !valid(1) => USE_BIT = 1		   
-	--USE_BIT		<= USE_BIT_neg 		when state = UPDATE_LRU_BIT;	
-	
-	
-		USE_BIT_neg <= 0 when USE_BIT = 1 else 1; 	-- Needed for the not(USE_BIT) operations 
-
+		
+		-- Update the USE bit.
+		use_bit <= 0 when state=IDLE and reset='1' else
+				   0 when state=CHECK and delay_counter=0 and hit(0)='1' and hit(1)='0' 						else
+		           1 when state=CHECK and delay_counter=1 and hit(0)='0' and hit(1)='1' 						else
+		           0 when state=CACHE_MISS and valid(0)='0' and valid(1)='1' 									else
+		           1 when state=CACHE_MISS and valid(0)='1' and valid(1)='0' 									else
+		           0 when state=CACHE_MISS and valid(0)='0' and valid(1)='0' 									else
+		   flipFlopI when state=CACHE_MISS and valid(0)='1' and valid(1)='1' and REPLACEMENT_STRATEGY=RANDOM_t 	else
+		         LRU when state=CACHE_MISS and valid(0)='1' and valid(1)='1' and REPLACEMENT_STRATEGY=LRU_t
+		           ;
+		
+		-- Update the not USE bit.
+		not_use_bit <= 0 when use_bit=1 else
+		               1 when use_bit=0; 
+		           
+		-- Update the LRU bit. TODO          
 		LRU 		<= 0 when state = CHECK and delay_Counter = 1 and hit(1) = '1' else
 		 		   1 when state = CHECK and delay_Counter = 1 and hit(0) = '1' else
 		 		   0 when state = UPDATE_LRU_BIT and rising_edge(clk) and LRU=1 else
@@ -240,10 +248,15 @@ begin
 --	LRU 		<= LRU_neg 			when state = UPDATE_LRU_BIT;		 		   
 --	LRU 		<= 0 		when state = IDLE and reset = '1';	
 		 		   
-		LRU_neg 	<= 0 when LRU = 1 else 1; 			-- Needed for the not(LRU) operations
-		
+		-- Update the not LRU bit.
+		LRU_neg 	<= 0 when LRU = 1 else 1;
+
 		-- Toggle flip flop in case of cache miss.		
-		flipFlop	<= not(flipFlop) when state=CACHE_MISS and hit(0)='0' and hit(1)='0' and rising_edge(clk);
+		flipFlop	<= '0' when state=CACHE_MISS and valid(0)='0' and valid(1)='1' else
+					   '1' when state=CACHE_MISS and valid(0)='1' and valid(1)='0' else
+					   '0' when state=CACHE_MISS and valid(0)='0' and valid(1)='0' else
+			 not(flipFlop) when state=CACHE_MISS and valid(0)='1' and valid(1)='1' and rising_edge(clk);
+		flipFlopI   <= 0   when flipFlop='0' else 1;
 		
 	end block LRU_FLIPFLOP_LOGIC;
 	
@@ -258,51 +271,71 @@ begin
 	VALID_DIRTY_LOGIC: block
 	begin
 		
-	-- Block at top right
-	dirty(USE_BIT) 				<= '1' when (RD_NOTWR = '0' ) and state = CACHE_HIT;
-	valid(USE_BIT) 				<= '1' when (RD_NOTWR = '0' ) and state = CACHE_HIT;
+		setValid(use_bit) <= '1' when (state=WRITE_TO_CACHE and rising_edge(clk)) else
+					         '0' when (state=UPDATE_LRU_BIT);
+					 
+		setDirty(use_bit) <= RD_NOTWR when (state=WRITE_TO_CACHE and rising_edge(clk)) else
+					              '0' when (state=UPDATE_LRU_BIT);
+
+		dirty(use_bit) <= '1' when (RD_NOTWR='1' and state=WRITE_TO_CACHE and rising_edge(clk)) else
+						  '0' when (RD_NOTWR='0' and state=WRITE_TO_CACHE and rising_edge(clk)) else
+						  '1' when (RD_NOTWR='1' and state=CACHE_HIT);
+
+		valid(use_bit) <= '1' when (state=WRITE_TO_CACHE and rising_edge(clk)) else
+						  '1' when (state=CACHE_HIT);
+
 	
 	end block VALID_DIRTY_LOGIC;			          						   
 
-		 		   
-		 		   
-	-- WRITE_TO_CACHE
-	dirty(LRU)	<= NOT(RD_NOTWR) 	when state = UPDATE_LRU_BIT;
-	valid(LRU) 	<= RD_NOTWR			when state = UPDATE_LRU_BIT;	 	 		   
-		 		   
-	--IDLE 		
 
 
-	
-	LRU_STATEMENTS: if REPLACEMENT_STRATEGY=LRU_t generate
+	-- ------------------------------------------------------------------------------------
+	-- Control logic to controls the two direct mapped caches.
+	-- ------------------------------------------------------------------------------------
+	CONTROL_SIGNALS: block
+		signal rdWord0, rdWord1 : STD_LOGIC := '0';
+		signal wrWord0, wrWord1 : STD_LOGIC := '0';
+		signal wrCBLine0 		: STD_LOGIC := '0';
 	begin
-
-		-- CHECK + CACHE_HIT				    
-		wrWord(MY_NOT_USE_BIT)	<= '0' when (state = CHECK and delay_Counter = 0);	
-		rdWord(MY_NOT_USE_BIT)	<= '0' when (state = CHECK and delay_Counter = 0);
 		
-		wrWord(MY_USE_BIT)		<= not(RD_NOTWR) when (state=CHECK and delay_Counter = 0) else 
-						           '0' when state=CACHE_HIT;
-		rdWord(MY_USE_BIT)		<= RD_NOTWR when (state=CHECK and delay_Counter = 0) else 
-					               '0' when REPLACEMENT_STRATEGY=LRU_t and (state=CACHE_HIT);
-					               
-					               
-		-- BLOCK_TO_CACHE
-		wrWord(LRU_neg)        		<= '0' when state = BLOCK_TO_CACHE;
-		rdWord(LRU_neg)	       		<= '0' when state = BLOCK_TO_CACHE; 
-		wrWord(LRU)                 <= not(RD_NOTWR) when (state=BLOCK_TO_CACHE ) else
-						          '0' when (state=WRITE_TO_CACHE); 
-		rdWord(LRU)                 <= RD_NOTWR when (state=BLOCK_TO_CACHE ) else
-						          '0' when (state=WRITE_TO_CACHE); 		
-	end generate LRU_STATEMENTS;
+		wrWord0 <= '1' when (state=CHECK and delay_counter=0 and hit(0)='1' and hit(1)='0') and RD_NOTWR='0' else
+				   '1' when (state=CHECK and delay_counter=0 and hit(0)='0' and hit(1)='1') and RD_NOTWR='0' else
+				   '0' when (state=CHECK and delay_counter=0) and RD_NOTWR='1';
+						   
+		wrWord1 <= '0' when (state=CHECK and delay_counter=0);
 		
-	RANDOM_STATEMENTS: if REPLACEMENT_STRATEGY=RANDOM_t generate
-	begin
-		USE_BIT <= 0;
-	end generate RANDOM_STATEMENTS;
-	
-	
-	
+		wrWord <= (wrWord0, wrWord1) when (use_bit=1) else
+				  (wrWord1, wrWord0) when (use_bit=0);
+		 
+		 
+		 
+		 
+		rdWord0 <= '1' when (state=IDLE and wrCPU='1' and rdCPU='0') else
+				   '1' when (state=IDLE and wrCPU='0' and rdCPU='1') else
+				   '1' when (state=CHECK and delay_counter=0) and RD_NOTWR='1' else
+				   '0' when (state=CHECK and delay_counter=0) and RD_NOTWR='0' else
+				   '0' when (state=IDLE and wrCPU='1' and rdCPU='1') else
+				   '0' when (state=IDLE and wrCPU='0' and rdCPU='0');
+						   		
+		rdWord1 <= '1' when (state=IDLE and wrCPU='1' and rdCPU='0') else
+							   '1' when (state=IDLE and wrCPU='0' and rdCPU='1') else
+							   '0' when (state=CHECK and delay_counter=0);
+							   
+		rdWord <= (rdWord0, rdWord1) when (use_bit=1) else
+				  (rdWord1, rdWord0) when (use_bit=0);
+		
+		
+							   
+		wrCBLine0 <= '1' when (state=EVICTION and readyMEM='1') else
+					 '0' when (state=BLOCK_TO_CACHE);
+		wrCBLine <= (wrCBLine0, '0') when (use_bit=1) else
+					('0', wrCBLine0) when (use_bit=0);
+		
+		rdCBLine <= "00";
+	end block CONTROL_SIGNALS;
+		
+		
+		
 	-- ------------------------------------------------------------------------------------
 	-- Control logic regarding Main Memory. Controls whether the Main Memory
 	-- should be written or read.
@@ -342,10 +375,47 @@ begin
 	-- ------------------------------------------------------------------------------------
 	-- Determine whether to stall the CPU.
 	-- ------------------------------------------------------------------------------------
-	stallCPU <= '1' when (state=IDLE and wrCPU/= rdCPU) else
+	stallCPU <= '1' when (state=IDLE and wrCPU/=rdCPU) else
 		        '0' when (state=IDLE);
+		        
+	-- ------------------------------------------------------------------------------------
+	-- Updates the RD_NOTWR signal.
+	-- ------------------------------------------------------------------------------------	     
+	RD_NOTWR <= '1' when (state=IDLE and wrCPU='1' and rdCPU='0') else
+				'0' when (state=IDLE and wrCPU='0' and rdCPU='1');
 				
-		        
-		        
-		        
+
+	-- 
+	dataCPU0 <= dataCPU       when (state=CHECK and delay_counter=0) and RD_NOTWR='1' and use_bit=0 else
+				(others=>'Z') when (state=CHECK and delay_counter=0) and RD_NOTWR='0' and use_bit=0;
+				
+	dataCPU1 <= dataCPU       when (state=CHECK and delay_counter=0) and RD_NOTWR='1' and use_bit=1 else
+				(others=>'Z') when (state=CHECK and delay_counter=0) and RD_NOTWR='0' and use_bit=1;
+
+	newCacheBlockLine1 <= dataToMEM when (state=EVICTION and readyMEM='1' and use_bit=1);
+	newCacheBlockLine0 <= dataToMEM when (state=EVICTION and readyMEM='1' and use_bit=0);
 end synth;
+
+
+--
+--	LRU_STATEMENTS: if REPLACEMENT_STRATEGY=LRU_t generate
+--	begin
+--
+--		-- CHECK + CACHE_HIT				    
+--		wrWord(MY_NOT_USE_BIT)	<= '0' when (state = CHECK and delay_Counter = 0);	
+--		rdWord(MY_NOT_USE_BIT)	<= '0' when (state = CHECK and delay_Counter = 0);
+--		
+--		wrWord(MY_USE_BIT)		<= not(RD_NOTWR) when (state=CHECK and delay_Counter = 0) else 
+--						           '0' when state=CACHE_HIT;
+--		rdWord(MY_USE_BIT)		<= RD_NOTWR when (state=CHECK and delay_Counter = 0) else 
+--					               '0' when REPLACEMENT_STRATEGY=LRU_t and (state=CACHE_HIT);
+--					               
+--					               
+--		-- BLOCK_TO_CACHE
+--		wrWord(LRU_neg)        		<= '0' when state = BLOCK_TO_CACHE;
+--		rdWord(LRU_neg)	       		<= '0' when state = BLOCK_TO_CACHE; 
+--		wrWord(LRU)                 <= not(RD_NOTWR) when (state=BLOCK_TO_CACHE ) else
+--						          '0' when (state=WRITE_TO_CACHE); 
+--		rdWord(LRU)                 <= RD_NOTWR when (state=BLOCK_TO_CACHE ) else
+--						          '0' when (state=WRITE_TO_CACHE); 		
+--	end generate LRU_STATEMENTS;

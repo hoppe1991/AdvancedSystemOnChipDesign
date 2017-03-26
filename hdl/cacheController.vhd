@@ -114,7 +114,7 @@ architecture synth of cacheController is
 		addr.index  := ARG(config.IndexIndexH downto config.IndexIndexL);
 		addr.offset := ARG(config.offsetIndexH downto config.offsetIndexL);
 		addr.indexAsInteger := TO_INTEGER(UNSIGNED(addr.index));
-		addr.offsetAsInteger := TO_INTEGER(UNSIGNED(addr.offset));
+		addr.offsetAsInteger := TO_INTEGER(UNSIGNED(addr.offset(3 downto 2)));
 		return addr;
 	end function;
 	
@@ -127,6 +127,8 @@ architecture synth of cacheController is
 	
 	signal addrCPUZero : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
 	signal addressCPU : MEMORY_ADDRESS := TO_MEMORY_ADDRESS(addrCPUZero);
+	
+	signal toCacheState : STD_LOGIC := '0';
 	
 	-- Current state of FSM.
 	signal state     : statetype := IDLE;
@@ -190,7 +192,7 @@ architecture synth of cacheController is
 	end;
 
 	signal auxiliaryCounter : INTEGER := 1;
-	signal myBlockLine : BLOCK_LINE;
+	signal myBlockLine : BLOCK_LINE; 
 begin
 	 
 	-- State register.
@@ -339,14 +341,15 @@ begin
 	-- ------------------------------------------------------------------------------------
 	-- Determine whether to stall the CPU.
 	-- ------------------------------------------------------------------------------------
-	stallCPU <= '1' when (state=IDLE and wrCPU='1' and rdCPU = '0') else
+	toCacheState <= '1' when state=TOCACHE1 or state=TOCACHE2 else
+					'0' when state=IDLE and rising_edge(clk);
+	
+	stallCPU <= --'0' when (state=IDLE and toCacheState='1') else
+				'1' when (state=IDLE and wrCPU='1' and rdCPU = '0') else
 		        '1' when (state=IDLE and wrCPU='0' and rdCPU = '1') else
-		        '0' when (state=IDLE);
-				
-		        
-		        
-		        
-		        
+		        '0' when (state=TOCACHE1 or state=TOCACHE2) else
+		        '0' when (state=CHECK1 and hitFromCache='1' and valid='1' and auxiliaryCounter=0) else
+		        '0' when (state=CHECK2 and hitFromCache='1' and valid='1' and auxiliaryCounter=0);
 	
 	-- ------------------------------------------------------------------------------------
 	-- Determine whether to read or to write from the Main Memory.
@@ -382,18 +385,17 @@ begin
 	
 	newCacheBlockLine <= GET_NEW_CACHE_BLOCK_LINE( dataMEM, dataCPU, addressCPU.offsetAsInteger) when (state=WRITE and readyMEM='1') else
 						 dataMEM when (state=READ and readyMEM='1');
-	
+						 
 	-- Determine the data word to be written to Main Memory.
 	dataMEM           <= dataToMEM when (state=CHECK2 and hitFromCache='0' and valid='1' and dirty='1' and auxiliaryCounter=0) else
 						 dataToMEM when (state=CHECK1 and lineIsDirty='1' and auxiliaryCounter=0) else
 						 (others=>'Z');
 	
-	
-	
-	myBlockLine <= STD_LOGIC_VECTOR_TO_BLOCK_LINE(dataMEM) when state=TOCACHE2;
+	myBlockLine <= STD_LOGIC_VECTOR_TO_BLOCK_LINE(dataMEM) when state=TOCACHE2 else
+			       STD_LOGIC_VECTOR_TO_BLOCK_LINE(dataMEM) when state=READ and readyMEM='1';
 	
 	-- Data CPU output.
-	dataCPU <= myBlockLine(addressCPU.offsetAsInteger) when state=TOCACHE2 else
+	dataCPU <= myBlockLine(addressCPU.offsetAsInteger) when (state=READ and readyMEM='1') else --state=TOCACHE2
 			   (others=>'Z') when (state=IDLE and wrCPU='1' and rdCPU='0') else
 			   (others=>'Z') when (state=IDLE and rdCPU='1' and wrCPU='0') else
 			   dataCPU when (state=IDLE and rdCPU='0' and wrCPU='0') else

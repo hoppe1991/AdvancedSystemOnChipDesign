@@ -14,8 +14,12 @@ use work.mips_pkg.all;
 use work.casts.all;
 
 entity mips is -- Pipelined MIPS processor
-  generic ( DFileName : STRING := "../dmem/isort_pipe";
-            IFileName : STRING := "../imem/isort_pipe");
+  generic ( DFileName 			: STRING := "../dmem/isort_pipe";
+            IFileName 			: STRING := "../imem/isort_pipe";
+	        TAG_FILENAME 		: STRING := "../imem/tagCache";
+			DATA_FILENAME		: STRING := "../imem/dataCache";
+			FILE_EXTENSION		: STRING := ".imem"
+            );
   port ( clk, reset        : in  STD_LOGIC;
          writedata, dataadr: out STD_LOGIC_VECTOR(31 downto 0);
          memwrite          : out STD_LOGIC
@@ -23,6 +27,27 @@ entity mips is -- Pipelined MIPS processor
 end;
 
 architecture struct of mips is
+
+	-- Signals regarding instruction cache.
+	signal MEMORY_ADDRESS_WIDTH : INTEGER := 32;
+	signal DATA_WIDTH 			: INTEGER := 32;
+	signal BLOCKSIZE 			: INTEGER := 4;
+	signal ADDRESSWIDTH         : INTEGER := 256;
+	signal OFFSET               : INTEGER := 8;
+	signal BRAM_ADDR_WIDTH		: INTEGER := 10; -- (11 downto 2) pc
+
+	-- Hit and miss counter.
+	signal hitCounter, missCounter : INTEGER := 0;
+	
+	-- Signals regarding main memory.
+	signal readyMEM 	: STD_LOGIC := '0';
+	signal addrMEM      : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');	
+	signal rdMEM, wrMEM : STD_LOGIC := '0';
+	signal dataMEM		: STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
+	
+	signal stallFromCache 	: STD_LOGIC := '0';
+  	signal stallFromCPU		: STD_LOGIC := '0';
+	signal stallCPU 		: STD_LOGIC := '0';
 
   signal zero,
          lez,
@@ -66,8 +91,6 @@ architecture struct of mips is
          forwardB : ForwardType := FromREG;
   signal WB_Opc  ,WB_Func   : STD_LOGIC_VECTOR(5 downto 0) := "000000";
 
-  signal Stall_disablePC     : STD_LOGIC := '0';
-
   signal Bubble     : EXType := (
                   ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
                    '0', "0000",WORD),
@@ -79,6 +102,10 @@ architecture struct of mips is
                   "00000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
 
 begin
+
+	-- Determine whether to stall the CPU or not.
+	stallCPU <= stallFromCache or stallFromCPU;
+
 
 -------------------- Instruction Fetch Phase (IF) -----------------------------
   pc        <= nextpc when rising_edge(clk);
@@ -98,11 +125,66 @@ begin
                   pc          when (IF_ir(31 downto 26) = "000100") or (i.mnem = BEQ) or (EX.i.mnem = BEQ) or (MA.i.mnem = BEQ) else --BEQ
                   pc          when (IF_ir(31 downto 26) = "000010") or (i.mnem = J)   or (EX.i.mnem = J)   or (MA.i.mnem = J)   else --J
                   pc          when ((IF_ir(5 downto  0) = "001000") and (IF_ir(31 downto 26) = "000000" )) or						  --JR
-                                    (i.mnem = JR) or (EX.i.mnem = JR) or (MA.i.mnem = JR)  else 
+                                    (i.mnem = JR) or (EX.i.mnem = JR) or (MA.i.mnem = JR)  else
+                  pc		  when (stallFromCache='1') else
                   pc4	; -- standard case: pc + 4, take following instruction;
 
-  imem:        entity work.bram  generic map ( INIT =>  (IFileName & ".imem"))
-               port map (clk, '0', pc(11 downto 2), (others=>'0'), IF_ir);
+
+	-- ------------------------------------------------------------------------------------------
+	-- Instruction cache.
+	-- ------------------------------------------------------------------------------------------
+	imemCache: entity work.cache
+		generic map(
+			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
+			DATA_WIDTH           => DATA_WIDTH,
+			BLOCKSIZE            => BLOCKSIZE,
+			ADDRESSWIDTH         => ADDRESSWIDTH,
+			OFFSET               => OFFSET,
+			TAG_FILENAME         => TAG_FILENAME,
+			DATA_FILENAME        => DATA_FILENAME,
+			FILE_EXTENSION       => FILE_EXTENSION
+		)
+		port map(
+			clk         => clk,
+			reset       => reset,
+			hitCounter  => hitCounter,
+			missCounter => missCounter,
+			stallCPU    => stallFromCache,
+			rdCPU       => '1',
+			wrCPU       => '0',
+			addrCPU     => pc,
+			dataCPU     => IF_ir,
+			readyMEM    => readyMEM,
+			rdMEM       => rdMEM,
+			wrMEM       => wrMEM,
+			addrMEM     => addrMEM,
+			dataMEM     => dataMEM
+		);
+
+	-- ------------------------------------------------------------------------------------------
+	-- Create main memory.
+	-- ------------------------------------------------------------------------------------------
+	mainMemoryController : entity work.mainMemory
+		generic map(
+			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
+			BLOCKSIZE            => BLOCKSIZE,
+			DATA_WIDTH           => DATA_WIDTH,
+			BRAM_ADDR_WIDTH		 => BRAM_ADDR_WIDTH,
+			DATA_FILENAME        => IFileName,
+			FILE_EXTENSION       => FILE_EXTENSION
+		)
+		port map(
+			clk         => clk,
+			readyMEM    => readyMEM,
+			addrMEM     => addrMEM,
+			rdMEM       => rdMEM,
+			wrMEM       => wrMEM,
+			dataMEM  	=> dataMEM,
+			reset       => reset
+		);
+
+--  imem:        entity work.bram  generic map ( INIT =>  (IFileName & ".imem"))
+--               port map (clk, '0', pc(11 downto 2), (others=>'0'), IF_ir);
 
 -------------------- IF/ID Pipeline Register -----------------------------------
                                                  
@@ -162,7 +244,7 @@ WB_Func <= 	MA.i.funct when rising_edge(clk);
 -- The following logic looks for all kinds of jump comands and orders 3 stalls.
 -- TODO EX.MemRead is equal to EX.c.mem2reg ?
 				
-Stall_disablePC <= 	'1' when  		((EX.c.mem2reg = '1') 						
+stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1') 						
       and (ForwardA = fromALUe                                            or ForwardB = fromALUe))            
       or ((EX.i.Opc = I_BEQ.OPC)                                          or (MA.i.Opc = I_BEQ.OPC)     or  (WB_Opc = I_BEQ.OPC))           --ok
       or ((EX.i.Opc = I_BNE.OPC)                                          or (MA.i.Opc = I_BNE.OPC)     or  (WB_Opc = I_BNE.OPC))           --ok
@@ -193,7 +275,7 @@ Stall_disablePC <= 	'1' when  		((EX.c.mem2reg = '1')
 -------------------- ID/EX Pipeline Register with Multiplexer Stalling----------
 -- bubble = "0000..." nop command. It will passed on at each Stalling signal
 
-  EX  <= Bubble when Stall_disablePC = '1' and rising_edge(clk) else
+  EX  <= Bubble when stallCPU = '1' and rising_edge(clk) else
          (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
 --  EX        <= (c, i, wa, a, b, signext, ID.pc4, rd2) when rising_edge(clk);
 

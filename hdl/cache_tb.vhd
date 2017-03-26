@@ -275,7 +275,6 @@ architecture tests of cache_tb is
 		report "-------------------------------------------------------------------" severity NOTE;
 	end;
 	
-	
 	procedure VALIDATE( cycles : in INTEGER; 
 		expectedStallCPU_duringLoop : in STD_LOGIC;
 		expectedMissCounter_duringLoop : in INTEGER;
@@ -586,9 +585,6 @@ begin
 			expected_hitCounter := expected_hitCounter + 1;
 			VALIDATE_SIGNALS(stallCPU, '0', missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 	
-							report "11111111111";
-	
-	
 			PRINT_HITCOUNTER( hitCounter, missCounter );
 		end loop;
 		
@@ -625,22 +621,16 @@ begin
 			expected_stallCPU := '1';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			
-						report "---------";
-			
-			
 			wait until rising_edge(clk);
 			for I in 1 to 45 loop
 				wait until rising_edge(clk);
 				expected_stallCPU := '1';
 				VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
-						report "%%%%%%%%%";
 			
 			end loop;
 			wait until rising_edge(clk);
 			expected_stallCPU := '0';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter+1, hitCounter, expected_hitCounter);
-			
-									report "00000000";
 			
 			PRINT_HITCOUNTER( hitCounter, missCounter );
 			wait until rising_edge(clk);
@@ -696,7 +686,8 @@ begin
 			expected_hitCounter 	:= hitCounter;
 			expected_missCounter	:= missCounter;
 			PRINT_HITCOUNTER( missCounter, hitCounter );
-			VALIDATE_SIGNALS(stallCPU, '0', missCounter, expected_missCounter, hitCounter, expected_hitCounter);
+			expected_stallCPU := '1';
+			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			for I in 1 to 23 loop
 				wait until rising_edge(clk);
 				expected_stallCPU := '1';
@@ -732,7 +723,10 @@ begin
 		wait until rising_edge(clk);
 		reset <= '0';
 		wait until rising_edge(clk);
-		VALIDATE_SIGNALS(stallCPU, '0', missCounter, 0, hitCounter, 0);
+		expected_missCounter := 0;
+		expected_hitCounter  := 0;
+		expected_stallCPU := '0';
+		VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 		
 		-- Define tag and offset.
 		tag_integer := 0;
@@ -761,7 +755,8 @@ begin
 			expected_hitCounter := hitCounter;
 			expected_missCounter := missCounter;
 			PRINT_HITCOUNTER( missCounter, hitCounter );
-			--VALIDATE_SIGNALS(stallCPU, '0', missCounter, expectedMissCounter, hitCounter, expectedHitCounter);
+			expected_stallCPU := '1';
+			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			for I in 1 to 23 loop
 				expected_missCounter := missCounter;
 				wait until rising_edge(clk);
@@ -809,7 +804,7 @@ begin
 			expected_hitCounter := hitCounter;
 			expected_missCounter := missCounter;
 			PRINT_HITCOUNTER( missCounter, hitCounter );
-			expected_stallCPU := '0';
+			expected_stallCPU := '1';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			for I in 1 to 46 loop
 				expected_missCounter := missCounter;
@@ -847,7 +842,10 @@ begin
 		wait until rising_edge(clk);
 		reset <= '0';
 		wait until rising_edge(clk);
-		VALIDATE_SIGNALS(stallCPU, '0', missCounter, 0, hitCounter, 0);
+		expected_missCounter := 0;
+		expected_hitCounter  := 0;
+		expected_stallCPU := '0';
+		VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 		
 		-- Define tag and offset.
 		tag_integer := 0;
@@ -916,7 +914,7 @@ begin
 			wrCPU <= '0';
 			expected_hitCounter 	:= hitCounter;
 			expected_missCounter 	:= missCounter;
-			expected_stallCPU 		:= '0';
+			expected_stallCPU 		:= '1';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			for I in 1 to 23 loop
 				expected_missCounter := missCounter;
@@ -1021,11 +1019,12 @@ begin
 			expected_hitCounter := hitCounter;
 			expected_missCounter := missCounter;
 			PRINT_HITCOUNTER( missCounter, hitCounter );
-			expected_stallCPU := '0';
+			expected_stallCPU := '1';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			wait until rising_edge(clk);
 			wait until rising_edge(clk);
 			wait until rising_edge(clk);
+			expected_stallCPU := '0';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter+1);
 			PRINT_HITCOUNTER( hitCounter, missCounter );
 		end loop;
@@ -1117,11 +1116,12 @@ begin
 			rdCPU <= '0';
 			expected_hitCounter := hitCounter;
 			expected_missCounter := missCounter;
-			expected_stallCPU := '0';
+			expected_stallCPU := '1';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			wait until rising_edge(clk);
 			wait until rising_edge(clk);
 			wait until rising_edge(clk);
+			expected_stallCPU := '0';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter+1);
 			VALIDATE_SIGNAL( "dataCPU", dataCPU, expectedDataCPU );
 		end loop;
@@ -1218,7 +1218,7 @@ begin
 			rdCPU <= '0';
 			expected_hitCounter := hitCounter;
 			expected_missCounter := missCounter;
-			expected_stallCPU := '0';
+			expected_stallCPU := '1';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			for I in 1 to 46 loop
 				expected_missCounter := missCounter;
@@ -1254,7 +1254,7 @@ begin
 			rdCPU <= '0';
 			expected_hitCounter := hitCounter;
 			expected_missCounter := missCounter;
-			expected_stallCPU := '0';
+			expected_stallCPU := '1';
 			VALIDATE_SIGNALS(stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 			for I in 1 to 46 loop
 				expected_missCounter := missCounter;

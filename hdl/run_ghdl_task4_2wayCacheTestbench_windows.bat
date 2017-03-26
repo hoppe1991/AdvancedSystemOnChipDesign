@@ -17,6 +17,8 @@ SET dataFilenameCache2="../imem/data%1_cache2"
 SET tagFilenameCache1="../imem/tag%1_cache1"
 SET tagFilenameCache2="../imem/tag%1_cache2"
 SET fileExtension=".imem"
+SET ghwFilename="twoWayCacheTestbench"
+
 
 REM Remove the work directory if it already exists.
 echo ++++++++++ Create work folder +++++++++++++++++++++++++++++++++
@@ -63,4 +65,4 @@ echo ++++++++++ analyze automatically outdated files and create an executable ++
 ghdl -m -g -O3 --ieee=synopsys --workdir=%location% twoWayAssociativeCache_tb
 echo.
 echo ++++++++++ run the executable for 15us and save all waveforms ++++++++++
-ghdl -r -g -O3 --ieee=synopsys --workdir=%location% twoWayAssociativeCache_tb --stop-time=300000ns  --wave=../sim/cacheTestbench.ghw -gREPLACEMENT_STRATEGY=%replacementStrategy% -gDATA_FILENAME_CACHE2=%dataFilenameCache2% -gDATA_FILENAME_CACHE1=%dataFilenameCache1% -gTAG_FILENAME_CACHE1=%tagFilenameCache1% -gTAG_FILENAME_CACHE2=%tagFilenameCache2% -gFILE_EXTENSION=%fileExtension%
+ghdl -r -g -O3 --ieee=synopsys --workdir=%location% twoWayAssociativeCache_tb --stop-time=300000ns --wave=../sim/%ghwFilename%.ghw -gMAIN_MEMORY_FILENAME=%mainMemoryFilename% -gREPLACEMENT_STRATEGY=%replacementStrategy% -gDATA_FILENAME_CACHE2=%dataFilenameCache2% -gDATA_FILENAME_CACHE1=%dataFilenameCache1% -gTAG_FILENAME_CACHE1=%tagFilenameCache1% -gTAG_FILENAME_CACHE2=%tagFilenameCache2% -gFILE_EXTENSION=%fileExtension%

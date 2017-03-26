@@ -45,7 +45,9 @@ architecture struct of mips is
 	signal rdMEM, wrMEM : STD_LOGIC := '0';
 	signal dataMEM		: STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
 	
-	signal stallFromCache : STD_LOGIC := '0';
+	signal stallFromCache 	: STD_LOGIC := '0';
+  	signal stallFromCPU		: STD_LOGIC := '0';
+	signal stallCPU 		: STD_LOGIC := '0';
 
   signal zero,
          lez,
@@ -89,8 +91,6 @@ architecture struct of mips is
          forwardB : ForwardType := FromREG;
   signal WB_Opc  ,WB_Func   : STD_LOGIC_VECTOR(5 downto 0) := "000000";
 
-  signal Stall_disablePC     : STD_LOGIC := '0';
-
   signal Bubble     : EXType := (
                   ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
                    '0', "0000",WORD),
@@ -102,6 +102,10 @@ architecture struct of mips is
                   "00000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
 
 begin
+
+	-- Determine whether to stall the CPU or not.
+	stallCPU <= stallFromCache or stallFromCPU;
+
 
 -------------------- Instruction Fetch Phase (IF) -----------------------------
   pc        <= nextpc when rising_edge(clk);
@@ -121,7 +125,8 @@ begin
                   pc          when (IF_ir(31 downto 26) = "000100") or (i.mnem = BEQ) or (EX.i.mnem = BEQ) or (MA.i.mnem = BEQ) else --BEQ
                   pc          when (IF_ir(31 downto 26) = "000010") or (i.mnem = J)   or (EX.i.mnem = J)   or (MA.i.mnem = J)   else --J
                   pc          when ((IF_ir(5 downto  0) = "001000") and (IF_ir(31 downto 26) = "000000" )) or						  --JR
-                                    (i.mnem = JR) or (EX.i.mnem = JR) or (MA.i.mnem = JR)  else 
+                                    (i.mnem = JR) or (EX.i.mnem = JR) or (MA.i.mnem = JR)  else
+                  pc		  when (stallFromCache='1') else
                   pc4	; -- standard case: pc + 4, take following instruction;
 
 
@@ -144,7 +149,7 @@ begin
 			reset       => reset,
 			hitCounter  => hitCounter,
 			missCounter => missCounter,
-			stallCPU    => stallFromCache, --Stall_disablePC,
+			stallCPU    => stallFromCache,
 			rdCPU       => '1',
 			wrCPU       => '0',
 			addrCPU     => pc,
@@ -239,7 +244,7 @@ WB_Func <= 	MA.i.funct when rising_edge(clk);
 -- The following logic looks for all kinds of jump comands and orders 3 stalls.
 -- TODO EX.MemRead is equal to EX.c.mem2reg ?
 				
-Stall_disablePC <= 	'1' when  		((EX.c.mem2reg = '1') 						
+stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1') 						
       and (ForwardA = fromALUe                                            or ForwardB = fromALUe))            
       or ((EX.i.Opc = I_BEQ.OPC)                                          or (MA.i.Opc = I_BEQ.OPC)     or  (WB_Opc = I_BEQ.OPC))           --ok
       or ((EX.i.Opc = I_BNE.OPC)                                          or (MA.i.Opc = I_BNE.OPC)     or  (WB_Opc = I_BNE.OPC))           --ok
@@ -270,7 +275,7 @@ Stall_disablePC <= 	'1' when  		((EX.c.mem2reg = '1')
 -------------------- ID/EX Pipeline Register with Multiplexer Stalling----------
 -- bubble = "0000..." nop command. It will passed on at each Stalling signal
 
-  EX  <= Bubble when Stall_disablePC = '1' and rising_edge(clk) else
+  EX  <= Bubble when stallCPU = '1' and rising_edge(clk) else
          (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
 --  EX        <= (c, i, wa, a, b, signext, ID.pc4, rd2) when rising_edge(clk);
 

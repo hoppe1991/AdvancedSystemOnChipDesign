@@ -45,12 +45,18 @@ begin
 
   -- Generate reset for first two clock cycles
   process begin
-    reset <= '0';
-    wait for 2 ns;
-    reset <= '1';
-    wait for 20 ns;
+  	
+  	reset <= '1';
+	wait until rising_edge(clk);
     reset <= '0';
     wait;
+  	
+--    reset <= '0';
+--    wait for 2 ns;
+--    reset <= '1';
+--    wait for 20 ns;
+--    reset <= '0';
+--    wait;
   end process;
 
   -- check that 7 gets written to address 84 at end of program

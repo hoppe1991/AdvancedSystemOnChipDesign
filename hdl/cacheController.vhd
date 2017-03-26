@@ -127,9 +127,7 @@ architecture synth of cacheController is
 	
 	signal addrCPUZero : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
 	signal addressCPU : MEMORY_ADDRESS := TO_MEMORY_ADDRESS(addrCPUZero);
-	
-	signal toCacheState : STD_LOGIC := '0';
-	
+	 
 	-- Current state of FSM.
 	signal state     : statetype := IDLE;
 	
@@ -303,7 +301,7 @@ begin
 		       rHitCt+1 when state=CHECK2 and hitFromCache='1' and rising_edge(clk) and auxiliaryCounter=0;
 		       
 	rMissCt <= 0 when reset='1' else
-			   rMissCt+1 when state=TOCACHE2 and rising_edge(clk) else
+			   rMissCt+1 when state=read and readyMEM='1' and rising_edge(clk) else
 			   rMissCt+1 when state=TOCACHE1 and rising_edge(clk);
 				    
 	-- Export the miss counter and hit counter.
@@ -340,16 +338,15 @@ begin
 	
 	-- ------------------------------------------------------------------------------------
 	-- Determine whether to stall the CPU.
-	-- ------------------------------------------------------------------------------------
-	toCacheState <= '1' when state=TOCACHE1 or state=TOCACHE2 else
-					'0' when state=IDLE and rising_edge(clk);
+	-- ------------------------------------------------------------------------------------ 
 	
 	stallCPU <= --'0' when (state=IDLE and toCacheState='1') else
 				'1' when (state=IDLE and wrCPU='1' and rdCPU = '0') else
 		        '1' when (state=IDLE and wrCPU='0' and rdCPU = '1') else
 		        '0' when (state=TOCACHE1 or state=TOCACHE2) else
 		        '0' when (state=CHECK1 and hitFromCache='1' and valid='1' and auxiliaryCounter=0) else
-		        '0' when (state=CHECK2 and hitFromCache='1' and valid='1' and auxiliaryCounter=0);
+		        '0' when (state=CHECK2 and hitFromCache='1' and valid='1' and auxiliaryCounter=0) else
+		        '0' when (state=IDLE);
 	
 	-- ------------------------------------------------------------------------------------
 	-- Determine whether to read or to write from the Main Memory.

@@ -1,17 +1,14 @@
 TODO Liste
 Treffen 08.03.2017
 --------------------------------------------
-
-							
 2017-03-20	[Task 4]		Was bedeutet "main memory: BlockRAM (4K x 128) with ready signal after 20 cycles"?
 
 2017-03-08	[Task 4]		Wolfgang fragen, was ist mit n-way caches gemeint?
 
 2017-03-08	[Task 4, Doku]	Aktualisierung der Finite State Machine in der Dokumentation und Anpassung an die Implementierung.
-							- Wartezustand unten links und unten rechts (nach writeback) 
 							- Schriftgröße anpassen
-							- In Textform die Kontrollsignale detailliert beschreiben (Einzelne Signale etc.)
-							- Signale und Zustände genau beschreiben
+
+2017-03-26	[Task 4, Doku]	Schreiben des Kapitels "3.6 Design a 2-way associative Data Cache incl. Controller"
 
 2017-03-08	[Task 4] 		Entwurf der Finite State Machine bzgl. 2-way set associative cache.
 							(a) Eine FSM für LRU-Strategie und eine FSM für Random Strategie.	ODER
@@ -37,11 +34,13 @@ Leonard Hendrik
 2017-03-20	[Task 4, Doku]	Korrekturlesen Kapitel "3.3 Design a direct mapped cache"
 Leonard Hendrik
 2017-03-20	[Task 4, Doku]	Korrekturlesen Kapitel "3.4 Design a Finite State Machine for the Cache"
-							- Aktualisierung wird noch benötigt.
-Leonard Hendrik
+Leonard Hendrik				- Aktualisierung wird noch benötigt.
 
 2017-03-20	[Task 4, Doku]	Korrekturlesen Kapitel "3.5 Design a testbench and simulate the Cache"
 Leonard Hendrik
+
+2017-03-26	[Task 4, Doku]	Korrekturlesen Kapitel "3.7 Replace the Instruction Memory of the MIPS CPU with the CPU"
+Leonard, Hendrik
 
 2017-03-20	[Doku]			Beschreibung, welche ausführbaren Daten wie auszuführen sind und wofür.
 
@@ -56,6 +55,12 @@ Leonard Hendrik
 
 Erledigt
 --------------------------------------------
+
+2017-03-08	[Task 4, Doku]	Aktualisierung der Finite State Machine in der Dokumentation und Anpassung an die Implementierung.
+Carsten						- Wartezustand unten links und unten rechts (nach writeback) 
+							- In Textform die Kontrollsignale detailliert beschreiben (Einzelne Signale etc.)
+							- Signale und Zustände genau beschreiben
+
 2017-03-24	[All]			Dateien aus Repositority löschen, die nicht benötigt werden:
 							- mips.o
 							- mips.vhd~

@@ -104,7 +104,7 @@ architecture struct of mips is
 begin
 
 	-- Determine whether to stall the CPU or not.
-	stallCPU <= stallFromCache or stallFromCPU;
+	stallCPU <= stallFromCache ;--or stallFromCPU;
 
 
 -------------------- Instruction Fetch Phase (IF) -----------------------------
@@ -115,10 +115,16 @@ begin
    FOUNDJR <= '1' when (i.mnem = JR);
 -- TODO REMOVE
     
-  nextpc    <= 	  MA.pcjump   when MA.c.jump  = '1' else -- j / jal jump addr
-                  MA.pcbranch when branch     = '1' else -- branch (bne, beq) addr
-                  MA.a        when MA.c.jr    = '1' else -- jr addr
+	pcm12 <= 	  to_slv(unsigned(MA.pcjump) + 4)    when MA.c.jump  = '1' else -- j / jal jump addr
+                  to_slv(unsigned(MA.pcbranch) + 4) when branch     = '1' else -- branch (bne, beq) addr
+                  to_slv(unsigned(MA.a) + 4)        when MA.c.jr    = '1' ; -- jr addr
+
+
+  nextpc    <= 	   pcm12  	when MA.c.jump  = '1' else -- j / jal jump addr				MA.pcjump
+                   pcm12 	when branch     = '1' else -- branch (bne, beq) addr				MA.pcbranch
+                   pcm12    when MA.c.jr    = '1' else -- jr addr						MA.a   
                   -- The conditions below cause the program counter to stop increasing (freezing the PC)   
+			 	  pc4		  when (stallFromCache='0' and stallFromCPU = '0') else
                   pc          when (IF_ir(31 downto 26) = "100011")   else --LW
                   pc          when (IF_ir(31 downto 26) = "000011") or (i.mnem = JAL) or (EX.i.mnem = JAL) or (MA.i.mnem = JAL) else --JAL
                   pc          when (IF_ir(31 downto 26) = "000101") or (i.mnem = BNE) or (EX.i.mnem = BNE) or (MA.i.mnem = BNE) else --BNE
@@ -126,7 +132,7 @@ begin
                   pc          when (IF_ir(31 downto 26) = "000010") or (i.mnem = J)   or (EX.i.mnem = J)   or (MA.i.mnem = J)   else --J
                   pc          when ((IF_ir(5 downto  0) = "001000") and (IF_ir(31 downto 26) = "000000" )) or						  --JR
                                     (i.mnem = JR) or (EX.i.mnem = JR) or (MA.i.mnem = JR)  else
-                  pc		  when (stallFromCache='1') else
+                  pc		  when (stallFromCache='1' or stallFromCPU = '1') else
                   pc4	; -- standard case: pc + 4, take following instruction;
 
 
@@ -275,7 +281,7 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
 -------------------- ID/EX Pipeline Register with Multiplexer Stalling----------
 -- bubble = "0000..." nop command. It will passed on at each Stalling signal
 
-  EX  <= Bubble when stallCPU = '1' and rising_edge(clk) else
+  EX  <= Bubble when (stallCPU = '1' or stallfromCPU = '1') and rising_edge(clk) else
          (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
 --  EX        <= (c, i, wa, a, b, signext, ID.pc4, rd2) when rising_edge(clk);
 

@@ -1,0 +1,90 @@
+[*]
+[*] GTKWave Analyzer v3.3.66 (w)1999-2015 BSI
+[*] Mon Mar 27 06:22:10 2017
+[*]
+[dumpfile] "/home/hendrik/Software/AdvancedSystemOnChipDesign/sim/branchTestWithNop.ghw"
+[dumpfile_mtime] "Mon Mar 27 06:13:44 2017"
+[dumpfile_size] 1093368
+[savefile] "/home/hendrik/Software/AdvancedSystemOnChipDesign/sim/HendriksSaveFile_mipsWithCache2.gtkw"
+[timestart] 0
+[size] 1841 1056
+[pos] 10443 0
+*-25.000000 3276500000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.mips_with_instructioncache_tb.
+[treeopen] top.mips_with_instructioncache_tb.dut.
+[treeopen] top.mips_with_instructioncache_tb.dut.c.
+[treeopen] top.mips_with_instructioncache_tb.dut.ex.
+[treeopen] top.mips_with_instructioncache_tb.dut.ex.c.
+[treeopen] top.mips_with_instructioncache_tb.dut.ex.i.
+[treeopen] top.mips_with_instructioncache_tb.dut.i.
+[treeopen] top.mips_with_instructioncache_tb.dut.ma.
+[treeopen] top.mips_with_instructioncache_tb.dut.wb.c.
+[sst_width] 196
+[signals_width] 343
+[sst_expanded] 1
+[sst_vpaned_height] 315
+@28
+top.mips_with_instructioncache_tb.clk
+@200
+-ID
+@28
+[color] 5
+top.mips_with_instructioncache_tb.dut.i.mnem
+@200
+-EX
+@28
+[color] 5
+top.mips_with_instructioncache_tb.dut.ex.i.mnem
+@200
+-MA
+@28
+[color] 5
+top.mips_with_instructioncache_tb.dut.ma.i.mnem
+@200
+-WB
+-Stalling Signals
+@28
+top.mips_with_instructioncache_tb.dut.stallcpu
+top.mips_with_instructioncache_tb.dut.stallfromcpu
+top.mips_with_instructioncache_tb.dut.stallfromcache
+@200
+-PC and Jump
+@24
+[color] 3
+#{top.mips_with_instructioncache_tb.dut.pc[31:0]} top.mips_with_instructioncache_tb.dut.pc[31] top.mips_with_instructioncache_tb.dut.pc[30] top.mips_with_instructioncache_tb.dut.pc[29] top.mips_with_instructioncache_tb.dut.pc[28] top.mips_with_instructioncache_tb.dut.pc[27] top.mips_with_instructioncache_tb.dut.pc[26] top.mips_with_instructioncache_tb.dut.pc[25] top.mips_with_instructioncache_tb.dut.pc[24] top.mips_with_instructioncache_tb.dut.pc[23] top.mips_with_instructioncache_tb.dut.pc[22] top.mips_with_instructioncache_tb.dut.pc[21] top.mips_with_instructioncache_tb.dut.pc[20] top.mips_with_instructioncache_tb.dut.pc[19] top.mips_with_instructioncache_tb.dut.pc[18] top.mips_with_instructioncache_tb.dut.pc[17] top.mips_with_instructioncache_tb.dut.pc[16] top.mips_with_instructioncache_tb.dut.pc[15] top.mips_with_instructioncache_tb.dut.pc[14] top.mips_with_instructioncache_tb.dut.pc[13] top.mips_with_instructioncache_tb.dut.pc[12] top.mips_with_instructioncache_tb.dut.pc[11] top.mips_with_instructioncache_tb.dut.pc[10] top.mips_with_instructioncache_tb.dut.pc[9] top.mips_with_instructioncache_tb.dut.pc[8] top.mips_with_instructioncache_tb.dut.pc[7] top.mips_with_instructioncache_tb.dut.pc[6] top.mips_with_instructioncache_tb.dut.pc[5] top.mips_with_instructioncache_tb.dut.pc[4] top.mips_with_instructioncache_tb.dut.pc[3] top.mips_with_instructioncache_tb.dut.pc[2] top.mips_with_instructioncache_tb.dut.pc[1] top.mips_with_instructioncache_tb.dut.pc[0]
+@22
+[color] 3
+#{top.mips_with_instructioncache_tb.dut.pc4[31:0]} top.mips_with_instructioncache_tb.dut.pc4[31] top.mips_with_instructioncache_tb.dut.pc4[30] top.mips_with_instructioncache_tb.dut.pc4[29] top.mips_with_instructioncache_tb.dut.pc4[28] top.mips_with_instructioncache_tb.dut.pc4[27] top.mips_with_instructioncache_tb.dut.pc4[26] top.mips_with_instructioncache_tb.dut.pc4[25] top.mips_with_instructioncache_tb.dut.pc4[24] top.mips_with_instructioncache_tb.dut.pc4[23] top.mips_with_instructioncache_tb.dut.pc4[22] top.mips_with_instructioncache_tb.dut.pc4[21] top.mips_with_instructioncache_tb.dut.pc4[20] top.mips_with_instructioncache_tb.dut.pc4[19] top.mips_with_instructioncache_tb.dut.pc4[18] top.mips_with_instructioncache_tb.dut.pc4[17] top.mips_with_instructioncache_tb.dut.pc4[16] top.mips_with_instructioncache_tb.dut.pc4[15] top.mips_with_instructioncache_tb.dut.pc4[14] top.mips_with_instructioncache_tb.dut.pc4[13] top.mips_with_instructioncache_tb.dut.pc4[12] top.mips_with_instructioncache_tb.dut.pc4[11] top.mips_with_instructioncache_tb.dut.pc4[10] top.mips_with_instructioncache_tb.dut.pc4[9] top.mips_with_instructioncache_tb.dut.pc4[8] top.mips_with_instructioncache_tb.dut.pc4[7] top.mips_with_instructioncache_tb.dut.pc4[6] top.mips_with_instructioncache_tb.dut.pc4[5] top.mips_with_instructioncache_tb.dut.pc4[4] top.mips_with_instructioncache_tb.dut.pc4[3] top.mips_with_instructioncache_tb.dut.pc4[2] top.mips_with_instructioncache_tb.dut.pc4[1] top.mips_with_instructioncache_tb.dut.pc4[0]
+@28
+[color] 3
+#{top.mips_with_instructioncache_tb.dut.pcjump[31:0]} top.mips_with_instructioncache_tb.dut.pcjump[31] top.mips_with_instructioncache_tb.dut.pcjump[30] top.mips_with_instructioncache_tb.dut.pcjump[29] top.mips_with_instructioncache_tb.dut.pcjump[28] top.mips_with_instructioncache_tb.dut.pcjump[27] top.mips_with_instructioncache_tb.dut.pcjump[26] top.mips_with_instructioncache_tb.dut.pcjump[25] top.mips_with_instructioncache_tb.dut.pcjump[24] top.mips_with_instructioncache_tb.dut.pcjump[23] top.mips_with_instructioncache_tb.dut.pcjump[22] top.mips_with_instructioncache_tb.dut.pcjump[21] top.mips_with_instructioncache_tb.dut.pcjump[20] top.mips_with_instructioncache_tb.dut.pcjump[19] top.mips_with_instructioncache_tb.dut.pcjump[18] top.mips_with_instructioncache_tb.dut.pcjump[17] top.mips_with_instructioncache_tb.dut.pcjump[16] top.mips_with_instructioncache_tb.dut.pcjump[15] top.mips_with_instructioncache_tb.dut.pcjump[14] top.mips_with_instructioncache_tb.dut.pcjump[13] top.mips_with_instructioncache_tb.dut.pcjump[12] top.mips_with_instructioncache_tb.dut.pcjump[11] top.mips_with_instructioncache_tb.dut.pcjump[10] top.mips_with_instructioncache_tb.dut.pcjump[9] top.mips_with_instructioncache_tb.dut.pcjump[8] top.mips_with_instructioncache_tb.dut.pcjump[7] top.mips_with_instructioncache_tb.dut.pcjump[6] top.mips_with_instructioncache_tb.dut.pcjump[5] top.mips_with_instructioncache_tb.dut.pcjump[4] top.mips_with_instructioncache_tb.dut.pcjump[3] top.mips_with_instructioncache_tb.dut.pcjump[2] top.mips_with_instructioncache_tb.dut.pcjump[1] top.mips_with_instructioncache_tb.dut.pcjump[0]
+@22
+#{top.mips_with_instructioncache_tb.dut.pcbranch[31:0]} top.mips_with_instructioncache_tb.dut.pcbranch[31] top.mips_with_instructioncache_tb.dut.pcbranch[30] top.mips_with_instructioncache_tb.dut.pcbranch[29] top.mips_with_instructioncache_tb.dut.pcbranch[28] top.mips_with_instructioncache_tb.dut.pcbranch[27] top.mips_with_instructioncache_tb.dut.pcbranch[26] top.mips_with_instructioncache_tb.dut.pcbranch[25] top.mips_with_instructioncache_tb.dut.pcbranch[24] top.mips_with_instructioncache_tb.dut.pcbranch[23] top.mips_with_instructioncache_tb.dut.pcbranch[22] top.mips_with_instructioncache_tb.dut.pcbranch[21] top.mips_with_instructioncache_tb.dut.pcbranch[20] top.mips_with_instructioncache_tb.dut.pcbranch[19] top.mips_with_instructioncache_tb.dut.pcbranch[18] top.mips_with_instructioncache_tb.dut.pcbranch[17] top.mips_with_instructioncache_tb.dut.pcbranch[16] top.mips_with_instructioncache_tb.dut.pcbranch[15] top.mips_with_instructioncache_tb.dut.pcbranch[14] top.mips_with_instructioncache_tb.dut.pcbranch[13] top.mips_with_instructioncache_tb.dut.pcbranch[12] top.mips_with_instructioncache_tb.dut.pcbranch[11] top.mips_with_instructioncache_tb.dut.pcbranch[10] top.mips_with_instructioncache_tb.dut.pcbranch[9] top.mips_with_instructioncache_tb.dut.pcbranch[8] top.mips_with_instructioncache_tb.dut.pcbranch[7] top.mips_with_instructioncache_tb.dut.pcbranch[6] top.mips_with_instructioncache_tb.dut.pcbranch[5] top.mips_with_instructioncache_tb.dut.pcbranch[4] top.mips_with_instructioncache_tb.dut.pcbranch[3] top.mips_with_instructioncache_tb.dut.pcbranch[2] top.mips_with_instructioncache_tb.dut.pcbranch[1] top.mips_with_instructioncache_tb.dut.pcbranch[0]
+@28
+top.mips_with_instructioncache_tb.dut.branch
+top.mips_with_instructioncache_tb.dut.c.jump
+top.mips_with_instructioncache_tb.dut.c.jr
+@200
+-MA PC Branch
+@25
+#{top.mips_with_instructioncache_tb.dut.ma.pcbranch[31:0]} top.mips_with_instructioncache_tb.dut.ma.pcbranch[31] top.mips_with_instructioncache_tb.dut.ma.pcbranch[30] top.mips_with_instructioncache_tb.dut.ma.pcbranch[29] top.mips_with_instructioncache_tb.dut.ma.pcbranch[28] top.mips_with_instructioncache_tb.dut.ma.pcbranch[27] top.mips_with_instructioncache_tb.dut.ma.pcbranch[26] top.mips_with_instructioncache_tb.dut.ma.pcbranch[25] top.mips_with_instructioncache_tb.dut.ma.pcbranch[24] top.mips_with_instructioncache_tb.dut.ma.pcbranch[23] top.mips_with_instructioncache_tb.dut.ma.pcbranch[22] top.mips_with_instructioncache_tb.dut.ma.pcbranch[21] top.mips_with_instructioncache_tb.dut.ma.pcbranch[20] top.mips_with_instructioncache_tb.dut.ma.pcbranch[19] top.mips_with_instructioncache_tb.dut.ma.pcbranch[18] top.mips_with_instructioncache_tb.dut.ma.pcbranch[17] top.mips_with_instructioncache_tb.dut.ma.pcbranch[16] top.mips_with_instructioncache_tb.dut.ma.pcbranch[15] top.mips_with_instructioncache_tb.dut.ma.pcbranch[14] top.mips_with_instructioncache_tb.dut.ma.pcbranch[13] top.mips_with_instructioncache_tb.dut.ma.pcbranch[12] top.mips_with_instructioncache_tb.dut.ma.pcbranch[11] top.mips_with_instructioncache_tb.dut.ma.pcbranch[10] top.mips_with_instructioncache_tb.dut.ma.pcbranch[9] top.mips_with_instructioncache_tb.dut.ma.pcbranch[8] top.mips_with_instructioncache_tb.dut.ma.pcbranch[7] top.mips_with_instructioncache_tb.dut.ma.pcbranch[6] top.mips_with_instructioncache_tb.dut.ma.pcbranch[5] top.mips_with_instructioncache_tb.dut.ma.pcbranch[4] top.mips_with_instructioncache_tb.dut.ma.pcbranch[3] top.mips_with_instructioncache_tb.dut.ma.pcbranch[2] top.mips_with_instructioncache_tb.dut.ma.pcbranch[1] top.mips_with_instructioncache_tb.dut.ma.pcbranch[0]
+#{top.mips_with_instructioncache_tb.dut.ma.pcjump[31:0]} top.mips_with_instructioncache_tb.dut.ma.pcjump[31] top.mips_with_instructioncache_tb.dut.ma.pcjump[30] top.mips_with_instructioncache_tb.dut.ma.pcjump[29] top.mips_with_instructioncache_tb.dut.ma.pcjump[28] top.mips_with_instructioncache_tb.dut.ma.pcjump[27] top.mips_with_instructioncache_tb.dut.ma.pcjump[26] top.mips_with_instructioncache_tb.dut.ma.pcjump[25] top.mips_with_instructioncache_tb.dut.ma.pcjump[24] top.mips_with_instructioncache_tb.dut.ma.pcjump[23] top.mips_with_instructioncache_tb.dut.ma.pcjump[22] top.mips_with_instructioncache_tb.dut.ma.pcjump[21] top.mips_with_instructioncache_tb.dut.ma.pcjump[20] top.mips_with_instructioncache_tb.dut.ma.pcjump[19] top.mips_with_instructioncache_tb.dut.ma.pcjump[18] top.mips_with_instructioncache_tb.dut.ma.pcjump[17] top.mips_with_instructioncache_tb.dut.ma.pcjump[16] top.mips_with_instructioncache_tb.dut.ma.pcjump[15] top.mips_with_instructioncache_tb.dut.ma.pcjump[14] top.mips_with_instructioncache_tb.dut.ma.pcjump[13] top.mips_with_instructioncache_tb.dut.ma.pcjump[12] top.mips_with_instructioncache_tb.dut.ma.pcjump[11] top.mips_with_instructioncache_tb.dut.ma.pcjump[10] top.mips_with_instructioncache_tb.dut.ma.pcjump[9] top.mips_with_instructioncache_tb.dut.ma.pcjump[8] top.mips_with_instructioncache_tb.dut.ma.pcjump[7] top.mips_with_instructioncache_tb.dut.ma.pcjump[6] top.mips_with_instructioncache_tb.dut.ma.pcjump[5] top.mips_with_instructioncache_tb.dut.ma.pcjump[4] top.mips_with_instructioncache_tb.dut.ma.pcjump[3] top.mips_with_instructioncache_tb.dut.ma.pcjump[2] top.mips_with_instructioncache_tb.dut.ma.pcjump[1] top.mips_with_instructioncache_tb.dut.ma.pcjump[0]
+@200
+-EX Phase Command Details
+@22
+#{top.mips_with_instructioncache_tb.dut.ex.i.brtarget[25:0]} top.mips_with_instructioncache_tb.dut.ex.i.brtarget[25] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[24] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[23] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[22] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[21] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[20] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[19] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[18] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[17] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[16] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[15] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[14] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[13] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[12] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[11] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[10] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[9] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[8] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[7] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[6] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[5] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[4] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[3] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[2] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[1] top.mips_with_instructioncache_tb.dut.ex.i.brtarget[0]
+@420
+[color] 3
+#{top.mips_with_instructioncache_tb.dut.ex.i.imm[15:0]} top.mips_with_instructioncache_tb.dut.ex.i.imm[15] top.mips_with_instructioncache_tb.dut.ex.i.imm[14] top.mips_with_instructioncache_tb.dut.ex.i.imm[13] top.mips_with_instructioncache_tb.dut.ex.i.imm[12] top.mips_with_instructioncache_tb.dut.ex.i.imm[11] top.mips_with_instructioncache_tb.dut.ex.i.imm[10] top.mips_with_instructioncache_tb.dut.ex.i.imm[9] top.mips_with_instructioncache_tb.dut.ex.i.imm[8] top.mips_with_instructioncache_tb.dut.ex.i.imm[7] top.mips_with_instructioncache_tb.dut.ex.i.imm[6] top.mips_with_instructioncache_tb.dut.ex.i.imm[5] top.mips_with_instructioncache_tb.dut.ex.i.imm[4] top.mips_with_instructioncache_tb.dut.ex.i.imm[3] top.mips_with_instructioncache_tb.dut.ex.i.imm[2] top.mips_with_instructioncache_tb.dut.ex.i.imm[1] top.mips_with_instructioncache_tb.dut.ex.i.imm[0]
+@22
+#{top.mips_with_instructioncache_tb.dut.ex.i.shamt[4:0]} top.mips_with_instructioncache_tb.dut.ex.i.shamt[4] top.mips_with_instructioncache_tb.dut.ex.i.shamt[3] top.mips_with_instructioncache_tb.dut.ex.i.shamt[2] top.mips_with_instructioncache_tb.dut.ex.i.shamt[1] top.mips_with_instructioncache_tb.dut.ex.i.shamt[0]
+#{top.mips_with_instructioncache_tb.dut.ex.i.funct[5:0]} top.mips_with_instructioncache_tb.dut.ex.i.funct[5] top.mips_with_instructioncache_tb.dut.ex.i.funct[4] top.mips_with_instructioncache_tb.dut.ex.i.funct[3] top.mips_with_instructioncache_tb.dut.ex.i.funct[2] top.mips_with_instructioncache_tb.dut.ex.i.funct[1] top.mips_with_instructioncache_tb.dut.ex.i.funct[0]
+@24
+#{top.mips_with_instructioncache_tb.dut.ex.i.rs[4:0]} top.mips_with_instructioncache_tb.dut.ex.i.rs[4] top.mips_with_instructioncache_tb.dut.ex.i.rs[3] top.mips_with_instructioncache_tb.dut.ex.i.rs[2] top.mips_with_instructioncache_tb.dut.ex.i.rs[1] top.mips_with_instructioncache_tb.dut.ex.i.rs[0]
+#{top.mips_with_instructioncache_tb.dut.ex.i.rt[4:0]} top.mips_with_instructioncache_tb.dut.ex.i.rt[4] top.mips_with_instructioncache_tb.dut.ex.i.rt[3] top.mips_with_instructioncache_tb.dut.ex.i.rt[2] top.mips_with_instructioncache_tb.dut.ex.i.rt[1] top.mips_with_instructioncache_tb.dut.ex.i.rt[0]
+#{top.mips_with_instructioncache_tb.dut.ex.i.rd[4:0]} top.mips_with_instructioncache_tb.dut.ex.i.rd[4] top.mips_with_instructioncache_tb.dut.ex.i.rd[3] top.mips_with_instructioncache_tb.dut.ex.i.rd[2] top.mips_with_instructioncache_tb.dut.ex.i.rd[1] top.mips_with_instructioncache_tb.dut.ex.i.rd[0]
+@22
+#{top.mips_with_instructioncache_tb.dut.ex.i.opc[5:0]} top.mips_with_instructioncache_tb.dut.ex.i.opc[5] top.mips_with_instructioncache_tb.dut.ex.i.opc[4] top.mips_with_instructioncache_tb.dut.ex.i.opc[3] top.mips_with_instructioncache_tb.dut.ex.i.opc[2] top.mips_with_instructioncache_tb.dut.ex.i.opc[1] top.mips_with_instructioncache_tb.dut.ex.i.opc[0]
+[pattern_trace] 1
+[pattern_trace] 0

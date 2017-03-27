@@ -115,9 +115,9 @@ begin
    FOUNDJR <= '1' when (i.mnem = JR);
 -- TODO REMOVE
     
-	pcm12 <= 	  to_slv(unsigned(MA.pcjump) + 4)    when MA.c.jump  = '1' else -- j / jal jump addr
+	pcm12 <= 	  to_slv(unsigned(MA.pcjump) + 0)    when MA.c.jump  = '1' else -- j / jal jump addr
                   to_slv(unsigned(MA.pcbranch) + 4) when branch     = '1' else -- branch (bne, beq) addr
-                  to_slv(unsigned(MA.a) + 4)        when MA.c.jr    = '1' ; -- jr addr
+                  to_slv(unsigned(MA.a) + 0)        when MA.c.jr    = '1' ; -- jr addr
 
 
   nextpc    <= 	   pcm12  	when MA.c.jump  = '1' else -- j / jal jump addr				MA.pcjump

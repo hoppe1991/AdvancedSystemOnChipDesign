@@ -101,8 +101,9 @@ architecture struct of mips is
                   --wa          a         imm         pc4         rd2        rd2imm
                   "00000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
   signal StaticBranchAlwaysTaken : STD_LOGIC := '1';
-  signal pcbranchIDPhase, pcjumpIDPhase : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
+  signal pcbranchIDPhase, pcjumpIDPhase, nextpcPredicted : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
   signal branchIdPhase : STD_LOGIC := '0';
+  signal branchNotTaken : STD_LOGIC := '0';
 
 begin
 
@@ -112,22 +113,23 @@ begin
 
 -------------------- Instruction Fetch Phase (IF) -----------------------------
   pc        <= nextpc when rising_edge(clk);
+  --pc        <= nextpcPredicted when rising_edge(clk);
   pc4       <= to_slv(unsigned(pc) + 4) ;
 
 -- DEBUG signal used to find a bug in JR commands
    FOUNDJR <= '1' when (i.mnem = JR);
 -- TODO REMOVE
     
-pcm12		<=		to_slv(unsigned(MA.pcjump) + 0)   when MA.c.jump  = '1' else -- j / jal jump addr
+  pcm12		<=		to_slv(unsigned(MA.pcjump) + 0)   when MA.c.jump  = '1' else -- j / jal jump addr
               		to_slv(unsigned(MA.pcbranch) + 4) when branch     = '1' else -- branch (bne, beq) addr
               		to_slv(unsigned(MA.a) + 0)        when MA.c.jr    = '1' ; -- jr addr
 
-pcm12Predicted		<=		pc4 									when StaticBranchAlwaysTaken = '0' else -- never jump
+  pcm12Predicted	<=		pc4 									when StaticBranchAlwaysTaken = '0' else -- never jump
 							to_slv(unsigned(pcjumpIDPhase) + 0)   	when c.jump  = '1' else -- j / jal jump addr
               				to_slv(unsigned(pcbranchIDPhase) + 4) 	when branchIdPhase     = '1' else -- branch (bne, beq) addr
               				to_slv(unsigned(a) + 0)        			when c.jr    = '1' ; -- jr addr
               				
-branchIdPhase		<= '1'  when (i.Opc = I_BEQ.Opc) or
+  branchIdPhase		<= '1'  when (i.Opc = I_BEQ.Opc) or
                          	(i.Opc = I_BNE.Opc) or
                          	(i.Opc = I_BLEZ.Opc) or
                          	(i.Opc = I_BLTZ.Opc) or
@@ -135,9 +137,25 @@ branchIdPhase		<= '1'  when (i.Opc = I_BEQ.Opc) or
                				'0';
 
 
-  nextpc    <=		pcm12	when MA.c.jump  = '1' else -- j / jal jump addr				MA.pcjump
+  nextpcPredicted    <=		pcm12Predicted 		when StaticBranchAlwaysTaken = '0' 	else -- never jump
+							pcm12Predicted   	when c.jump  = '1' 					else -- j / jal jump addr
+		              		pcm12Predicted		when branchIdPhase     = '1' 		else -- branch (bne, beq) addr
+		              		pcm12Predicted      when c.jr    = '1' 					else -- jr addr   
+		                	-- The conditions below cause the program counter to stop increasing (freezing the PC)   
+					 		pc4		when (stallFromCache='0' and stallFromCPU = '0') else
+		                	pc		when (IF_ir(31 downto 26) = "100011")   else --LW
+		                	pc	    when (IF_ir(31 downto 26) = "000011") or (i.mnem = JAL) or (EX.i.mnem = JAL) or (MA.i.mnem = JAL) else --JAL
+		                	pc	    when (IF_ir(31 downto 26) = "000101") or (i.mnem = BNE) or (EX.i.mnem = BNE) or (MA.i.mnem = BNE) else --BNE
+		                	pc		when (IF_ir(31 downto 26) = "000100") or (i.mnem = BEQ) or (EX.i.mnem = BEQ) or (MA.i.mnem = BEQ) else --BEQ
+		                	pc		when (IF_ir(31 downto 26) = "000010") or (i.mnem = J)   or (EX.i.mnem = J)   or (MA.i.mnem = J)   else --J
+		                	pc		when ((IF_ir(5 downto  0) = "001000") and (IF_ir(31 downto 26) = "000000" )) or						  --JR
+		                                    (i.mnem = JR) or (EX.i.mnem = JR) or (MA.i.mnem = JR)  else
+		                	pc		when (stallFromCache='1' or stallFromCPU = '1') else
+		                	pc4	; -- standard case: pc + 4, take following instruction;
+                	
+  nextpc	<=		pcm12	when MA.c.jump  = '1' else -- j / jal jump addr				MA.pcjump
                 	pcm12 	when branch     = '1' else -- branch (bne, beq) addr		MA.pcbranch
-                	pcm12   when MA.c.jr    = '1' else -- jr addr						MA.a   
+                	pcm12   when MA.c.jr    = '1' else -- jr addr						MA.a
                 	-- The conditions below cause the program counter to stop increasing (freezing the PC)   
 			 		pc4		when (stallFromCache='0' and stallFromCPU = '0') else
                 	pc		when (IF_ir(31 downto 26) = "100011")   else --LW
@@ -336,6 +354,13 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
                          (MA.i.Opc = I_BLTZ.Opc and     MA.ltz  = '1') or
                          (MA.i.Opc = I_BGTZ.Opc and     MA.gtz  = '1') else
                '0';
+               
+  branchNotTaken    <= '1'  when (MA.i.Opc = I_BEQ.Opc  	and     MA.zero = '0') or
+                         	(MA.i.Opc = I_BNE.Opc  		and not MA.zero = '0') or
+                         	(MA.i.Opc = I_BLEZ.Opc 		and     MA.lez  = '0') or
+                         	(MA.i.Opc = I_BLTZ.Opc 		and     MA.ltz  = '0') or
+                         	(MA.i.Opc = I_BGTZ.Opc 		and     MA.gtz  = '0') else
+               				'0';
 
   dmem:        entity work.bram_be   -- data memory
                generic map ( EDGE => Falling, FNAME => DFileName)

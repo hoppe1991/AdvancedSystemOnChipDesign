@@ -84,7 +84,7 @@ architecture struct of mips is
   signal wa,
          EX_Rd  : STD_LOGIC_VECTOR(4 downto 0) := "00000";
   signal MA_Rd  : STD_LOGIC_VECTOR(4 downto 0) := "00000";
-  signal pc, pcjump, pcbranch, nextpc, pc4, pcm12, a, signext, b, rd2imm, aluout,
+  signal pc, pcjump, pcbranch, nextpc, pc4, pcm12, pcm12Predicted, a, signext, b, rd2imm, aluout,
          wd, rd, rd1, rd2, aout, WB_wd, WB_rd,
          IF_ir : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
   signal forwardA,
@@ -102,6 +102,7 @@ architecture struct of mips is
                   "00000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
   signal StaticBranchAlwaysTaken : STD_LOGIC := '1';
   signal pcbranchIDPhase, pcjumpIDPhase : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
+  signal branchIdPhase : STD_LOGIC := '0';
 
 begin
 
@@ -117,9 +118,21 @@ begin
    FOUNDJR <= '1' when (i.mnem = JR);
 -- TODO REMOVE
     
-  pcm12		<=		to_slv(unsigned(MA.pcjump) + 0)   when MA.c.jump  = '1' else -- j / jal jump addr
+pcm12		<=		to_slv(unsigned(MA.pcjump) + 0)   when MA.c.jump  = '1' else -- j / jal jump addr
               		to_slv(unsigned(MA.pcbranch) + 4) when branch     = '1' else -- branch (bne, beq) addr
               		to_slv(unsigned(MA.a) + 0)        when MA.c.jr    = '1' ; -- jr addr
+
+pcm12Predicted		<=		pc4 									when StaticBranchAlwaysTaken = '0' else -- never jump
+							to_slv(unsigned(pcjumpIDPhase) + 0)   	when c.jump  = '1' else -- j / jal jump addr
+              				to_slv(unsigned(pcbranchIDPhase) + 4) 	when branchIdPhase     = '1' else -- branch (bne, beq) addr
+              				to_slv(unsigned(a) + 0)        			when c.jr    = '1' ; -- jr addr
+              				
+branchIdPhase		<= '1'  when (i.Opc = I_BEQ.Opc) or
+                         	(i.Opc = I_BNE.Opc) or
+                         	(i.Opc = I_BLEZ.Opc) or
+                         	(i.Opc = I_BLTZ.Opc) or
+                         	(i.Opc = I_BGTZ.Opc) else
+               				'0';
 
 
   nextpc    <=		pcm12	when MA.c.jump  = '1' else -- j / jal jump addr				MA.pcjump

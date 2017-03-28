@@ -47,7 +47,7 @@ architecture struct of mips is
 	
 	signal stallFromCache 	: STD_LOGIC := '0';
   	signal stallFromCPU		: STD_LOGIC := '0';
-	signal stallCPU 		: STD_LOGIC := '0';
+	--signal stallCPU 		: STD_LOGIC := '0';
 
   signal zero,
          lez,
@@ -100,11 +100,13 @@ architecture struct of mips is
                   "000000", "00000", x"0000", "00" & x"000000"),
                   --wa          a         imm         pc4         rd2        rd2imm
                   "00000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
+  signal StaticBranchAlwaysTaken : STD_LOGIC := '1';
+  signal pcbranchIDPhase, pcjumpIDPhase : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
 
 begin
 
 	-- Determine whether to stall the CPU or not.
-	stallCPU <= stallFromCache ;--or stallFromCPU;
+	--stallCPU <= stallFromCache ;--or stallFromCPU;
 
 
 -------------------- Instruction Fetch Phase (IF) -----------------------------
@@ -115,25 +117,25 @@ begin
    FOUNDJR <= '1' when (i.mnem = JR);
 -- TODO REMOVE
     
-	pcm12 <= 	  to_slv(unsigned(MA.pcjump) + 0)    when MA.c.jump  = '1' else -- j / jal jump addr
-                  to_slv(unsigned(MA.pcbranch) + 4) when branch     = '1' else -- branch (bne, beq) addr
-                  to_slv(unsigned(MA.a) + 0)        when MA.c.jr    = '1' ; -- jr addr
+  pcm12		<=		to_slv(unsigned(MA.pcjump) + 0)   when MA.c.jump  = '1' else -- j / jal jump addr
+              		to_slv(unsigned(MA.pcbranch) + 4) when branch     = '1' else -- branch (bne, beq) addr
+              		to_slv(unsigned(MA.a) + 0)        when MA.c.jr    = '1' ; -- jr addr
 
 
-  nextpc    <= 	   pcm12  	when MA.c.jump  = '1' else -- j / jal jump addr				MA.pcjump
-                   pcm12 	when branch     = '1' else -- branch (bne, beq) addr				MA.pcbranch
-                   pcm12    when MA.c.jr    = '1' else -- jr addr						MA.a   
-                  -- The conditions below cause the program counter to stop increasing (freezing the PC)   
-			 	  pc4		  when (stallFromCache='0' and stallFromCPU = '0') else
-                  pc          when (IF_ir(31 downto 26) = "100011")   else --LW
-                  pc          when (IF_ir(31 downto 26) = "000011") or (i.mnem = JAL) or (EX.i.mnem = JAL) or (MA.i.mnem = JAL) else --JAL
-                  pc          when (IF_ir(31 downto 26) = "000101") or (i.mnem = BNE) or (EX.i.mnem = BNE) or (MA.i.mnem = BNE) else --BNE
-                  pc          when (IF_ir(31 downto 26) = "000100") or (i.mnem = BEQ) or (EX.i.mnem = BEQ) or (MA.i.mnem = BEQ) else --BEQ
-                  pc          when (IF_ir(31 downto 26) = "000010") or (i.mnem = J)   or (EX.i.mnem = J)   or (MA.i.mnem = J)   else --J
-                  pc          when ((IF_ir(5 downto  0) = "001000") and (IF_ir(31 downto 26) = "000000" )) or						  --JR
+  nextpc    <=		pcm12	when MA.c.jump  = '1' else -- j / jal jump addr				MA.pcjump
+                	pcm12 	when branch     = '1' else -- branch (bne, beq) addr		MA.pcbranch
+                	pcm12   when MA.c.jr    = '1' else -- jr addr						MA.a   
+                	-- The conditions below cause the program counter to stop increasing (freezing the PC)   
+			 		pc4		when (stallFromCache='0' and stallFromCPU = '0') else
+                	pc		when (IF_ir(31 downto 26) = "100011")   else --LW
+                	pc	    when (IF_ir(31 downto 26) = "000011") or (i.mnem = JAL) or (EX.i.mnem = JAL) or (MA.i.mnem = JAL) else --JAL
+                	pc	    when (IF_ir(31 downto 26) = "000101") or (i.mnem = BNE) or (EX.i.mnem = BNE) or (MA.i.mnem = BNE) else --BNE
+                	pc		when (IF_ir(31 downto 26) = "000100") or (i.mnem = BEQ) or (EX.i.mnem = BEQ) or (MA.i.mnem = BEQ) else --BEQ
+                	pc		when (IF_ir(31 downto 26) = "000010") or (i.mnem = J)   or (EX.i.mnem = J)   or (MA.i.mnem = J)   else --J
+                	pc		when ((IF_ir(5 downto  0) = "001000") and (IF_ir(31 downto 26) = "000000" )) or						  --JR
                                     (i.mnem = JR) or (EX.i.mnem = JR) or (MA.i.mnem = JR)  else
-                  pc		  when (stallFromCache='1' or stallFromCPU = '1') else
-                  pc4	; -- standard case: pc + 4, take following instruction;
+                	pc		when (stallFromCache='1' or stallFromCPU = '1') else
+                	pc4	; -- standard case: pc + 4, take following instruction;
 
 
 	-- ------------------------------------------------------------------------------------------
@@ -214,6 +216,11 @@ begin
 
   signext   <= X"ffff" & i.Imm  when (i.Imm(15) = '1' and c.signext = '1') else
                X"0000" & i.Imm;
+               
+ -- Effective address calculation for branch prediction
+  pcbranchIDPhase  <= to_slv(signed(ID.pc4) + signed(signext(29 downto 0) & "00"));
+
+  pcjumpIDPhase    <= ID.pc4(31 downto 28) & i.BrTarget & "00";
 
 -------------------- Multiplexers regarding Forwarding -------------------------
   a <=  rd1 when (ForwardA = fromReg) else
@@ -247,7 +254,7 @@ ForwardB <= fromALUe when ( i.Rt /= "00000" and i.Rt = EX.wa and EX.c.regwr = '1
 WB_Opc <= 	MA.i.Opc when rising_edge(clk);
 WB_Func <= 	MA.i.funct when rising_edge(clk);
 
--- The following logic looks for all kinds of jump comands and orders 3 stalls.
+-- The following logic looks for all kinds of jump commands and orders 3 stalls.
 -- TODO EX.MemRead is equal to EX.c.mem2reg ?
 				
 stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1') 						
@@ -281,7 +288,7 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
 -------------------- ID/EX Pipeline Register with Multiplexer Stalling----------
 -- bubble = "0000..." nop command. It will passed on at each Stalling signal
 
-  EX  <= Bubble when (stallCPU = '1' or stallfromCPU = '1') and rising_edge(clk) else
+  EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1') and rising_edge(clk) else
          (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
 --  EX        <= (c, i, wa, a, b, signext, ID.pc4, rd2) when rising_edge(clk);
 

@@ -103,7 +103,7 @@ architecture struct of mips is
   signal StaticBranchAlwaysTaken : STD_LOGIC := '1';
   signal pcbranchIDPhase, pcjumpIDPhase, nextpcPredicted : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
   signal branchIdPhase : STD_LOGIC := '0';
-  signal branchNotTaken : STD_LOGIC := '0';
+  signal branchNotTaken, predictionError : STD_LOGIC := '0';
 
 begin
 
@@ -112,8 +112,8 @@ begin
 
 
 -------------------- Instruction Fetch Phase (IF) -----------------------------
-  pc        <= nextpc when rising_edge(clk);
-  --pc        <= nextpcPredicted when rising_edge(clk);
+  --pc        <= nextpc when rising_edge(clk);
+  pc        <= nextpcPredicted when rising_edge(clk);
   pc4       <= to_slv(unsigned(pc) + 4) ;
 
 -- DEBUG signal used to find a bug in JR commands
@@ -137,7 +137,8 @@ begin
                				'0';
 
 
-  nextpcPredicted    <=		pcm12Predicted 		when StaticBranchAlwaysTaken = '0' 	else -- never jump
+  nextpcPredicted    <=		nextpc					when predictionError = '1'			else
+  							pcm12Predicted 		when StaticBranchAlwaysTaken = '0' 	else -- never jump
 							pcm12Predicted   	when c.jump  = '1' 					else -- j / jal jump addr
 		              		pcm12Predicted		when branchIdPhase     = '1' 		else -- branch (bne, beq) addr
 		              		pcm12Predicted      when c.jr    = '1' 					else -- jr addr   
@@ -319,8 +320,12 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
 -------------------- ID/EX Pipeline Register with Multiplexer Stalling----------
 -- bubble = "0000..." nop command. It will passed on at each Stalling signal
 
-  EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1') and rising_edge(clk) else
+  predictionError	<=	branchNotTaken xor StaticBranchAlwaysTaken;
+
+  EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1' or predictionError = '1') and rising_edge(clk) else
          (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
+--  EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1') and rising_edge(clk) else
+--         (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
 --  EX        <= (c, i, wa, a, b, signext, ID.pc4, rd2) when rising_edge(clk);
 
 -------------------- Execution Phase (EX) --------------------------------------

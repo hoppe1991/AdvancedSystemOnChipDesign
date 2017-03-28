@@ -320,7 +320,8 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
 -------------------- ID/EX Pipeline Register with Multiplexer Stalling----------
 -- bubble = "0000..." nop command. It will passed on at each Stalling signal
 
-  predictionError	<=	branchNotTaken xor StaticBranchAlwaysTaken;
+  predictionError	<=	branchNotTaken xor StaticBranchAlwaysTaken	when branch = '1'	else
+  						'0';
 
   EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1' or predictionError = '1') and rising_edge(clk) else
          (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);

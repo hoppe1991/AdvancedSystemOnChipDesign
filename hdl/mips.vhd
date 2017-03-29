@@ -103,7 +103,7 @@ architecture struct of mips is
   signal StaticBranchAlwaysTaken : STD_LOGIC := '1';
   signal pcbranchIDPhase, pcjumpIDPhase, nextpcPredicted : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
   signal branchIdPhase : STD_LOGIC := '0';
-  signal branchNotTaken, predictionError, predictionError2 : STD_LOGIC := '0';
+  signal branchNotTaken, predictionError : STD_LOGIC := '0';
 
 begin
 
@@ -124,7 +124,8 @@ begin
               		to_slv(unsigned(MA.pcbranch) + 4) when branch     = '1' else -- branch (bne, beq) addr
               		to_slv(unsigned(MA.a) + 0)        when MA.c.jr    = '1' ; -- jr addr
 
-  pcm12Predicted	<=		pc4 									when StaticBranchAlwaysTaken = '0' else -- never jump
+  pcm12Predicted	<=		pc										when (EX.i.mnem = BNE) or (EX.i.mnem = BEQ) else
+  							pc4 									when StaticBranchAlwaysTaken = '0' else -- never jump
 							to_slv(unsigned(pcjumpIDPhase) + 0)   	when c.jump  = '1' else -- j / jal jump addr
               				to_slv(unsigned(pcbranchIDPhase) + 4) 	when branchIdPhase     = '1' else -- branch (bne, beq) addr
               				to_slv(unsigned(a) + 0)        			when c.jr    = '1' ; -- jr addr
@@ -138,7 +139,7 @@ begin
 
 
   nextpcPredicted    <=		nextpc				when predictionError = '1'			else
-  							pcm12Predicted 		when StaticBranchAlwaysTaken = '0' 	else -- never jump
+  							pcm12Predicted 		when StaticBranchAlwaysTaken = '0' 	else -- never jump Not correct: not possible to jump anymore
 							pcm12Predicted   	when c.jump  = '1' 					else -- j / jal jump addr
 		              		pcm12Predicted		when branchIdPhase     = '1' 		else -- branch (bne, beq) addr
 		              		pcm12Predicted      when c.jr    = '1' 					else -- jr addr   
@@ -320,13 +321,10 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
 -------------------- ID/EX Pipeline Register with Multiplexer Stalling----------
 -- bubble = "0000..." nop command. It will passed on at each Stalling signal
 
-  predictionError	<=	branch xor StaticBranchAlwaysTaken	when ((a /= b) 	and i.Opc = I_BEQ.OPC)	else
-  						branch xor StaticBranchAlwaysTaken	when ((a = b) 	and i.Opc = I_BNE.OPC)	else
+  predictionError	<=	StaticBranchAlwaysTaken	when ((a /= b) 	and i.Opc = I_BEQ.OPC)	else
+  						StaticBranchAlwaysTaken	when ((a = b) 	and i.Opc = I_BNE.OPC)	else
   						'0';
   						
-  predictionError2	<=	not(StaticBranchAlwaysTaken)	when ((a /= b) 	and i.Opc = I_BEQ.OPC)	else
-  						not(StaticBranchAlwaysTaken)	when ((a = b) 	and i.Opc = I_BNE.OPC)	else
-  						'0';
   						
 -- TODO Clean Up
   EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1' or predictionError = '1') and rising_edge(clk) else

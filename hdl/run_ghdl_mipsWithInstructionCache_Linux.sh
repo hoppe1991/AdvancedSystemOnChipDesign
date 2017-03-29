@@ -1,6 +1,6 @@
 # you have to specify the assembler text for the mips at the prompt!
-PATHTOMARS="/home/hendrik/Downloads/Mars4_5.jar" # Hendriks path
-PATHTOGHDL="/home/hendrik/Downloads/ghdl-033/bin/ghdl" # Hendriks ghdl path
+PATHTOMARS="/home/leonard/Documents/Mars.jar" # Hendriks path
+PATHTOGHDL="/home/leonard/Documents/ghdl-0.33-x86_64-linux/bin/ghdl" # Hendriks ghdl path
 
 
 if (( $# == 1)) 

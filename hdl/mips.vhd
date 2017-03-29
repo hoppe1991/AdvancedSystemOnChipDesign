@@ -129,10 +129,11 @@ begin
 							to_slv(unsigned(pcjumpIDPhase) + 0)   	when c.jump  = '1' else -- j / jal jump addr
               				to_slv(unsigned(pcbranchIDPhase) + 4) 	when branchIdPhase     = '1' else -- branch (bne, beq) addr
               				to_slv(unsigned(a) + 0)        			when c.jr    = '1' ; -- jr addr
-              				
+  
+  -- TODO: Repeat for all commands, check for better solution    				
   branchIdPhase		<= '1'  when 
-  							((i.Opc = I_BEQ.Opc) and (EX.i.Opc /= I_BEQ.Opc)) 	or
-                       		((i.Opc = I_BNE.Opc) and (EX.i.Opc /= I_BNE.Opc)) 	or
+  							((i.Opc = I_BEQ.Opc) and (EX.i.Opc /= I_BEQ.Opc) and (MA.i.Opc /= I_BEQ.Opc)) 	or
+                       		((i.Opc = I_BNE.Opc) and (EX.i.Opc /= I_BNE.Opc) and (MA.i.Opc /= I_BNE.Opc)) 	or
                          	((i.Opc = I_BLEZ.Opc) and (EX.i.Opc /= I_BLEZ.Opc)) or
                          	((i.Opc = I_BLTZ.Opc) and (EX.i.Opc /= I_BLTZ.Opc)) or
                          	((i.Opc = I_BGTZ.Opc) and (EX.i.Opc /= I_BGTZ.Opc))	else

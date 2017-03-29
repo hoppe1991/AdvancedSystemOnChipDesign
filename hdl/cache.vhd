@@ -87,7 +87,7 @@ architecture rtl of cache is
 	-- Memory address to Direct Mapped Cache.
 	signal addrDMC : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
 begin
-	dataCPU <= (others=>'Z');
+	dataCPU <= (others=>'Z'); -- TODO Is this line necessary?
 	
 	direct_mapped_cache : entity work.directMappedCache
 		generic map(

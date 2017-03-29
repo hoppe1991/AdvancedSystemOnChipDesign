@@ -58,14 +58,14 @@ entity directMappedCacheController is
 		hit 			 	: out   STD_LOGIC; -- Signal identify whether data are available in the cache ('1') or not ('0').
 		
 		-- Ports defines how to read or write the data BRAM.
-		wrCBLine 	: in   STD_LOGIC; -- Write signal identifies whether a complete cache block should be written into cache.
+		wrCBLine 	: in	STD_LOGIC; -- Write signal identifies whether a complete cache block should be written into cache.
 		rdCBLine 	: in	STD_LOGIC; -- Read signal identifies whether a complete cache block should be read from cache.
-		rdWord	 	: in   STD_LOGIC; -- Read signal identifies to read data word from the cache.
-		wrWord   	: in   STD_LOGIC; -- Write signal identifies to write data word into the cache.
-		writeMode 	: in STD_LOGIC; -- '1' when write mode. '0' when read mode.
+		rdWord	 	: in	STD_LOGIC; -- Read signal identifies to read data word from the cache.
+		wrWord   	: in	STD_LOGIC; -- Write signal identifies to write data word into the cache.
+		writeMode 	: in	STD_LOGIC; -- '1' when write mode. '0' when read mode.
 
 		-- Index determines to which line of BRAM should be written or read.
-		index : out STD_LOGIC_VECTOR(DETERMINE_NR_BITS(ADDRESSWIDTH)-1 downto 0);
+		index 		: out STD_LOGIC_VECTOR(DETERMINE_NR_BITS(ADDRESSWIDTH)-1 downto 0);
 				
 		-- Ports regarding BRAM tag.
 		tagToBRAM 		: out STD_LOGIC_VECTOR(GET_TAG_NR_BITS( MEMORY_ADDRESS_WIDTH, ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET )-1 downto 0);
@@ -92,8 +92,6 @@ end;
 architecture synth of directMappedCacheController is
 	constant config : CONFIG_BITS_WIDTH := GET_CONFIG_BITS_WIDTH(MEMORY_ADDRESS_WIDTH, ADDRESSWIDTH, BLOCKSIZE, DATA_WIDTH, OFFSET);
 	
-	signal dataCPU_TMP : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0); -- TODO Remove this signal.
-	 
 	type MEMORY_ADDRESS is record
 		tag    : STD_LOGIC_VECTOR(config.tagNrOfBits - 1 downto 0);
 		index  : STD_LOGIC_VECTOR(config.indexNrOfBits - 1 downto 0);
@@ -246,7 +244,6 @@ architecture synth of directMappedCacheController is
 -----------------------------------------------------------------------------------
 begin
 	
-
 	-- -----------------------------------------------------------------------------
 	-- Determines the read/write mode.
 	-- -----------------------------------------------------------------------------
@@ -260,7 +257,7 @@ begin
 	-- Determine the offset, index and tag of the address signal.
 	-- -----------------------------------------------------------------------------
 	memoryAddress <= TO_MEMORY_ADDRESS( addrCPU ); 
-	index <= memoryAddress.index;
+	index 		  <= memoryAddress.index;
 
 	-- -----------------------------------------------------------------------------
 	-- Determine the valid bit.
@@ -306,17 +303,12 @@ begin
 	blockLineFromBRAM <=  TO_CACHE_BLOCK_LINE( dataFromBRAM );
 	dataToBRAM <= newCacheBlockLine when myCacheMode=WRITE_LINE else 
 	              TO_STD_LOGIC_VECTOR( blockLineToBRAM ) when myCacheMode=WRITE_DATA;
-	              
- 
- 	dataCPU_TMP <= (others=>'Z') when writeMode='1' else
-			   blockLineFromBRAM(memoryAddress.offsetAsInteger) when myCacheMode=READ_DATA else
-		       (others=>'Z');
- 	
-	dataCPU <= (others=>'Z') when writeMode='1' else
+
+	dataCPU <= 
+			   (others=>'0') when myCacheMode=READ_DATA and not(valid = '1' AND tagsAreEqual = '1') else
+			   (others=>'Z') when writeMode='1' else
 			   (blockLineFromBRAM(memoryAddress.offsetAsInteger)) when myCacheMode=READ_DATA else
 		       (others=>'Z');
-
-
 
 	-- -----------------------------------------------------------------------------
 	-- Check whether to read or write the data BRAM.
@@ -329,7 +321,6 @@ begin
 	 writeToDataBRAM <= writeToDataBRAMs;
 	 writeToTagBRAM <= writeToDataBRAMs;
 	  
-
 	-- -----------------------------------------------------------------------------
 	-- The hit signal is supposed to be an asynchronous signal.
 	-- -----------------------------------------------------------------------------

@@ -103,7 +103,7 @@ architecture struct of mips is
   signal StaticBranchAlwaysTaken : STD_LOGIC := '1';
   signal pcbranchIDPhase, pcjumpIDPhase, nextpcPredicted : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
   signal branchIdPhase : STD_LOGIC := '0';
-  signal branchNotTaken, predictionError : STD_LOGIC := '0';
+  signal branchNotTaken, predictionError, predictionError2 : STD_LOGIC := '0';
 
 begin
 
@@ -320,9 +320,14 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
 -------------------- ID/EX Pipeline Register with Multiplexer Stalling----------
 -- bubble = "0000..." nop command. It will passed on at each Stalling signal
 
-  predictionError	<=	branch xor StaticBranchAlwaysTaken	when ((a = b) 	and i.Opc = I_BEQ.OPC)	else
-  						branch xor StaticBranchAlwaysTaken	when ((a /= b) 	and i.Opc = I_BNE.OPC)	else
+  predictionError	<=	branch xor StaticBranchAlwaysTaken	when ((a /= b) 	and i.Opc = I_BEQ.OPC)	else
+  						branch xor StaticBranchAlwaysTaken	when ((a = b) 	and i.Opc = I_BNE.OPC)	else
   						'0';
+  						
+  predictionError2	<=	not(StaticBranchAlwaysTaken)	when ((a /= b) 	and i.Opc = I_BEQ.OPC)	else
+  						not(StaticBranchAlwaysTaken)	when ((a = b) 	and i.Opc = I_BNE.OPC)	else
+  						'0';
+  						
 -- TODO Clean Up
   EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1' or predictionError = '1') and rising_edge(clk) else
          (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);

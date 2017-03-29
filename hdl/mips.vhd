@@ -137,7 +137,7 @@ begin
                				'0';
 
 
-  nextpcPredicted    <=		nextpc					when predictionError = '1'			else
+  nextpcPredicted    <=		nextpc				when predictionError = '1'			else
   							pcm12Predicted 		when StaticBranchAlwaysTaken = '0' 	else -- never jump
 							pcm12Predicted   	when c.jump  = '1' 					else -- j / jal jump addr
 		              		pcm12Predicted		when branchIdPhase     = '1' 		else -- branch (bne, beq) addr
@@ -249,7 +249,7 @@ begin
   signext   <= X"ffff" & i.Imm  when (i.Imm(15) = '1' and c.signext = '1') else
                X"0000" & i.Imm;
                
- -- Effective address calculation for branch prediction
+ -- Effective address calculation for branch prediction in ID-Phase
   pcbranchIDPhase  <= to_slv(signed(ID.pc4) + signed(signext(29 downto 0) & "00"));
 
   pcjumpIDPhase    <= ID.pc4(31 downto 28) & i.BrTarget & "00";
@@ -320,9 +320,10 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
 -------------------- ID/EX Pipeline Register with Multiplexer Stalling----------
 -- bubble = "0000..." nop command. It will passed on at each Stalling signal
 
-  predictionError	<=	branchNotTaken xor StaticBranchAlwaysTaken	when branch = '1'	else
+  predictionError	<=	branch xor StaticBranchAlwaysTaken	when (a = b) 	and i.Opc /= I_BEQ.OPC	else
+  						branch xor StaticBranchAlwaysTaken	when (a /= b) 	and i.Opc /= I_BNE.OPC	else
   						'0';
-
+-- TODO Clean Up
   EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1' or predictionError = '1') and rising_edge(clk) else
          (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
 --  EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1') and rising_edge(clk) else
@@ -342,6 +343,7 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
   pcbranch  <= to_slv(signed(EX.pc4) + signed(EX.imm(29 downto 0) & "00"));
 
   pcjump    <= EX.pc4(31 downto 28) & EX.i.BrTarget & "00";
+  
 
 -------------------- EX/MA Pipeline Register -----------------------------------
 
@@ -361,7 +363,7 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
                          (MA.i.Opc = I_BGTZ.Opc and     MA.gtz  = '1') else
                '0';
                
-  branchNotTaken    <= '1'  when (MA.i.Opc = I_BEQ.Opc  	and     MA.zero = '0') or
+  branchNotTaken    <= '1'  when (MA.i.Opc = I_BEQ.Opc  and     MA.zero = '0') or
                          	(MA.i.Opc = I_BNE.Opc  		and not MA.zero = '0') or
                          	(MA.i.Opc = I_BLEZ.Opc 		and     MA.lez  = '0') or
                          	(MA.i.Opc = I_BLTZ.Opc 		and     MA.ltz  = '0') or

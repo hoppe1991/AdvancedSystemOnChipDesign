@@ -122,13 +122,13 @@ begin
     
   pcm12		<=		to_slv(unsigned(MA.pcjump) + 0)   when MA.c.jump  = '1' else -- j / jal jump addr
               		to_slv(unsigned(MA.pcbranch) + 4) when branch     = '1' else -- branch (bne, beq) addr
-              		to_slv(unsigned(MA.a) + 0)        when MA.c.jr    = '1' ; -- jr addr
+              		to_slv(unsigned(MA.a) + 4)        when MA.c.jr    = '1' ; -- jr addr
 
   pcm12Predicted	<=		pc										when (EX.i.mnem = BNE) or (EX.i.mnem = BEQ) else
   							pc4 									when StaticBranchAlwaysTaken = '0' else -- never jump
 							to_slv(unsigned(pcjumpIDPhase) + 0)   	when c.jump  = '1' else -- j / jal jump addr
               				to_slv(unsigned(pcbranchIDPhase) + 4) 	when branchIdPhase     = '1' else -- branch (bne, beq) addr
-              				to_slv(unsigned(a) + 0)        			when c.jr    = '1' ; -- jr addr
+              				to_slv(unsigned(a) + 4)        			when c.jr    = '1' ; -- jr addr
   
   -- TODO: Repeat for all commands, check for better solution    				
   branchIdPhase		<= '1'  when 

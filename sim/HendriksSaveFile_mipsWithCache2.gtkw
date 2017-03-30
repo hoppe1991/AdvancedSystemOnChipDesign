@@ -1,21 +1,19 @@
 [*]
 [*] GTKWave Analyzer v3.3.66 (w)1999-2015 BSI
-[*] Mon Mar 27 06:53:54 2017
+[*] Thu Mar 30 06:29:33 2017
 [*]
 [dumpfile] "/home/hendrik/Software/AdvancedSystemOnChipDesign/sim/isort_pipe3.ghw"
-[dumpfile_mtime] "Mon Mar 27 06:44:37 2017"
-[dumpfile_size] 1794510
+[dumpfile_mtime] "Thu Mar 30 05:06:08 2017"
+[dumpfile_size] 2079726
 [savefile] "/home/hendrik/Software/AdvancedSystemOnChipDesign/sim/HendriksSaveFile_mipsWithCache2.gtkw"
-[timestart] 0
+[timestart] 17218510000
 [size] 1841 1056
-[pos] 10443 0
-*-33.000000 21510000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] 24292 0
+*-24.000000 17260000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.mips_with_instructioncache_tb.
 [treeopen] top.mips_with_instructioncache_tb.dut.
 [treeopen] top.mips_with_instructioncache_tb.dut.c.
-[treeopen] top.mips_with_instructioncache_tb.dut.dmem.
-[treeopen] top.mips_with_instructioncache_tb.dut.dmem.byte0.
 [treeopen] top.mips_with_instructioncache_tb.dut.dmem.byte0.mem.
 [treeopen] top.mips_with_instructioncache_tb.dut.dmem.byte2.mem.
 [treeopen] top.mips_with_instructioncache_tb.dut.ex.
@@ -25,6 +23,7 @@
 [treeopen] top.mips_with_instructioncache_tb.dut.imemcache.cache_controller.
 [treeopen] top.mips_with_instructioncache_tb.dut.imemcache.direct_mapped_cache.
 [treeopen] top.mips_with_instructioncache_tb.dut.ma.
+[treeopen] top.mips_with_instructioncache_tb.dut.ma.i.
 [treeopen] top.mips_with_instructioncache_tb.dut.mainmemorycontroller.
 [treeopen] top.mips_with_instructioncache_tb.dut.mainmemorycontroller.bram_main_memory.
 [treeopen] top.mips_with_instructioncache_tb.dut.mainmemorycontroller.controller_main_memory.
@@ -35,6 +34,99 @@
 [signals_width] 462
 [sst_expanded] 1
 [sst_vpaned_height] 315
+@28
+top.mips_with_instructioncache_tb.clk
+@200
+-ID
+@28
+top.mips_with_instructioncache_tb.dut.i.mnem
+@22
+#{top.mips_with_instructioncache_tb.dut.i.opc[5:0]} top.mips_with_instructioncache_tb.dut.i.opc[5] top.mips_with_instructioncache_tb.dut.i.opc[4] top.mips_with_instructioncache_tb.dut.i.opc[3] top.mips_with_instructioncache_tb.dut.i.opc[2] top.mips_with_instructioncache_tb.dut.i.opc[1] top.mips_with_instructioncache_tb.dut.i.opc[0]
+@200
+-EX
+@28
+top.mips_with_instructioncache_tb.dut.ex.i.mnem
+@22
+#{top.mips_with_instructioncache_tb.dut.ex.i.opc[5:0]} top.mips_with_instructioncache_tb.dut.ex.i.opc[5] top.mips_with_instructioncache_tb.dut.ex.i.opc[4] top.mips_with_instructioncache_tb.dut.ex.i.opc[3] top.mips_with_instructioncache_tb.dut.ex.i.opc[2] top.mips_with_instructioncache_tb.dut.ex.i.opc[1] top.mips_with_instructioncache_tb.dut.ex.i.opc[0]
+@200
+-MA
+@28
+top.mips_with_instructioncache_tb.dut.ma.i.mnem
+@22
+#{top.mips_with_instructioncache_tb.dut.ma.i.opc[5:0]} top.mips_with_instructioncache_tb.dut.ma.i.opc[5] top.mips_with_instructioncache_tb.dut.ma.i.opc[4] top.mips_with_instructioncache_tb.dut.ma.i.opc[3] top.mips_with_instructioncache_tb.dut.ma.i.opc[2] top.mips_with_instructioncache_tb.dut.ma.i.opc[1] top.mips_with_instructioncache_tb.dut.ma.i.opc[0]
+@200
+-forwarda
+@28
+[color] 2
+top.mips_with_instructioncache_tb.dut.stallfromcpu
+[color] 2
+top.mips_with_instructioncache_tb.dut.stallfromcache
+@22
+#{top.mips_with_instructioncache_tb.dut.pc[31:0]} top.mips_with_instructioncache_tb.dut.pc[31] top.mips_with_instructioncache_tb.dut.pc[30] top.mips_with_instructioncache_tb.dut.pc[29] top.mips_with_instructioncache_tb.dut.pc[28] top.mips_with_instructioncache_tb.dut.pc[27] top.mips_with_instructioncache_tb.dut.pc[26] top.mips_with_instructioncache_tb.dut.pc[25] top.mips_with_instructioncache_tb.dut.pc[24] top.mips_with_instructioncache_tb.dut.pc[23] top.mips_with_instructioncache_tb.dut.pc[22] top.mips_with_instructioncache_tb.dut.pc[21] top.mips_with_instructioncache_tb.dut.pc[20] top.mips_with_instructioncache_tb.dut.pc[19] top.mips_with_instructioncache_tb.dut.pc[18] top.mips_with_instructioncache_tb.dut.pc[17] top.mips_with_instructioncache_tb.dut.pc[16] top.mips_with_instructioncache_tb.dut.pc[15] top.mips_with_instructioncache_tb.dut.pc[14] top.mips_with_instructioncache_tb.dut.pc[13] top.mips_with_instructioncache_tb.dut.pc[12] top.mips_with_instructioncache_tb.dut.pc[11] top.mips_with_instructioncache_tb.dut.pc[10] top.mips_with_instructioncache_tb.dut.pc[9] top.mips_with_instructioncache_tb.dut.pc[8] top.mips_with_instructioncache_tb.dut.pc[7] top.mips_with_instructioncache_tb.dut.pc[6] top.mips_with_instructioncache_tb.dut.pc[5] top.mips_with_instructioncache_tb.dut.pc[4] top.mips_with_instructioncache_tb.dut.pc[3] top.mips_with_instructioncache_tb.dut.pc[2] top.mips_with_instructioncache_tb.dut.pc[1] top.mips_with_instructioncache_tb.dut.pc[0]
+@200
+-forwarda
+-ID (if_ir and pc4
+@c00200
+-ID
+@1401200
+-ID
+@800200
+-Instruction
+@1000200
+-Instruction
+@c00200
+-C
+@1401200
+-C
+@c00200
+-EX
+@800200
+-EX_I
+@1000200
+-EX_I
+@c00200
+-EX_C
+@1401200
+-EX_C
+-EX
+@c00200
+-MA
+@800200
+-MA_C
+@1000200
+-MA_C
+@800200
+-MA_I
+@1000200
+-MA_I
+@1401200
+-MA
+@c00200
+-WB
+-WB_C
+@1401200
+-WB_C
+-WB
+@c00200
+-control
+@1401200
+-control
+@c00200
+-Bypass
+@1401200
+-Bypass
+@800200
+-RegFile
+@200
+-t1
+@1401200
+-group_end
+@200
+-t7
+@800200
+-RFPort
+@1000200
+-RFPort
 @28
 top.mips_with_instructioncache_tb.clk
 @200
@@ -56,7 +148,6 @@ top.mips_with_instructioncache_tb.dut.ma.i.mnem
 -WB
 -Stalling Signals
 @28
-top.mips_with_instructioncache_tb.dut.stallcpu
 top.mips_with_instructioncache_tb.dut.stallfromcpu
 top.mips_with_instructioncache_tb.dut.stallfromcache
 @200
@@ -76,6 +167,9 @@ top.mips_with_instructioncache_tb.dut.stallfromcache
 top.mips_with_instructioncache_tb.dut.branch
 top.mips_with_instructioncache_tb.dut.c.jump
 top.mips_with_instructioncache_tb.dut.c.jr
+top.mips_with_instructioncache_tb.dut.staticbranchalwaystaken
+@29
+top.mips_with_instructioncache_tb.dut.predictionerror
 @200
 -MA PC Branch
 @24

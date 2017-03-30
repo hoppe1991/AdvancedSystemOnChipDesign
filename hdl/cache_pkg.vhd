@@ -78,6 +78,14 @@ package cache_pkg is
 		BLOCKSIZE : in INTEGER; DATA_WIDTH : in INTEGER; OFFSET : in INTEGER
 	) return INTEGER;
 	
+	-- -----------------------------------------------------------------------------------------------------------
+	-- The function RETURN_MODIFIED_VECTOR first modifies the given vector by copying the given vector and
+	-- setting the value at the specified position with the given index.
+	-- The new value at this position is given by the parameter.
+	-- Finally, the function returns the modified vector.
+	-- -----------------------------------------------------------------------------------------------------------
+	function RETURN_MODIFIED_VECTOR( index_in : in INTEGER; vector : in STD_LOGIC_VECTOR; value_in : in STD_LOGIC) return STD_LOGIC_VECTOR;
+		
 end cache_pkg;
 
 package body cache_pkg is
@@ -134,4 +142,17 @@ package body cache_pkg is
 		return INTEGER(CEIL(LOG2(REAL(ARG))));
 	end;
 
+	-- -----------------------------------------------------------------------------------------------------------
+	-- The function RETURN_MODIFIED_VECTOR first modifies the given vector by copying the given vector and
+	-- setting the value at the specified position with the given index.
+	-- The new value at this position is given by the parameter.
+	-- Finally, the function returns the modified vector.
+	-- -----------------------------------------------------------------------------------------------------------
+	function RETURN_MODIFIED_VECTOR( index_in : in INTEGER; vector : in STD_LOGIC_VECTOR; value_in : in STD_LOGIC) return STD_LOGIC_VECTOR is
+		variable v : STD_LOGIC_VECTOR(vector'RANGE) := (others=>'0');
+	begin
+		v := vector;
+		v(index_in) := value_in;
+		return v;
+	end;
 end cache_pkg;

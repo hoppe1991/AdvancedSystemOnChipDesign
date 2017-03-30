@@ -79,18 +79,7 @@ architecture synth of cacheController is
 		indexAsInteger : INTEGER;
 		offsetAsInteger : INTEGER;
 	end record;
- 
-	-- Definition of auxiliary functions.
-	function STD_LOGIC_VECTOR_TO_BLOCK_LINE(ARG : in STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0)) return BLOCK_LINE;
-	function TO_MEMORY_ADDRESS(ARG : in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0)) return MEMORY_ADDRESS;
-	function TO_STD_LOGIC_VECTOR(ARG : in MEMORY_ADDRESS) return STD_LOGIC_VECTOR;
-	function BLOCK_LINE_TO_STD_LOGIC_VECTOR(ARG : in BLOCK_LINE) return STD_LOGIC_VECTOR;
-	function GET_NEW_CACHE_BLOCK_LINE(
-		blockLine 		: in STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0);
-		data 	  		: in STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
-		offsetAsInteger : in INTEGER
-	) return STD_LOGIC_VECTOR;
-		
+	
 	-- Declaration of states.
 	type statetype is (
 		IDLE,
@@ -105,26 +94,37 @@ architecture synth of cacheController is
 		READ,
 		TOCACHE2
 	);
-
-	function TO_MEMORY_ADDRESS(ARG : in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0)
-	) return MEMORY_ADDRESS is
-		variable addr : MEMORY_ADDRESS;
-	begin
-		addr.tag    := ARG(config.tagIndexH downto config.tagIndexL);
-		addr.index  := ARG(config.IndexIndexH downto config.IndexIndexL);
-		addr.offset := ARG(config.offsetIndexH downto config.offsetIndexL);
-		addr.indexAsInteger := TO_INTEGER(UNSIGNED(addr.index));
-		addr.offsetAsInteger := TO_INTEGER(UNSIGNED(addr.offset(3 downto 2)));
-		return addr;
-	end function;
-	
-	function TO_STD_LOGIC_VECTOR(ARG : in MEMORY_ADDRESS) return STD_LOGIC_VECTOR is
-		variable addr : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
-	begin
-		addr := ARG.tag & ARG.index & ARG.offset;
-		return addr;
-	end function;
-	
+ 
+	-- ------------------------------------------------------------------------------------------
+	-- The function converts the given vector to a block line.
+	-- ------------------------------------------------------------------------------------------	
+	function STD_LOGIC_VECTOR_TO_BLOCK_LINE(ARG : in STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0)) return BLOCK_LINE;
+		
+	-- ------------------------------------------------------------------------------------------
+	-- The function converts the given vector to a memory address.
+	-- ------------------------------------------------------------------------------------------	
+	function TO_MEMORY_ADDRESS(ARG : in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0)) return MEMORY_ADDRESS;
+		
+	-- ------------------------------------------------------------------------------------------
+	-- The function converts the given memory address to a vector.
+	-- ------------------------------------------------------------------------------------------	
+	function TO_STD_LOGIC_VECTOR(ARG : in MEMORY_ADDRESS) return STD_LOGIC_VECTOR;
+		
+	-- ------------------------------------------------------------------------------------------
+	-- Returns the given block line to a vector.
+	-- ------------------------------------------------------------------------------------------
+	function BLOCK_LINE_TO_STD_LOGIC_VECTOR(ARG : in BLOCK_LINE) return STD_LOGIC_VECTOR;
+		
+	-- ------------------------------------------------------------------------------------------
+	-- Modifies and returns the given block line at the position
+	-- determined by the offset integer.
+	-- ------------------------------------------------------------------------------------------
+	function RETURN_MODIFIED_BLOCK_LINE(
+		blockLine 		: in STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0);
+		data 	  		: in STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
+		offsetAsInteger : in INTEGER
+	) return STD_LOGIC_VECTOR;
+		
 	signal addrCPUZero : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
 	signal addressCPU : MEMORY_ADDRESS := TO_MEMORY_ADDRESS(addrCPUZero);
 	 
@@ -142,8 +142,14 @@ architecture synth of cacheController is
 	signal lineIsInvalid  : STD_LOGIC := '0';
 	signal lineIsNotDirty : STD_LOGIC := '0';
 	signal lineIsDirty    : STD_LOGIC := '0';
+	signal auxiliaryCounter : INTEGER := 1;
+	signal myBlockLine : BLOCK_LINE; 
 	
-	function GET_NEW_CACHE_BLOCK_LINE(
+	-- ------------------------------------------------------------------------------------------
+	-- Modifies and returns the given block line at the position
+	-- determined by the offset integer.
+	-- ------------------------------------------------------------------------------------------
+	function RETURN_MODIFIED_BLOCK_LINE(
 		blockLine 		: in STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0);
 		data 	  		: in STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
 		offsetAsInteger	: in INTEGER
@@ -163,7 +169,9 @@ architecture synth of cacheController is
 		return newCacheBlockLine;
 	end;
 
-	-- Returns the given BLOCK_LINE as a STD_LOGIC_VECTOR. 
+	-- ------------------------------------------------------------------------------------------
+	-- Returns the given block line to a vector.
+	-- ------------------------------------------------------------------------------------------
 	function BLOCK_LINE_TO_STD_LOGIC_VECTOR(ARG : in BLOCK_LINE) return STD_LOGIC_VECTOR is
 		variable v : STD_LOGIC_VECTOR(config.cacheLineBits - 1 downto 0);
 	begin
@@ -174,8 +182,10 @@ architecture synth of cacheController is
 		end loop;
 		return v;
 	end;
-
-	-- Returns the given STD_LOGIC_VECTOR as a BLOCK_LINE.
+	
+	-- ------------------------------------------------------------------------------------------
+	-- Returns the given vector to a block line.
+	-- ------------------------------------------------------------------------------------------
 	function STD_LOGIC_VECTOR_TO_BLOCK_LINE(ARG : in STD_LOGIC_VECTOR(cacheBlockLineBits-1 downto 0)) return BLOCK_LINE is
 		variable v          : BLOCK_LINE;
 		variable startIndex : INTEGER;
@@ -189,8 +199,31 @@ architecture synth of cacheController is
 		return v;
 	end;
 
-	signal auxiliaryCounter : INTEGER := 1;
-	signal myBlockLine : BLOCK_LINE; 
+	-- ------------------------------------------------------------------------------------------
+	-- The function converts the given vector to a memory address.
+	-- ------------------------------------------------------------------------------------------
+	function TO_MEMORY_ADDRESS(ARG : in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0)
+	) return MEMORY_ADDRESS is
+		variable addr : MEMORY_ADDRESS;
+	begin
+		addr.tag    := ARG(config.tagIndexH downto config.tagIndexL);
+		addr.index  := ARG(config.IndexIndexH downto config.IndexIndexL);
+		addr.offset := ARG(config.offsetIndexH downto config.offsetIndexL);
+		addr.indexAsInteger := TO_INTEGER(UNSIGNED(addr.index));
+		addr.offsetAsInteger := TO_INTEGER(UNSIGNED(addr.offset(3 downto 2)));
+		return addr;
+	end function;
+	
+	-- ------------------------------------------------------------------------------------------
+	-- The function converts the given memory address to a vector.
+	-- ------------------------------------------------------------------------------------------	
+	function TO_STD_LOGIC_VECTOR(ARG : in MEMORY_ADDRESS) return STD_LOGIC_VECTOR is
+		variable addr : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
+	begin
+		addr := ARG.tag & ARG.index & ARG.offset;
+		return addr;
+	end function;
+	
 begin
 	 
 	-- State register.
@@ -380,7 +413,7 @@ begin
 	            '1' when (state=WRITE and readyMEM = '1') else 
 	            '0';
 	
-	newCacheBlockLine <= GET_NEW_CACHE_BLOCK_LINE( dataMEM, dataCPU, addressCPU.offsetAsInteger) when (state=WRITE and readyMEM='1') else
+	newCacheBlockLine <= RETURN_MODIFIED_BLOCK_LINE( dataMEM, dataCPU, addressCPU.offsetAsInteger) when (state=WRITE and readyMEM='1') else
 						 dataMEM when (state=READ and readyMEM='1');
 						 
 	-- Determine the data word to be written to Main Memory.

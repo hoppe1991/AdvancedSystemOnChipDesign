@@ -1,0 +1,9 @@
+branchIdPhase		<= 	'1'  when 
+				((i.Opc = I_BEQ.Opc) and (EX.i.Opc /= I_BEQ.Opc) and 
+				(MA.i.Opc /= I_BEQ.Opc)) or
+				((i.Opc = I_BNE.Opc) and (EX.i.Opc /= I_BNE.Opc) and 
+				(MA.i.Opc /= I_BNE.Opc)) else '0';
+
+predictionError		<=	
+	StaticBranchAlwaysTaken	when ((a /= b) 	and i.Opc = I_BEQ.OPC)	else
+	StaticBranchAlwaysTaken	when ((a = b) 	and i.Opc = I_BNE.OPC)	else '0';

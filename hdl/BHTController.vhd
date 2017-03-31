@@ -28,7 +28,6 @@ entity BHTController is
   		prediction 					 : out STD_LOGIC;
   		
   		branchTaken 					: in STD_LOGIC; -- 1: TAKEN, 0: NOT TAKEN
-  		branchInstructionAddressWrite 	: in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
   		
   		wa 				: out STD_LOGIC_VECTOR(BHT_INDEXSIZE-1 downto 0);
   		wd 				: out STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
@@ -40,6 +39,9 @@ architecture behave of BHTController is
 	
 	signal previousState1 : stateBHT := WEAKLY_TAKEN;
 	signal nextState : stateBHT 	 := WEAKLY_TAKEN;
+	signal rdState : stateBHT := WEAKLY_TAKEN;
+	
+	signal nextAddress : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) :=  (others=>'0');
     
 begin
 
@@ -47,22 +49,26 @@ begin
 	ra <= branchInstructionAddressRead(BHT_INDEXSIZE+1 downto 2);
 	
 	-- Determine the address of register to be written.
-	wa <= branchInstructionAddressWrite(BHT_INDEXSIZE+1 downto 2);
+	wa <= nextAddress(BHT_INDEXSIZE+1 downto 2);
 	
 	-- Determine the prediction.
-	prediction <= '1' when rd="11" or rd="10" else
+	rdState <= TO_STATEBHT(rd);
+	prediction <= '1' when rdState=STRONGLY_TAKEN or rdState=WEAKLY_TAKEN else
 				  '0';
 	
-	--
-	previousState1 <= TO_STATEBHT(rd) when rising_edge(clk);		  
-				  
+	-- Save the previous state.
+	nextAddress    <= branchInstructionAddressRead when rising_edge(clk);
+	previousState1 <= rdState when rising_edge(clk);		  
+	
+	-- Determine the next state to be written into register.	  
 	nextState 	   <= 	STRONGLY_TAKEN when branchTaken='1' and (previousState1=STRONGLY_TAKEN or previousState1=WEAKLY_TAKEN) else
 				   		WEAKLY_TAKEN when branchTaken='1' and (previousState1=WEAKLY_NOT_TAKEN) else
 				   		WEAKLY_TAKEN when branchTaken='0' and (previousState1=STRONGLY_TAKEN) else
 				   		WEAKLY_NOT_TAKEN when branchTaken='1' and (previousState1=STRONGLY_NOT_TAKEN) else
 				   		WEAKLY_NOT_TAKEN when branchTaken='0' and (previousState1=WEAKLY_TAKEN) else
 				   		STRONGLY_NOT_TAKEN;
-				   			   		
+	
+	-- Determine new data word to be written into register.			   			   		
 	wd 				<= TO_STD_LOGIC_VECTOR(nextState);
 				   		
 		 

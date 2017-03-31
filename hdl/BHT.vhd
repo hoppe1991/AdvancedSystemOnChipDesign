@@ -25,8 +25,7 @@ entity BHT is
   		branchInstructionAddressRead : in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
   		prediction					 : out STD_LOGIC; -- 1: TAKEN, 0: NOT TAKEN
   		
-  		currentBranch					: in STD_LOGIC;
-  		branchInstructionAddressWrite 	: in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
+  		branchTaken					: in STD_LOGIC;
   		writeEnable 					: in STD_LOGIC
   );
 end;
@@ -55,13 +54,12 @@ begin
 			port map (
 				clk 			=> clk,
 				ra 				=> ra,
-				writeData 		=> wd,
+				wd 				=> wd,
 				wa 				=> wa,
 				rd 				=> rd,
-				currentBranch 	=> currentBranch,
+				branchTaken 	=> branchTaken,
 				prediction	 	=> prediction,
-				branchInstructionAddressRead => branchInstructionAddressRead,
-				branchInstructionAddressWrite => branchInstructionAddressWrite
+				branchInstructionAddressRead => branchInstructionAddressRead
 				
   );
 	
@@ -73,7 +71,7 @@ begin
 		)
 			port map (
 				clk => clk,
-				ra1 => branchInstructionAddressRead,
+				ra1 => ra,
 				ra2 => (others=>'0'),
 				rd1 => rd,
 				wa3 => wa,

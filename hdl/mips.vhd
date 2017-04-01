@@ -113,8 +113,11 @@ begin
 	-- TODO Set the control signal.
 	writeEnableBHT <= '0' when (TRUE) else
 					  '0';
-	
-	
+
+	-- ----------------------------------------------------------------------
+	-- Branch History Table (BHT) predicts whether a branch instruction
+	-- will be TAKEN or NOT TAKEN.
+	-- ----------------------------------------------------------------------
 	branchHistoryTable: entity work.BHT
 		generic map(
 			BHT_ENTRIES          => BHT_ENTRIES,
@@ -122,19 +125,16 @@ begin
 			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH
 		)
 		port map(
-			clk                           => clk,
-			reset                         => reset,
-			branchInstructionAddressRead  => pc,
-			prediction                    => predictionFromBHT,
-			branchTaken                   => predictionError,
-			writeEnable                   => writeEnableBHT
+			clk				=> clk,
+			reset           => reset,
+			instructionPC	=> pc,
+			prediction		=> predictionFromBHT,
+			branchTaken		=> predictionError,
+			writeEnable		=> writeEnableBHT
 		);
 	
-	
-
 	-- Determine whether to stall the CPU or not.
 	--stallCPU <= stallFromCache ;--or stallFromCPU;
-
 
 -------------------- Instruction Fetch Phase (IF) -----------------------------
   --pc        <= nextpc when rising_edge(clk);

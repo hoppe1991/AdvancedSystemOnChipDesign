@@ -1,10 +1,10 @@
---------------------------------------------------------------------------------
--- filename : directMappedCache_tb.vhd
--- author   : Meyer zum Felde, Püttjer, Hoppe
--- company  : TUHH
--- revision : 0.1
--- date     : 09/02/17
---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+-- filename: bht_pkg.vhd
+-- author  : Meyer zum Felde, Püttjer, Hoppe
+-- company : TUHH
+-- revision: 0.1
+-- date    : 01/04/17 
+---------------------------------------------------------------------------------
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -14,54 +14,48 @@ use ieee.math_real.log2;
 
 package bht_pkg is
 
-	-- Replacement strategy used by the two way associative cache.
-	-- There are two replacement strategies:
-	-- 1. Random replacement.
-	-- 2. Least Recently Used (LRU) replacement. 	
-	type stateBHT is (
+	-- Saturation counter stands in one of the following states:
+	--		1. Strong Predict Not Taken
+	--  	2. Weak Predict Not Taken
+	--		3. Weak Predict Taken
+	--		4. Strong Predict Taken
+	type STATE_SATURATION_COUNTER is (
 		STRONGLY_TAKEN,
 		WEAKLY_TAKEN,
 		WEAKLY_NOT_TAKEN,
 		STRONGLY_NOT_TAKEN
 	);
 
-	function TO_STD_LOGIC_VECTOR(state : in stateBHT) return STD_LOGIC_VECTOR;
+	-- Converts the given state to vector.
+	function TO_STD_LOGIC_VECTOR(state : in STATE_SATURATION_COUNTER) return STD_LOGIC_VECTOR;
 
-	function TO_STATEBHT(v : in STD_LOGIC_VECTOR(1 downto 0)) return STATEBHT;
+	-- Converts the given vector to state of the saturation counter.
+	function TO_STATEBHT(v : in STD_LOGIC_VECTOR(1 downto 0)) return STATE_SATURATION_COUNTER;
 
 end bht_pkg;
 
 package body bht_pkg is
-	function TO_STATEBHT(v : in STD_LOGIC_VECTOR(1 downto 0)) return STATEBHT is
-		variable s : STATEBHT;
-	begin
-		if (v = "11") then
-			s := STRONGLY_TAKEN;
-		elsif (v = "10") then
-			s := WEAKLY_TAKEN;
-		elsif (v = "01") then
-			s := WEAKLY_NOT_TAKEN;
-		else
-			s := STRONGLY_NOT_TAKEN;
-		end if;
-		return s;
 
+	-- Converts the given vector to state of the saturation counter.
+	function TO_STATEBHT(v : in STD_LOGIC_VECTOR(1 downto 0)) return STATE_SATURATION_COUNTER is
+	begin
+		case v is
+			when "11" => return STRONGLY_TAKEN;
+			when "10" => return WEAKLY_TAKEN;
+			when "01" => return WEAKLY_NOT_TAKEN;
+			when others => return STRONGLY_NOT_TAKEN;
+		end case;
 	end function;
 
-	function TO_STD_LOGIC_VECTOR(state : in stateBHT) return STD_LOGIC_VECTOR is
-		variable s : STD_LOGIC_VECTOR(1 downto 0) := (others => '0');
+	-- Converts the given state to vector.
+	function TO_STD_LOGIC_VECTOR(state : in STATE_SATURATION_COUNTER) return STD_LOGIC_VECTOR is
 	begin
-		if (state = STRONGLY_TAKEN) then
-			s := "11";
-		elsif (state = WEAKLY_TAKEN) then
-			s := "10";
-		elsif (state = WEAKLY_NOT_TAKEN) then
-			s := "01";
-		else
-			s := "00";
-		end if;
-
-		return s;
+		case state is
+			when STRONGLY_TAKEN => return "11";
+			when WEAKLY_TAKEN => return "10";
+			when WEAKLY_NOT_TAKEN => return "01";
+			when others => return "00";
+		end case;
 	end function;
 
 end bht_pkg;

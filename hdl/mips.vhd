@@ -35,7 +35,8 @@ architecture struct of mips is
 	signal ADDRESSWIDTH         : INTEGER := 256;
 	signal OFFSET               : INTEGER := 8;
 	signal BRAM_ADDR_WIDTH		: INTEGER := 10; -- (11 downto 2) pc
-
+	constant BHT_ENTRIES : INTEGER := 32;
+	
 	-- Hit and miss counter.
 	signal hitCounter, missCounter : INTEGER := 0;
 	
@@ -105,7 +106,31 @@ architecture struct of mips is
   signal branchIdPhase : STD_LOGIC := '0';
   signal branchNotTaken, predictionError : STD_LOGIC := '0';
 
+  signal predictionFromBHT : STD_LOGIC := '0';
+  signal writeEnableBHT    : STD_LOGIC := '0';
 begin
+	
+	-- TODO Set the control signal.
+	writeEnableBHT <= '0' when (TRUE) else
+					  '0';
+	
+	
+	branchHistoryTable: entity work.BHT
+		generic map(
+			BHT_ENTRIES          => BHT_ENTRIES,
+			EDGE                 => FALLING,				-- RAISING
+			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH
+		)
+		port map(
+			clk                           => clk,
+			reset                         => reset,
+			branchInstructionAddressRead  => pc,
+			prediction                    => predictionFromBHT,
+			branchTaken                   => predictionError,
+			writeEnable                   => writeEnableBHT
+		);
+	
+	
 
 	-- Determine whether to stall the CPU or not.
 	--stallCPU <= stallFromCache ;--or stallFromCPU;
@@ -326,7 +351,7 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
   predictionError	<=	StaticBranchAlwaysTaken	when ((a /= b) 	and i.Opc = I_BEQ.OPC)	else
   						StaticBranchAlwaysTaken	when ((a = b) 	and i.Opc = I_BNE.OPC)	else
   						'0';
-  						
+  	
   						
 -- TODO Clean Up
   EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1' or predictionError = '1') and rising_edge(clk) else

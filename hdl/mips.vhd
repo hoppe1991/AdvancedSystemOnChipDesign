@@ -104,9 +104,9 @@ architecture struct of mips is
   signal StaticBranchAlwaysTaken : STD_LOGIC := '1';
   signal pcbranchIDPhase, pcjumpIDPhase, nextpcPredicted : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
   signal branchIdPhase : STD_LOGIC := '0';
-  signal branchNotTaken, predictionError : STD_LOGIC := '0';
+  signal branchNotTaken, predictionError, predictionError2, predictionError3 : STD_LOGIC := '0';
 
-  signal predictionFromBHT : STD_LOGIC := '0';
+  signal predictionFromBHT, predictionFromBHT2 : STD_LOGIC := '0';
   signal writeEnableBHT    : STD_LOGIC := '0';
 begin
 	
@@ -350,6 +350,20 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
 
   predictionError	<=	StaticBranchAlwaysTaken	when ((a /= b) 	and i.Opc = I_BEQ.OPC)	else
   						StaticBranchAlwaysTaken	when ((a = b) 	and i.Opc = I_BNE.OPC)	else
+  						'0';
+  						
+  predictionError2	<=	'1'	when (predictionFromBHT = '1'	and (a /= b) 	and i.Opc = I_BEQ.OPC)	else
+  						'1' when (predictionFromBHT = '0'	and (a = b) 	and i.Opc = I_BEQ.OPC)	else
+  						'1' when (predictionFromBHT = '1'	and (a = b) 	and i.Opc = I_BNE.OPC)	else
+  						'1' when (predictionFromBHT = '0'	and (a = b) 	and i.Opc = I_BNE.OPC)	else
+  						'0';
+  						
+  predictionFromBHT2 <= predictionFromBHT when rising_edge(clk);
+  
+  predictionError3	<=	'1'	when (predictionFromBHT2 = '1'	and (a /= b) 	and i.Opc = I_BEQ.OPC)	else
+  						'1' when (predictionFromBHT2 = '0'	and (a = b) 	and i.Opc = I_BEQ.OPC)	else
+  						'1' when (predictionFromBHT2 = '1'	and (a = b) 	and i.Opc = I_BNE.OPC)	else
+  						'1' when (predictionFromBHT2 = '0'	and (a = b) 	and i.Opc = I_BNE.OPC)	else
   						'0';
   	
   						

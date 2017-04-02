@@ -104,15 +104,18 @@ architecture struct of mips is
   signal StaticBranchAlwaysTaken : STD_LOGIC := '1';
   signal pcbranchIDPhase, pcjumpIDPhase, nextpcPredicted : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
   signal branchIdPhase : STD_LOGIC := '0';
-  signal branchNotTaken, predictionError, predictionError2, predictionError3 : STD_LOGIC := '0';
+  --TODO Remove debug signals
+  signal branchNotTaken, branchTaken, predictionError, predictionError2, predictionError3 : STD_LOGIC := '0';
 
   signal predictionFromBHT, predictionFromBHT2 : STD_LOGIC := '0';
   signal writeEnableBHT    : STD_LOGIC := '0';
 begin
 	
-	-- TODO Set the control signal.
-	writeEnableBHT <= '0' when (TRUE) else
-					  '0';
+	-- TODO Correct?
+	-- Write into BHT whenever a branch command is fetched and decoded
+	writeEnableBHT <=	'1'	when i.Opc = I_BEQ.OPC	else
+  						'1' when i.Opc = I_BEQ.OPC	else
+  						'0';
 
 	-- ----------------------------------------------------------------------
 	-- Branch History Table (BHT) predicts whether a branch instruction
@@ -129,7 +132,7 @@ begin
 			reset           => reset,
 			instructionPC	=> pc,
 			prediction		=> predictionFromBHT,
-			branchTaken		=> predictionError,
+			branchTaken		=> branchTaken,
 			writeEnable		=> writeEnableBHT
 		);
 	
@@ -150,12 +153,13 @@ begin
               		to_slv(unsigned(MA.a) + 4)        when MA.c.jr    = '1' ; -- jr addr
 
   pcm12Predicted	<=		pc										when (EX.i.mnem = BNE) or (EX.i.mnem = BEQ) else
-  							pc4 									when StaticBranchAlwaysTaken = '0' else -- never jump
+  							pc4 									when predictionFromBHT = '0' else -- never jump
 							to_slv(unsigned(pcjumpIDPhase) + 0)   	when c.jump  = '1' else -- j / jal jump addr
               				to_slv(unsigned(pcbranchIDPhase) + 4) 	when branchIdPhase     = '1' else -- branch (bne, beq) addr
               				to_slv(unsigned(a) + 4)        			when c.jr    = '1' ; -- jr addr
   
-  -- TODO: Repeat for all commands, check for better solution    				
+  -- TODO: Repeat for all commands, check for better solution
+  -- Detect that a branch command was fetched and is currently in only in the ID-Phase    				
   branchIdPhase		<= '1'  when 
   							((i.Opc = I_BEQ.Opc) and (EX.i.Opc /= I_BEQ.Opc) and (MA.i.Opc /= I_BEQ.Opc)) 	or
                        		((i.Opc = I_BNE.Opc) and (EX.i.Opc /= I_BNE.Opc) and (MA.i.Opc /= I_BNE.Opc)) 	or
@@ -166,7 +170,7 @@ begin
 
 
   nextpcPredicted    <=		nextpc				when predictionError = '1'			else
-  							pcm12Predicted 		when StaticBranchAlwaysTaken = '0' 	else -- never jump Not correct: not possible to jump anymore
+  							pcm12Predicted 		when predictionFromBHT = '0' 		else -- prediction: branch not taken
 							pcm12Predicted   	when c.jump  = '1' 					else -- j / jal jump addr
 		              		pcm12Predicted		when branchIdPhase     = '1' 		else -- branch (bne, beq) addr
 		              		pcm12Predicted      when c.jr    = '1' 					else -- jr addr   
@@ -348,8 +352,13 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
 -------------------- ID/EX Pipeline Register with Multiplexer Stalling----------
 -- bubble = "0000..." nop command. It will passed on at each Stalling signal
 
+-- TODO Debug and verify working implementation of predectionError and branchTaken signals
   predictionError	<=	StaticBranchAlwaysTaken	when ((a /= b) 	and i.Opc = I_BEQ.OPC)	else
   						StaticBranchAlwaysTaken	when ((a = b) 	and i.Opc = I_BNE.OPC)	else
+  						'0';
+  						
+  branchTaken		<=	'1' when (a /= b) 	and i.Opc = I_BEQ.OPC	else
+  						'1' when (a = b) 	and i.Opc = I_BEQ.OPC	else
   						'0';
   						
   predictionError2	<=	'1'	when (predictionFromBHT = '1'	and (a /= b) 	and i.Opc = I_BEQ.OPC)	else
@@ -400,13 +409,16 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
   wd        <= MA.rd2; --b;
   aout      <= MA.aluout;
 
+-- TODO Are the signals branch and branchNotTaken still needed?
+-- A branch command was fetched and in MA-Phase a jump-decision is made.
   branch    <= '1'  when (MA.i.Opc = I_BEQ.Opc  and     MA.zero = '1') or
                          (MA.i.Opc = I_BNE.Opc  and not MA.zero = '1') or
                          (MA.i.Opc = I_BLEZ.Opc and     MA.lez  = '1') or
                          (MA.i.Opc = I_BLTZ.Opc and     MA.ltz  = '1') or
                          (MA.i.Opc = I_BGTZ.Opc and     MA.gtz  = '1') else
                '0';
-               
+
+-- A branch command was fetched and in MA-Phase a jump-decision is made.               
   branchNotTaken    <= '1'  when (MA.i.Opc = I_BEQ.Opc  and     MA.zero = '0') or
                          	(MA.i.Opc = I_BNE.Opc  		and not MA.zero = '0') or
                          	(MA.i.Opc = I_BLEZ.Opc 		and     MA.lez  = '0') or

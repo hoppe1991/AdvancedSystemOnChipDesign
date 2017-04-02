@@ -85,7 +85,7 @@ architecture struct of mips is
   signal wa,
          EX_Rd  : STD_LOGIC_VECTOR(4 downto 0) := "00000";
   signal MA_Rd  : STD_LOGIC_VECTOR(4 downto 0) := "00000";
-  signal pc, pcjump, pcbranch, nextpc, pc4, pcm12, pcm12Predicted, a, signext, b, rd2imm, aluout,
+  signal pc, pcjump, pcbranch, nextpc, oldPc, pc4, pcm12, pcm12Predicted, a, signext, b, rd2imm, aluout,
          wd, rd, rd1, rd2, aout, WB_wd, WB_rd,
          IF_ir : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
   signal forwardA,
@@ -109,13 +109,18 @@ architecture struct of mips is
 
   signal predictionFromBHT, predictionFromBHT2 : STD_LOGIC := '0';
   signal writeEnableBHT    : STD_LOGIC := '0';
+  signal readyToWriteBHT	: STD_LOGIC := '0';
 begin
 	
 	-- TODO Correct?
 	-- Write into BHT whenever a branch command is fetched and decoded
-	writeEnableBHT <=	'1'	when i.Opc = I_BEQ.OPC	else
-  						'1' when i.Opc = I_BNE.OPC	else
+	writeEnableBHT <=	'1'	when i.Opc = I_BEQ.OPC	and readyToWriteBHT = '1'	else
+  						'1' when i.Opc = I_BNE.OPC	and readyToWriteBHT	= '1'	else
   						'0';
+  	
+  	-- Allow 1 write cycle for each branch instruction					
+	readyToWriteBHT	<=	'1' when	pc /= oldPc				and rising_edge(clk) else
+						'0'	when	writeEnableBHT = '1'	and rising_edge(clk);
 
 	-- ----------------------------------------------------------------------
 	-- Branch History Table (BHT) predicts whether a branch instruction
@@ -141,6 +146,7 @@ begin
 
 -------------------- Instruction Fetch Phase (IF) -----------------------------
   --pc        <= nextpc when rising_edge(clk);
+  oldPc		<= pc when rising_edge(clk);
   pc        <= nextpcPredicted when rising_edge(clk);
   pc4       <= to_slv(unsigned(pc) + 4) ;
 

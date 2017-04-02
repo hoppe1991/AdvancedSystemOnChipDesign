@@ -114,7 +114,7 @@ begin
 	-- TODO Correct?
 	-- Write into BHT whenever a branch command is fetched and decoded
 	writeEnableBHT <=	'1'	when i.Opc = I_BEQ.OPC	else
-  						'1' when i.Opc = I_BEQ.OPC	else
+  						'1' when i.Opc = I_BNE.OPC	else
   						'0';
 
 	-- ----------------------------------------------------------------------

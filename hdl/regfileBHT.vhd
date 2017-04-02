@@ -52,8 +52,10 @@ architecture behave of regfileBHT is
 	-- Initial state as zero vector.
 	constant zero : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0) := TO_STD_LOGIC_VECTOR( initialState );
 	
+	constant ramIndex : INTEGER := 2**ADDR_WIDTH;
+	
 	-- Register file defined as array of vectors.
-	type ramtype is array (2 ** ADDR_WIDTH - 1 downto 0) of STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
+	type ramtype is array (ramIndex - 1 downto 0) of STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0);
 	
 	-- Register file containing the data vectors.
 	signal reg : ramtype := (others => zero);

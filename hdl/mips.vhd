@@ -29,13 +29,16 @@ end;
 architecture struct of mips is
 
 	-- Signals regarding instruction cache.
-	signal MEMORY_ADDRESS_WIDTH : INTEGER := 32;
-	signal DATA_WIDTH 			: INTEGER := 32;
-	signal BLOCKSIZE 			: INTEGER := 4;
-	signal ADDRESSWIDTH         : INTEGER := 256;
-	signal OFFSET               : INTEGER := 8;
-	signal BRAM_ADDR_WIDTH		: INTEGER := 10; -- (11 downto 2) pc
-	constant BHT_ENTRIES : INTEGER := 32;
+	constant MEMORY_ADDRESS_WIDTH 	: INTEGER := 32;
+	constant DATA_WIDTH 			: INTEGER := 32;
+	constant BLOCKSIZE 				: INTEGER := 4;
+	constant ADDRESSWIDTH         	: INTEGER := 256;
+	constant OFFSET               	: INTEGER := 8;
+	constant BRAM_ADDR_WIDTH		: INTEGER := 10; -- (11 downto 2) pc
+	constant BHT_ENTRIES 			: INTEGER 	:= 32;
+	constant BHT_EDGE 	 			: EDGETYPE := FALLING; -- FALLING or RAISING
+	constant BTB_ENRTIES 			: INTEGER 	:= 16;
+	constant BTB_EDGE    			: EDGETYPE := FALLING; -- FALLING or RAISING
 	
 	-- Hit and miss counter.
 	signal hitCounter, missCounter : INTEGER := 0;
@@ -92,7 +95,7 @@ architecture struct of mips is
          forwardB : ForwardType := FromREG;
   signal WB_Opc  ,WB_Func   : STD_LOGIC_VECTOR(5 downto 0) := "000000";
 
-  signal Bubble     : EXType := (
+  constant Bubble     : EXType := (
                   ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
                    '0', "0000",WORD),
                   --Opcode,    opc       rd       rt       rs
@@ -110,6 +113,18 @@ architecture struct of mips is
   signal predictionFromBHT, predictionFromBHT2 : STD_LOGIC := '0';
   signal writeEnableBHT    : STD_LOGIC := '0';
   signal readyToWriteBHT	: STD_LOGIC := '0';
+  
+  
+  -- Signals regarding BTB.
+  signal addressWriteID : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
+  signal addressWriteEX : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
+  signal dataWriteID	: STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
+  signal dataWriteEX    : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
+  signal writeEnableID  : STD_LOGIC := '0';
+  signal writeEnableEX  : STD_LOGIC := '0';
+  signal predictedPC    	: STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');    
+  signal predictedPCIsValid : STD_LOGIC := '0';
+
 begin
 	
 	-- TODO Correct?
@@ -129,7 +144,7 @@ begin
 	branchHistoryTable: entity work.BHT
 		generic map(
 			BHT_ENTRIES          => BHT_ENTRIES,
-			EDGE                 => FALLING,				-- RAISING
+			EDGE                 => BHT_EDGE,
 			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH
 		)
 		port map(
@@ -140,6 +155,33 @@ begin
 			branchTaken		=> branchTaken,
 			writeEnable		=> writeEnableBHT
 		);
+		
+	
+	-- ----------------------------------------------------------------------
+	-- Branch Target Buffer (BTB).
+	-- ----------------------------------------------------------------------
+	branchTargetBuffer: entity work.btb
+		generic map(
+			BTB_ENRTIES          => BTB_ENRTIES,
+			EDGE                 => BTB_EDGE,
+			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH
+		)
+		port map(
+			clk              	=> clk,
+			reset            	=> reset,
+			pc               	=> pc,
+			-- TODO Connect the ports with the correct signals.
+			addressWriteID   	=> addressWriteID,	
+			writeEnableID    	=> writeEnableID,
+			dataWriteID      	=> dataWriteID,
+			addressWriteEX   	=> addressWriteEX,
+			writeEnableEX    	=> writeEnableEX,
+			dataWriteEX      	=> dataWriteEX,
+			predictedPC      	=> predictedPC,
+			predictedPCIsValid	=> predictedPCIsValid
+		);
+	
+	
 	
 	-- Determine whether to stall the CPU or not.
 	--stallCPU <= stallFromCache ;--or stallFromCPU;

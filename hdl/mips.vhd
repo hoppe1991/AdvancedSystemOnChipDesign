@@ -114,8 +114,8 @@ begin
 	
 	-- TODO Correct?
 	-- Write into BHT whenever a branch command is fetched and decoded
-	writeEnableBHT <=	'1'	when i.Opc = I_BEQ.OPC	and readyToWriteBHT = '1'	else
-  						'1' when i.Opc = I_BNE.OPC	and readyToWriteBHT	= '1'	else
+	writeEnableBHT <=	'1'	when i.Opc = I_BEQ.OPC	and readyToWriteBHT = '1'	and stallFromCPU = '0'	else
+  						'1' when i.Opc = I_BNE.OPC	and readyToWriteBHT	= '1'	and stallFromCPU = '0'	else
   						'0';
   	
   	-- Allow 1 write cycle for each branch instruction					

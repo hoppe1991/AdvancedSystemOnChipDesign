@@ -16,7 +16,8 @@ entity regfileBHT is
 	generic(
 			EDGE       : EDGETYPE := FALLING;
 		    DATA_WIDTH : integer  := 32;
-		    ADDR_WIDTH : integer  := 5
+		    ADDR_WIDTH : integer  := 5;
+		    ZERO	   : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0) := (others=>'0')
 	);
 
 	port(
@@ -45,13 +46,8 @@ entity regfileBHT is
 end;
 
 architecture behave of regfileBHT is
-	
-	-- Initial state of saturation counter.
-	constant initialState : STATE_SATURATION_COUNTER := WEAKLY_TAKEN;
-	
-	-- Initial state as zero vector.
-	constant zero : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0) := TO_STD_LOGIC_VECTOR( initialState );
-	
+			
+	-- Number of registers.
 	constant ramIndex : INTEGER := 2**ADDR_WIDTH;
 	
 	-- Register file defined as array of vectors.

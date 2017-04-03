@@ -12,6 +12,7 @@ use IEEE.math_real.log2;
 use IEEE.math_real.ceil;
 use work.mips_pkg.all;
 use work.casts.all;
+use work.bht_pkg.all;
 
 -- -------------------------------------------------------------------------------------
 -- BHT takes for each branch instruction a separation counter.
@@ -68,6 +69,9 @@ architecture behave of BHT is
   	constant DATA_WIDTH 	: INTEGER := 2;
     constant ADDR_WIDTH 	: integer := BHT_INDEXSIZE;
     
+	-- Initial state of saturation counter.
+	constant initialState : STATE_SATURATION_COUNTER := WEAKLY_TAKEN;
+    
     signal rd : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0) := (others=>'0');
     signal ra : STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0) := (others=>'0');
     
@@ -103,8 +107,9 @@ begin
 		generic map(
 			EDGE       => EDGE,
 			DATA_WIDTH => DATA_WIDTH,
-			ADDR_WIDTH => ADDR_WIDTH
-		)
+			ADDR_WIDTH => ADDR_WIDTH,	
+		    ZERO 	   => TO_STD_LOGIC_VECTOR( initialState )
+		 )
 		port map(
 			reset => reset,
 			clk   => clk,

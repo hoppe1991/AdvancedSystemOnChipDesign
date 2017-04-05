@@ -69,8 +69,6 @@ architecture behave of BHT is
   	constant DATA_WIDTH 	: INTEGER := 2;
     constant ADDR_WIDTH 	: integer := BHT_INDEXSIZE;
     
-	-- Initial state of saturation counter.
-	constant initialState : STATE_SATURATION_COUNTER := WEAKLY_TAKEN;
     
     signal rd : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0) := (others=>'0');
     signal ra : STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0) := (others=>'0');
@@ -108,7 +106,7 @@ begin
 			EDGE       => EDGE,
 			DATA_WIDTH => DATA_WIDTH,
 			ADDR_WIDTH => ADDR_WIDTH,	
-		    ZERO 	   => TO_STD_LOGIC_VECTOR( initialState )
+		    IS_BHT     => TRUE
 		 )
 		port map(
 			reset => reset,

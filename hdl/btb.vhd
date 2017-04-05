@@ -82,16 +82,16 @@ architecture behave of btb is
     constant ADDR_WIDTH 	: integer := BTB_INDEXSIZE;
     
     -- Signals regarding first register file.
-    signal ra1 : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0) 	:= (others=>'0');
+    signal ra1 : STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0) 	:= (others=>'0');
     signal rd1 : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0) 	:= (others=>'0');
-    signal wa1 : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0) 	:= (others=>'0');
+    signal wa1 : STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0) 	:= (others=>'0');
     signal wd1 : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0) 	:= (others=>'0');
     signal we1 : STD_LOGIC 									:= '0';
     
     -- Signals regarding second register file.
-    signal ra2 : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0) 	:= (others=>'0');
+    signal ra2 : STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0) 	:= (others=>'0');
     signal rd2 : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0) 	:= (others=>'0');
-    signal wa2 : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0) 	:= (others=>'0');
+    signal wa2 : STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0) 	:= (others=>'0');
     signal wd2 : STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0) 	:= (others=>'0');
     signal we2 : STD_LOGIC 									:= '0';
     
@@ -104,7 +104,8 @@ begin
 		generic map(
 			BTB_ENRTIES          => BTB_ENRTIES,
 			DATA_WIDTH           => DATA_WIDTH,
-			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH
+			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
+			ADDR_WIDTH			 => ADDR_WIDTH
 		)
 		port map(
 			clk              => clk,

@@ -27,7 +27,11 @@ entity btbController is
   		DATA_WIDTH       : INTEGER := 65;
  
  		-- Width of a memory address.       
-		MEMORY_ADDRESS_WIDTH : INTEGER := 32
+		MEMORY_ADDRESS_WIDTH : INTEGER := 32;
+		
+		-- 
+		ADDR_WIDTH		: INTEGER := 5
+		
   );  
             
   port    (
@@ -65,16 +69,16 @@ entity btbController is
   		predictedPCIsValid : out STD_LOGIC;
   		
   		-- Ports regarding first register file.
-    	ra1 : out STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
+    	ra1 : out STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0);
     	rd1 : in STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
-    	wa1 : out STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
+    	wa1 : out STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0);
     	wd1 : out STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
     	we1 : out STD_LOGIC;
     
     	-- Ports regarding second register file.
-    	ra2 : out STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
+    	ra2 : out STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0);
     	rd2 : in STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
-    	wa2 : out STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
+    	wa2 : out STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0);
     	wd2 : out STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
     	we2 : out STD_LOGIC 		
   );

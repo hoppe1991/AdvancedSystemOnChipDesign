@@ -17,7 +17,7 @@ entity regfileBHT is
 			EDGE       : EDGETYPE := FALLING;
 		    DATA_WIDTH : integer  := 32;
 		    ADDR_WIDTH : integer  := 5;
-		    ZERO	   : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0) := (others=>'0')
+		    IS_BHT	   : BOOLEAN  := FALSE
 	);
 
 	port(
@@ -46,7 +46,16 @@ entity regfileBHT is
 end;
 
 architecture behave of regfileBHT is
-			
+	
+	-- Initial state of saturation counter.
+	constant initialState : STATE_SATURATION_COUNTER := WEAKLY_TAKEN;
+	
+	-- Initializes the initial value of register.	
+	function INIT_ZERO return STD_LOGIC_VECTOR;
+	
+	-- Initial value of register.
+	constant ZERO : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0) := INIT_ZERO;
+		
 	-- Number of registers.
 	constant ramIndex : INTEGER := 2**ADDR_WIDTH;
 	
@@ -55,6 +64,19 @@ architecture behave of regfileBHT is
 	
 	-- Register file containing the data vectors.
 	signal reg : ramtype := (others => zero);
+ 
+	-- Initializes the initial value of register.	
+	function INIT_ZERO return STD_LOGIC_VECTOR is
+		variable v : STD_LOGIC_VECTOR(DATA_WIDTH - 1 downto 0) := (others=>'0');
+	begin
+		if IS_BHT then
+			v := TO_STD_LOGIC_VECTOR_STATE( initialState );
+		else
+			v := (others=>'0');
+		end if;
+		
+		return v;
+	end;
 
 begin
 

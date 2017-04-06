@@ -266,6 +266,17 @@ package mips_pkg is
        pc4, rd2        : STD_LOGIC_VECTOR(31 downto 0);
   end record;
   
+  
+  constant Bubble : EXType := (
+       ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0', '0', "0000",WORD),
+       --Opcode,    opc       rd       rt       rs
+       (NOP, "000000", "00000", "00000", "00000",
+       --Funct    Shamt     Imm     BrTarget
+       "000000", "00000", x"0000", "00" & x"000000"),
+       --wa          a         imm         pc4         rd2        rd2imm
+       "00000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000"
+   );
+  
   type MAType is record -- memory access phase
        c               : Controltype;
        i               : InstructionType; 
@@ -290,5 +301,90 @@ package mips_pkg is
 --       bhw             : AccessType;
 --       addr, din, dout : STD_LOGIC_VECTOR(31 downto 0);
 --  end record; 
+
+
+	function INIT_CONTROLTYPE return ControlType;
+	
+	function INIT_INSTRUCTIONTYPE return InstructionType;
+	
+	function INIT_IDTYPE return IDType;
+    
+    function INIT_EXTYPE return EXType;
+    
+    function INIT_MATYPE return MAType;
+ 
+   	function INIT_WBTYPE return WBType;
+    
+end mips_pkg;
+
+
+package body mips_pkg is
+
+function INIT_CONTROLTYPE return ControlType is
+	variable c : ControlType;
+begin
+	c := ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',"0000",WORD);
+    return c;
+end;
+
+	
+function INIT_INSTRUCTIONTYPE return InstructionType is
+	variable i : InstructionType;
+begin
+	i := (UNKNOWN, "000000", "00000", "00000", "00000",  --i
+                                     "000000", "00000", x"0000", "00" & x"000000");
+	return i;
+end;
+
+		
       
+function INIT_IDTYPE return IDType is
+	variable i : IDType;
+begin
+	i := (x"00000000", x"00000000");
+	return i;
+end;
+
+    
+function INIT_EXTYPE return EXType is
+	variable e : EXType;
+begin
+	e := (
+                  ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
+                   '0', "0000",WORD),
+                  --Opcode,    opc       rd       rt       rs
+                  (UNKNOWN, "000000", "00000", "00000", "00000",
+                  --Funct    Shamt     Imm     BrTarget
+                  "000000", "00000", x"0000", "00" & x"000000"),
+                  --wa          a         imm         pc4         rd2        rd2imm
+                  "00000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
+     return e;
+ end;
+ 
+    
+ function INIT_MATYPE return MAType is
+ 	variable m : MAType;
+ begin
+ 	m := (
+                  ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
+                   '0',"0000",WORD),
+                  (UNKNOWN, "000000", "00000", "00000", "00000",  --i
+                  "000000", "00000", x"0000", "00" & x"000000"),
+                  "00000",x"00000000",x"00000000",x"00000000",x"00000000",
+                  x"00000000",x"00000000",x"00000000",'0','0','0','0');
+     return m;
+ end;
+ 
+    
+ function INIT_WBTYPE return WBType is
+ 	variable wb : WBType;
+ begin
+ 	wb := (
+                  ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
+                   '0',"0000",WORD),
+                  "00000",x"00000000",x"00000000");
+    return wb;
+end;
+    
+  
 end mips_pkg;

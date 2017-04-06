@@ -14,7 +14,9 @@ SET tagFilename="../imem/tag%1"
 SET dataFilename="../imem/data%1"
 SET fileExtension=".imem"
 SET ghwFilename="mipsWithInstructionCache"
-SET workDirectory="workD"
+SET workDirectory="work"
+SET DFileName=""../dmem/%1""
+SET IFileName=""../imem/%1""
 
 echo.
 echo ++++++++++ Create work folder +++++++++++++++++++++++++++++++++
@@ -42,7 +44,7 @@ echo ++++++++++ create an executable for the testbench ++++++++++
 ghdl -e -g -O3 --ieee=synopsys --workdir=%workDirectory% convertMemFiles
 echo.
 echo ++++++++++ run the executable ++++++++++
-ghdl -r -g -O3 --ieee=synopsys --workdir=%workDirectory% convertMemFiles -gDFileName="../dmem/%1" -gIFileName="../imem/%1"
+ghdl -r -g -O3 --ieee=synopsys --workdir=%workDirectory% convertMemFiles -gDFileName=%DFileName% -gIFileName=%IFileName%
 
 echo.
 echo ++++++++++ Create files for cache BRAMs +++++++++++++++++++++++
@@ -53,7 +55,7 @@ echo ++++++++++ create an executable for the testbench ++++++++++
 ghdl -e -g -O3 --ieee=synopsys --workdir=%workDirectory% creatorOfCacheFiles
 echo.
 echo ++++++++++ run the executable ++++++++++
-ghdl -r -g -O3 --ieee=synopsys --workdir=%workDirectory% creatorOfCacheFiles -gTag_Filename="../imem/tag%1" -gData_Filename="../imem/data%1" -gFILE_EXTENSION=".imem"
+ghdl -r -g -O3 --ieee=synopsys --workdir=%workDirectory% creatorOfCacheFiles -gTag_Filename=%tagFilename% -gData_Filename=%dataFilename% -gFILE_EXTENSION=%fileExtension%
 
 
 echo.
@@ -64,4 +66,4 @@ echo ++++++++++ analyze automatically outdated files and create an executable ++
 ghdl -m -g -O3 --ieee=synopsys --workdir=%workDirectory% mips_with_instructionCache_tb
 echo.
 echo ++++++++++ run the executable for 15us and save all waveforms ++++++++++
-ghdl -r -g -O3 --ieee=synopsys --workdir=%workDirectory% mips_with_instructionCache_tb --stop-time=40us  --wave=../sim/%1.ghw -gDFileName="../dmem/%1" -gIFileName="../imem/%1" -gTAG_FILENAME=%tagFilename% -gDATA_FILENAME=%dataFilename% -gFILE_EXTENSION=%fileExtension%
+ghdl -r -g -O3 --ieee=synopsys --workdir=%workDirectory% mips_with_instructionCache_tb --stop-time=40us  --wave=../sim/%1.ghw -gDFileName=%DFileName% -gIFileName=%IFileName% -gTAG_FILENAME=%tagFilename% -gDATA_FILENAME=%dataFilename% -gFILE_EXTENSION=%fileExtension%

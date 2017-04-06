@@ -28,29 +28,15 @@ end;
 
 architecture struct of mips is
 
-	-- Width of memory address.
-	constant MEMORY_ADDRESS_WIDTH	: INTEGER := 32;
-	
-	-- Width of data word.
-	constant DATA_WIDTH 			: INTEGER := 32;
-	
-	-- Number of words that a cache block contains.
-	constant BLOCKSIZE 				: INTEGER := 4;
-	
-	-- The number of instruction cache lines.
-	constant ADDRESSWIDTH         	: INTEGER := 256;
-	
-	-- Number of bits specifying smallest unit that can be selected in the cache.
-	-- Byte access should be possible.
-	constant OFFSET               	: INTEGER := 8;
-	
-	-- Width of address regarding the main memory.
-	constant BRAM_ADDR_WIDTH		: INTEGER := 10; -- (11 downto 2) pc
-	
-	-- Number of entries in BHT.
-	constant BHT_ENTRIES 			: INTEGER := 32;
-	
-	-- Hit and miss counter of instruction cache.
+	-- Signals regarding instruction cache.
+	signal MEMORY_ADDRESS_WIDTH : INTEGER := 32;
+	signal DATA_WIDTH 			: INTEGER := 32;
+	signal BLOCKSIZE 			: INTEGER := 4;
+	signal ADDRESSWIDTH         : INTEGER := 256;
+	signal OFFSET               : INTEGER := 8;
+	signal BRAM_ADDR_WIDTH		: INTEGER := 10; -- (11 downto 2) pc
+
+	-- Hit and miss counter.
 	signal hitCounter, missCounter : INTEGER := 0;
 	
 	-- Signals regarding main memory.
@@ -62,76 +48,71 @@ architecture struct of mips is
 	signal stallFromCache 	: STD_LOGIC := '0';
   	signal stallFromCPU		: STD_LOGIC := '0';
 	--signal stallCPU 		: STD_LOGIC := '0';
-	
-	signal zero,
-           lez,
-           FOUNDJR , --TODO REMOVE
-           ltz,
-           gtz,
-           branch : STD_LOGIC       := '0';
-     
-    signal c      : ControlType     := INIT_CONTROLTYPE;
-  	signal i      : InstructionType := INIT_INSTRUCTIONTYPE;
-  	signal ID     : IDType 			:= INIT_IDTYPE;
-  	signal EX     : EXType 			:= INIT_EXTYPE;
-  	signal MA     : MAType 			:= INIT_MATYPE;
-  	signal WB     : WBType 			:= INIT_WBTYPE;
-	
-	signal wa	  : STD_LOGIC_VECTOR(4 downto 0) := "00000";
-  	signal pc, pcjump, pcbranch, nextpc, oldPc, pc4, pcm12, pcm12Predicted, a, signext, b, rd2imm, aluout,
-           wd, rd, rd1, rd2, aout, WB_wd, WB_rd,
-           IF_ir : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
-    signal forwardA,
-           forwardB : ForwardType := FromREG;
-	signal WB_Opc  ,WB_Func   : STD_LOGIC_VECTOR(5 downto 0) := "000000";
 
-  	signal StaticBranchAlwaysTaken : STD_LOGIC := '1';
-  	signal pcbranchIDPhase, pcjumpIDPhase, nextpcPredicted : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
-  	signal branchIdPhase : STD_LOGIC := '0';
-  	--TODO Remove debug signals
-  	signal branchNotTaken, branchTaken, predictionError, predictionError2, predictionError3 : STD_LOGIC := '0';
+  signal zero,
+         lez,
+         FOUNDJR ,
+  --TODO REMOVE
+         ltz,
+         gtz,
+         branch : STD_LOGIC       := '0';
+  signal c      : ControlType     := ('0','0','0','0','0','0','0','0','0','0',
+                                      '0','0','0','0','0','0',"0000",WORD);
+  signal i      : InstructionType := (UNKNOWN, "000000", "00000", "00000", "00000",  --i
+                                     "000000", "00000", x"0000", "00" & x"000000");
+  signal ID     : IDType := (x"00000000", x"00000000");
+  signal EX     : EXType := (
+                  ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
+                   '0', "0000",WORD),
+                  --Opcode,    opc       rd       rt       rs
+                  (UNKNOWN, "000000", "00000", "00000", "00000",
+                  --Funct    Shamt     Imm     BrTarget
+                  "000000", "00000", x"0000", "00" & x"000000"),
+                  --wa          a         imm         pc4         rd2        rd2imm
+                  "00000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
+  signal MA     : MAType := (
+                  ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
+                   '0',"0000",WORD),
+                  (UNKNOWN, "000000", "00000", "00000", "00000",  --i
+                  "000000", "00000", x"0000", "00" & x"000000"),
+                  "00000",x"00000000",x"00000000",x"00000000",x"00000000",
+                  x"00000000",x"00000000",x"00000000",'0','0','0','0');
+  signal WB     : WBType := (
+                  ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
+                   '0',"0000",WORD),
+                  "00000",x"00000000",x"00000000");
+  signal wa,
+         EX_Rd  : STD_LOGIC_VECTOR(4 downto 0) := "00000";
+  signal MA_Rd  : STD_LOGIC_VECTOR(4 downto 0) := "00000";
+  signal pc, pcjump, pcbranch, nextpc, pc4, pcm12, pcm12Predicted, a, signext, b, rd2imm, aluout,
+         wd, rd, rd1, rd2, aout, WB_wd, WB_rd,
+         IF_ir : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
+  signal forwardA,
+         forwardB : ForwardType := FromREG;
+  signal WB_Opc  ,WB_Func   : STD_LOGIC_VECTOR(5 downto 0) := "000000";
 
-  	signal predictionFromBHT, predictionFromBHT2 : STD_LOGIC := '0';
-  	signal writeEnableBHT    : STD_LOGIC := '0';
-  	signal readyToWriteBHT	: STD_LOGIC := '0';
-  	
+  signal Bubble     : EXType := (
+                  ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
+                   '0', "0000",WORD),
+                  --Opcode,    opc       rd       rt       rs
+                  (NOP, "000000", "00000", "00000", "00000",
+                  --Funct    Shamt     Imm     BrTarget
+                  "000000", "00000", x"0000", "00" & x"000000"),
+                  --wa          a         imm         pc4         rd2        rd2imm
+                  "00000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
+  signal StaticBranchAlwaysTaken : STD_LOGIC := '1';
+  signal pcbranchIDPhase, pcjumpIDPhase, nextpcPredicted : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
+  signal branchIdPhase : STD_LOGIC := '0';
+  signal branchNotTaken, predictionError : STD_LOGIC := '0';
+
 begin
-	
-	-- TODO Correct?
-	-- Write into BHT whenever a branch command is fetched and decoded
-	writeEnableBHT <=	'1'	when i.Opc = I_BEQ.OPC	and readyToWriteBHT = '1'	and stallFromCPU = '0'	else
-  						'1' when i.Opc = I_BNE.OPC	and readyToWriteBHT	= '1'	and stallFromCPU = '0'	else
-  						'0';
-  	
-  	-- Allow 1 write cycle for each branch instruction					
-	readyToWriteBHT	<=	'1' when	pc /= oldPc				and rising_edge(clk) else
-						'0'	when	writeEnableBHT = '1'	and rising_edge(clk);
 
-	-- ----------------------------------------------------------------------
-	-- Branch History Table (BHT) predicts whether a branch instruction
-	-- will be TAKEN or NOT TAKEN.
-	-- ----------------------------------------------------------------------
-	branchHistoryTable: entity work.BHT
-		generic map(
-			BHT_ENTRIES          => BHT_ENTRIES,
-			EDGE                 => FALLING,				-- RAISING
-			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH
-		)
-		port map(
-			clk				=> clk,
-			reset           => reset,
-			instructionPC	=> pc,
-			prediction		=> predictionFromBHT,
-			branchTaken		=> branchTaken,
-			writeEnable		=> writeEnableBHT
-		);
-	
 	-- Determine whether to stall the CPU or not.
 	--stallCPU <= stallFromCache ;--or stallFromCPU;
 
+
 -------------------- Instruction Fetch Phase (IF) -----------------------------
   --pc        <= nextpc when rising_edge(clk);
-  oldPc		<= pc when rising_edge(clk);
   pc        <= nextpcPredicted when rising_edge(clk);
   pc4       <= to_slv(unsigned(pc) + 4) ;
 
@@ -144,13 +125,12 @@ begin
               		to_slv(unsigned(MA.a) + 4)        when MA.c.jr    = '1' ; -- jr addr
 
   pcm12Predicted	<=		pc										when (EX.i.mnem = BNE) or (EX.i.mnem = BEQ) else
-  							pc4 									when predictionFromBHT = '0' else -- never jump
+  							pc4 									when StaticBranchAlwaysTaken = '0' else -- never jump
 							to_slv(unsigned(pcjumpIDPhase) + 0)   	when c.jump  = '1' else -- j / jal jump addr
               				to_slv(unsigned(pcbranchIDPhase) + 4) 	when branchIdPhase     = '1' else -- branch (bne, beq) addr
               				to_slv(unsigned(a) + 4)        			when c.jr    = '1' ; -- jr addr
   
-  -- TODO: Repeat for all commands, check for better solution
-  -- Detect that a branch command was fetched and is currently in only in the ID-Phase    				
+  -- TODO: Repeat for all commands, check for better solution    				
   branchIdPhase		<= '1'  when 
   							((i.Opc = I_BEQ.Opc) and (EX.i.Opc /= I_BEQ.Opc) and (MA.i.Opc /= I_BEQ.Opc)) 	or
                        		((i.Opc = I_BNE.Opc) and (EX.i.Opc /= I_BNE.Opc) and (MA.i.Opc /= I_BNE.Opc)) 	or
@@ -161,7 +141,7 @@ begin
 
 
   nextpcPredicted    <=		nextpc				when predictionError = '1'			else
-  							pcm12Predicted 		when predictionFromBHT = '0' 		else -- prediction: branch not taken
+  							pcm12Predicted 		when StaticBranchAlwaysTaken = '0' 	else -- never jump Not correct: not possible to jump anymore
 							pcm12Predicted   	when c.jump  = '1' 					else -- j / jal jump addr
 		              		pcm12Predicted		when branchIdPhase     = '1' 		else -- branch (bne, beq) addr
 		              		pcm12Predicted      when c.jr    = '1' 					else -- jr addr   
@@ -289,29 +269,30 @@ begin
         wd  when (ForwardB = fromMEM);
 
 -------------------- Hazard Detection and Forward Logic ------------------------
-	ForwardA <= fromALUe when ( i.Rs /= "00000" and i.Rs = EX.wa and EX.c.regwr = '1' ) else
-            	fromALUm when ( i.Rs /= "00000" and i.Rs = MA.wa and MA.c.regwr = '1' ) else
-            	fromMEM  when ( i.Rs /= "00000" and i.Rs = WB.wa and WB.c.regwr = '1' ) else
-            	fromReg;
 
-	ForwardB <= fromALUe when ( i.Rt /= "00000" and i.Rt = EX.wa and EX.c.regwr = '1' ) else
-            	fromALUm when ( i.Rt /= "00000" and i.Rt = MA.wa and MA.c.regwr = '1' ) else
-            	fromMEM  when ( i.Rt /= "00000" and i.Rt = WB.wa and WB.c.regwr = '1' ) else
-            	fromReg;
+ForwardA <= fromALUe when ( i.Rs /= "00000" and i.Rs = EX.wa and EX.c.regwr = '1' ) else
+            fromALUm when ( i.Rs /= "00000" and i.Rs = MA.wa and MA.c.regwr = '1' ) else
+            fromMEM  when ( i.Rs /= "00000" and i.Rs = WB.wa and WB.c.regwr = '1' ) else
+            fromReg;
+
+ForwardB <= fromALUe when ( i.Rt /= "00000" and i.Rt = EX.wa and EX.c.regwr = '1' ) else
+            fromALUm when ( i.Rt /= "00000" and i.Rt = MA.wa and MA.c.regwr = '1' ) else
+            fromMEM  when ( i.Rt /= "00000" and i.Rt = WB.wa and WB.c.regwr = '1' ) else
+            fromReg;
 
 -- Explanation aim is to detect data dependencies by checking registers of consequent commands:
 -- if ( (EX.MemRead == 1) // Detect Load in EX stage
 -- and (ForwardA==1 or ForwardB==1)) then Stall // RAW Hazard
 -- PC needs to be frozen and nops inserted as is instructed by the Stall_disablePC signal below.
 
-	--TODO place in correct part in mips_pkg, it doesnt actually belong here			
-	WB_Opc  <= 	MA.i.Opc when rising_edge(clk);
-	WB_Func <= 	MA.i.funct when rising_edge(clk);
+--TODO place in correct part in mips_pkg, it doesnt actually belong here			
+WB_Opc <= 	MA.i.Opc when rising_edge(clk);
+WB_Func <= 	MA.i.funct when rising_edge(clk);
 
 -- The following logic looks for all kinds of jump commands and orders 3 stalls.
 -- TODO EX.MemRead is equal to EX.c.mem2reg ?
 				
-	stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1') 						
+stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1') 						
       and (ForwardA = fromALUe                                            or ForwardB = fromALUe))            
       or ((EX.i.Opc = I_BEQ.OPC)                                          or (MA.i.Opc = I_BEQ.OPC)     or  (WB_Opc = I_BEQ.OPC))           --ok
       or ((EX.i.Opc = I_BNE.OPC)                                          or (MA.i.Opc = I_BNE.OPC)     or  (WB_Opc = I_BNE.OPC))           --ok
@@ -322,54 +303,37 @@ begin
       or ((EX.i.Opc = I_JAL.OPC)                                          or (MA.i.Opc = I_JAL.OPC)     or  (WB_Opc = I_JAL.OPC))  
       or (((EX.i.Opc = I_JALR.OPC)      and (EX.i.funct = I_JALR.funct))  or ((MA.i.Opc = I_JALR.OPC)   and (MA.i.funct = I_JALR.funct)))    
       or (((EX.i.Opc = I_JR.OPC)        and (EX.i.funct = I_JR.funct))    or ((MA.i.Opc = I_JR.OPC)     and (MA.i.funct = I_JR.funct))	
-	  or ((WB_Opc = I_JR.OPC) 			and WB_Func = I_JR.funct))		--TODO replace using mips_PKG WB_func, WB_Opc do not belong here
+	    or ((WB_Opc = I_JR.OPC) 			    and WB_Func = I_JR.funct))		--TODO replace using mips_PKG WB_func, WB_Opc do not belong here
               
 -- Some commands have duplicate opc therefore additional information like (funct) is needed. 
 -- Supervisor said, only implement most important commands
-	 else '0' when   	(ForwardA /= fromALUe)    		and (ForwardB /= fromALUe) 			and (MA.i.Opc = I_LW.OPC) else
-		  '0' when  	(EX.i.Opc /= I_BEQ.OPC)   		and (MA.i.Opc /= I_BEQ.OPC) 
-				 	and (EX.i.Opc /= I_BNE.OPC)   		and (MA.i.Opc /= I_BNE.OPC) 
-					and (EX.i.Opc /= I_BLEZ.OPC)  		and (MA.i.Opc /= I_BLEZ.OPC) 
-					and (EX.i.Opc /= I_BLTZ.OPC)  		and (MA.i.Opc /= I_BLTZ.OPC) 
-					and (EX.i.Opc /= I_BGTZ.OPC)  		and (MA.i.Opc /= I_BGTZ.OPC) 
-					and (EX.i.Opc /= I_J.OPC)     		and (MA.i.Opc /= I_J.OPC) 
-					and (EX.i.Opc /= I_JAL.OPC)   		and (MA.i.Opc /= I_JAL.OPC) 
-					and (EX.i.funct /= I_JALR.funct)  	and (MA.i.funct /= I_JALR.funct)
-					and (EX.i.funct /= I_JR.funct)    	and (MA.i.funct /= I_JR.funct)      
-					and rising_edge(clk);
+
+		else	'0' when   	(ForwardA /= fromALUe)    and (ForwardB /= fromALUe) and (MA.i.Opc = I_LW.OPC) else
+				  '0' when  	(EX.i.Opc /= I_BEQ.OPC)   and (MA.i.Opc /= I_BEQ.OPC) 
+						  and (EX.i.Opc /= I_BNE.OPC)   		and (MA.i.Opc /= I_BNE.OPC) 
+						  and (EX.i.Opc /= I_BLEZ.OPC)  		and (MA.i.Opc /= I_BLEZ.OPC) 
+						  and (EX.i.Opc /= I_BLTZ.OPC)  		and (MA.i.Opc /= I_BLTZ.OPC) 
+						  and (EX.i.Opc /= I_BGTZ.OPC)  		and (MA.i.Opc /= I_BGTZ.OPC) 
+						  and (EX.i.Opc /= I_J.OPC)     		and (MA.i.Opc /= I_J.OPC) 
+						  and (EX.i.Opc /= I_JAL.OPC)   		and (MA.i.Opc /= I_JAL.OPC) 
+						  and (EX.i.funct /= I_JALR.funct)  and (MA.i.funct /= I_JALR.funct)
+						  and (EX.i.funct /= I_JR.funct)    and (MA.i.funct /= I_JR.funct)      
+						  and rising_edge(clk);
 
 -------------------- ID/EX Pipeline Register with Multiplexer Stalling----------
 -- bubble = "0000..." nop command. It will passed on at each Stalling signal
 
--- TODO Debug and verify working implementation of predectionError and branchTaken signals
   predictionError	<=	StaticBranchAlwaysTaken	when ((a /= b) 	and i.Opc = I_BEQ.OPC)	else
-  						StaticBranchAlwaysTaken	when ((a  = b) 	and i.Opc = I_BNE.OPC)	else
+  						StaticBranchAlwaysTaken	when ((a = b) 	and i.Opc = I_BNE.OPC)	else
   						'0';
   						
-  branchTaken		<=	'1' when (a /= b) 	and i.Opc = I_BEQ.OPC	else							
-  						'1' when (a = b) 	and i.Opc = I_BEQ.OPC	else	-- TODO branchTaken must be set to '1' when ((a=b) and (i.Opc=I_BEQ.OPC)) ?
-  						'0';
   						
-  predictionError2	<=	'1'	when (predictionFromBHT = '1'	and (a /= b) 	and i.Opc = I_BEQ.OPC)	else
-  						'1' when (predictionFromBHT = '0'	and (a = b) 	and i.Opc = I_BEQ.OPC)	else
-  						'1' when (predictionFromBHT = '1'	and (a = b) 	and i.Opc = I_BNE.OPC)	else
-  						'1' when (predictionFromBHT = '0'	and (a = b) 	and i.Opc = I_BNE.OPC)	else
-  						'0';
-  						
-  predictionFromBHT2 <= predictionFromBHT when rising_edge(clk);
-  
-  predictionError3	<=	'1'	when (predictionFromBHT2 = '1'	and (a /= b) 	and i.Opc = I_BEQ.OPC)	else
-  						'1' when (predictionFromBHT2 = '0'	and (a = b) 	and i.Opc = I_BEQ.OPC)	else
-  						'1' when (predictionFromBHT2 = '1'	and (a = b) 	and i.Opc = I_BNE.OPC)	else
-  						'1' when (predictionFromBHT2 = '0'	and (a = b) 	and i.Opc = I_BNE.OPC)	else
-  						'0';
-  
-  -- TODO Clean Up
-  EX  <= Bubble when (stallFromCache='1' or stallFromCPU='1' or predictionError='1') and rising_edge(clk) else
+-- TODO Clean Up
+  EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1' or predictionError = '1') and rising_edge(clk) else
          (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
-  --  EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1') and rising_edge(clk) else
-  --         (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
-  --  EX        <= (c, i, wa, a, b, signext, ID.pc4, rd2) when rising_edge(clk);
+--  EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1') and rising_edge(clk) else
+--         (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
+--  EX        <= (c, i, wa, a, b, signext, ID.pc4, rd2) when rising_edge(clk);
 
 -------------------- Execution Phase (EX) --------------------------------------
 
@@ -397,16 +361,13 @@ begin
   wd        <= MA.rd2; --b;
   aout      <= MA.aluout;
 
--- TODO Are the signals branch and branchNotTaken still needed?
--- A branch command was fetched and in MA-Phase a jump-decision is made.
   branch    <= '1'  when (MA.i.Opc = I_BEQ.Opc  and     MA.zero = '1') or
                          (MA.i.Opc = I_BNE.Opc  and not MA.zero = '1') or
                          (MA.i.Opc = I_BLEZ.Opc and     MA.lez  = '1') or
                          (MA.i.Opc = I_BLTZ.Opc and     MA.ltz  = '1') or
                          (MA.i.Opc = I_BGTZ.Opc and     MA.gtz  = '1') else
                '0';
-
--- A branch command was fetched and in MA-Phase a jump-decision is made.               
+               
   branchNotTaken    <= '1'  when (MA.i.Opc = I_BEQ.Opc  and     MA.zero = '0') or
                          	(MA.i.Opc = I_BNE.Opc  		and not MA.zero = '0') or
                          	(MA.i.Opc = I_BLEZ.Opc 		and     MA.lez  = '0') or

@@ -84,9 +84,10 @@ architecture struct of mips is
   signal wa,
          EX_Rd  : STD_LOGIC_VECTOR(4 downto 0) := "00000";
   signal MA_Rd  : STD_LOGIC_VECTOR(4 downto 0) := "00000";
-  signal pc, pcjump, pcbranch, nextpc, pc4, pcm12, pcm12Predicted, a, signext, b, rd2imm, aluout,
+  signal pc, pcjump, pcbranch, nextpc, pc4, pc_Jump_BRAM_Adapted, pc_Jump_BRAM_Adapted_Predicted, a, signext, b, rd2imm, aluout,
          wd, rd, rd1, rd2, aout, WB_wd, WB_rd,
          IF_ir : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
+                  
   signal forwardA,
          forwardB : ForwardType := FromREG;
   signal WB_Opc  ,WB_Func   : STD_LOGIC_VECTOR(5 downto 0) := "000000";
@@ -101,6 +102,7 @@ architecture struct of mips is
                   --wa          a         imm         pc4         rd2        rd2imm
                   "00000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
   signal StaticBranchAlwaysTaken : STD_LOGIC := '1';
+  signal freezingPC : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
   signal pcbranchIDPhase, pcjumpIDPhase, nextpcPredicted : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
   signal branchIdPhase : STD_LOGIC := '0';
   signal branchNotTaken, predictionError : STD_LOGIC := '0';
@@ -119,16 +121,17 @@ begin
 -- DEBUG signal used to find a bug in JR commands
    FOUNDJR <= '1' when (i.mnem = JR);
 -- TODO REMOVE
-    
-  pcm12		<=		to_slv(unsigned(MA.pcjump) + 0)   when MA.c.jump  = '1' else -- j / jal jump addr
-              		to_slv(unsigned(MA.pcbranch) + 4) when branch     = '1' else -- branch (bne, beq) addr
-              		to_slv(unsigned(MA.a) + 4)        when MA.c.jr    = '1' ; -- jr addr
 
-  pcm12Predicted	<=		pc										when (EX.i.mnem = BNE) or (EX.i.mnem = BEQ) else
-  							pc4 									when StaticBranchAlwaysTaken = '0' else -- never jump
-							to_slv(unsigned(pcjumpIDPhase) + 0)   	when c.jump  = '1' else -- j / jal jump addr
-              				to_slv(unsigned(pcbranchIDPhase) + 4) 	when branchIdPhase     = '1' else -- branch (bne, beq) addr
-              				to_slv(unsigned(a) + 4)        			when c.jr    = '1' ; -- jr addr
+	-- Determine the next PC in case of jump / branch in MA phase since BRAM insertion.
+  	pc_Jump_BRAM_Adapted		<=		to_slv(unsigned(MA.pcjump) + 0)   when MA.c.jump  = '1' else -- j / jal jump addr
+              							to_slv(unsigned(MA.pcbranch) + 4) when branch     = '1' else -- branch (bne, beq) addr
+              							to_slv(unsigned(MA.a) + 4)        when MA.c.jr    = '1' ; -- jr addr
+
+  	pc_Jump_BRAM_Adapted_Predicted	<=	pc	when (EX.i.mnem = BNE) or (EX.i.mnem = BEQ) else -- keep PC the same if BNE or BEQ occurs in EX phase.
+  									    pc4 when StaticBranchAlwaysTaken = '0' else -- never jump
+										to_slv(unsigned(pcjumpIDPhase) + 0) when c.jump  = '1' else -- j / jal jump addr
+              							to_slv(unsigned(pcbranchIDPhase) + 4) 	when branchIdPhase     = '1' else -- branch (bne, beq) addr
+              							to_slv(unsigned(a) + 4)        			when c.jr    = '1' ; -- jr addr
   
   -- TODO: Repeat for all commands, check for better solution    				
   branchIdPhase		<= '1'  when 
@@ -139,39 +142,29 @@ begin
                          	((i.Opc = I_BGTZ.Opc) and (EX.i.Opc /= I_BGTZ.Opc))	else
                				'0';
 
-
-  nextpcPredicted    <=		nextpc				when predictionError = '1'			else
-  							pcm12Predicted 		when StaticBranchAlwaysTaken = '0' 	else -- never jump Not correct: not possible to jump anymore
-							pcm12Predicted   	when c.jump  = '1' 					else -- j / jal jump addr
-		              		pcm12Predicted		when branchIdPhase     = '1' 		else -- branch (bne, beq) addr
-		              		pcm12Predicted      when c.jr    = '1' 					else -- jr addr   
-		                	-- The conditions below cause the program counter to stop increasing (freezing the PC)   
-					 		pc4		when (stallFromCache='0' and stallFromCPU = '0') else
-		                	pc		when (IF_ir(31 downto 26) = "100011")   else --LW
-		                	pc	    when (IF_ir(31 downto 26) = "000011") or (i.mnem = JAL) or (EX.i.mnem = JAL) or (MA.i.mnem = JAL) else --JAL
-		                	pc	    when (IF_ir(31 downto 26) = "000101") or (i.mnem = BNE) or (EX.i.mnem = BNE) or (MA.i.mnem = BNE) else --BNE
-		                	pc		when (IF_ir(31 downto 26) = "000100") or (i.mnem = BEQ) or (EX.i.mnem = BEQ) or (MA.i.mnem = BEQ) else --BEQ
-		                	pc		when (IF_ir(31 downto 26) = "000010") or (i.mnem = J)   or (EX.i.mnem = J)   or (MA.i.mnem = J)   else --J
-		                	pc		when ((IF_ir(5 downto  0) = "001000") and (IF_ir(31 downto 26) = "000000" )) or						  --JR
-		                                    (i.mnem = JR) or (EX.i.mnem = JR) or (MA.i.mnem = JR)  else
+	-- The conditions below cause the program counter to stop increasing (freezing the PC)   
+	freezingPC		    <=  pc4		when (stallFromCache='0' and stallFromCPU = '0') else
+		                	--pc		when (IF_ir(31 downto 26) = "100011")   else --LW
+		                	--pc	    when (IF_ir(31 downto 26) = "000011") or (i.mnem = JAL) or (EX.i.mnem = JAL) or (MA.i.mnem = JAL) else --JAL
+		                	--pc	    when (IF_ir(31 downto 26) = "000101") or (i.mnem = BNE) or (EX.i.mnem = BNE) or (MA.i.mnem = BNE) else --BNE
+		                	--pc		when (IF_ir(31 downto 26) = "000100") or (i.mnem = BEQ) or (EX.i.mnem = BEQ) or (MA.i.mnem = BEQ) else --BEQ
+		                	--pc		when (IF_ir(31 downto 26) = "000010") or (i.mnem = J)   or (EX.i.mnem = J)   or (MA.i.mnem = J)   else --J
+		                	--pc		when ((IF_ir(5 downto  0) = "001000") and (IF_ir(31 downto 26) = "000000" )) or						  --JR
+		                    ---                (i.mnem = JR) or (EX.i.mnem = JR) or (MA.i.mnem = JR)  else
 		                	pc		when (stallFromCache='1' or stallFromCPU = '1') else
 		                	pc4	; -- standard case: pc + 4, take following instruction;
+		                	
+  nextpcPredicted    <=		nextpc				when predictionError = '1'			else
+  							pc_Jump_BRAM_Adapted_Predicted 		when StaticBranchAlwaysTaken = '0' 	else -- never jump Not correct: not possible to jump anymore
+							pc_Jump_BRAM_Adapted_Predicted   	when c.jump  = '1' 					else -- j / jal jump addr
+		              		pc_Jump_BRAM_Adapted_Predicted		when branchIdPhase     = '1' 		else -- branch (bne, beq) addr
+		              		pc_Jump_BRAM_Adapted_Predicted      when c.jr    = '1' 					else -- jr addr   
+		                	freezingPC;
                 	
-  nextpc	<=		pcm12	when MA.c.jump  = '1' else -- j / jal jump addr				MA.pcjump
-                	pcm12 	when branch     = '1' else -- branch (bne, beq) addr		MA.pcbranch
-                	pcm12   when MA.c.jr    = '1' else -- jr addr						MA.a
-                	-- The conditions below cause the program counter to stop increasing (freezing the PC)   
-			 		pc4		when (stallFromCache='0' and stallFromCPU = '0') else
-                	pc		when (IF_ir(31 downto 26) = "100011")   else --LW
-                	pc	    when (IF_ir(31 downto 26) = "000011") or (i.mnem = JAL) or (EX.i.mnem = JAL) or (MA.i.mnem = JAL) else --JAL
-                	pc	    when (IF_ir(31 downto 26) = "000101") or (i.mnem = BNE) or (EX.i.mnem = BNE) or (MA.i.mnem = BNE) else --BNE
-                	pc		when (IF_ir(31 downto 26) = "000100") or (i.mnem = BEQ) or (EX.i.mnem = BEQ) or (MA.i.mnem = BEQ) else --BEQ
-                	pc		when (IF_ir(31 downto 26) = "000010") or (i.mnem = J)   or (EX.i.mnem = J)   or (MA.i.mnem = J)   else --J
-                	pc		when ((IF_ir(5 downto  0) = "001000") and (IF_ir(31 downto 26) = "000000" )) or						  --JR
-                                    (i.mnem = JR) or (EX.i.mnem = JR) or (MA.i.mnem = JR)  else
-                	pc		when (stallFromCache='1' or stallFromCPU = '1') else
-                	pc4	; -- standard case: pc + 4, take following instruction;
-
+		  nextpc	<=		pc_Jump_BRAM_Adapted when MA.c.jump  = '1' 				else -- j / jal jump addr				MA.pcjump
+		                	pc_Jump_BRAM_Adapted when branch     = '1' 				else -- branch (bne, beq) addr		MA.pcbranch
+		                	pc_Jump_BRAM_Adapted when MA.c.jr    = '1' 				else -- jr addr						MA.a
+		                	freezingPC;
 
 	-- ------------------------------------------------------------------------------------------
 	-- Instruction cache.

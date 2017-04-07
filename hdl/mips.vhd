@@ -154,7 +154,7 @@ begin
 		                	pc		when (stallFromCache='1' or stallFromCPU = '1') else
 		                	pc4	; -- standard case: pc + 4, take following instruction;
 		                	
-  nextpcPredicted    <=		nextpc				when predictionError = '1'			else
+  nextpcPredicted    <=		nextpc							    when predictionError = '1'			else
   							pc_Jump_BRAM_Adapted_Predicted 		when StaticBranchAlwaysTaken = '0' 	else -- never jump Not correct: not possible to jump anymore
 							pc_Jump_BRAM_Adapted_Predicted   	when c.jump  = '1' 					else -- j / jal jump addr
 		              		pc_Jump_BRAM_Adapted_Predicted		when branchIdPhase     = '1' 		else -- branch (bne, beq) addr

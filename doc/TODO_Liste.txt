@@ -1,6 +1,10 @@
 TODO Liste
 Treffen 08.03.2017
 --------------------------------------------
+2017-04-06	[Doku]			Einleitung in der Dokumentation schreiben.
+
+2017-04-06	[Doku]			Zusammenfassung/Fazit in der Dokumentation schreiben.
+
 2017-03-20	[Task 4]		Was bedeutet "main memory: BlockRAM (4K x 128) with ready signal after 20 cycles"?
 
 2017-03-08	[Task 4]		Wolfgang fragen, was ist mit n-way caches gemeint?

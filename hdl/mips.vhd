@@ -127,7 +127,7 @@ begin
 -- TODO REMOVE
 
   	-- New prediction of the next PC for branch prediction
-  	nextpcPredicted    <=	nextpc							    when StaticBranchAlwaysTaken = '0' and predictionError = '0' 	else --normal behaviour if no branch taken
+  	nextpcPredicted    <=	pc_Jump_BRAM_Adapted_PredictedAT	when StaticBranchAlwaysTaken = '0' and predictionError = '1' 	else --normal behaviour if no branch taken
   							--nextpc							    when StaticBranchAlwaysTaken = '0' and predictionError = '1' 	else
 							pc_Jump_BRAM_Adapted_PredictedNT   	when StaticBranchAlwaysTaken = '0' and c.jump  = '1' 			else -- j / jal jump addr
 		              		pc_Jump_BRAM_Adapted_PredictedNT	when StaticBranchAlwaysTaken = '0' and branchIdPhase     = '1' 	else -- branch (bne, beq) addr
@@ -142,12 +142,13 @@ begin
 
   	pc_Jump_BRAM_Adapted_PredictedNT <=	pc	when (EX.i.mnem = BNE) or (EX.i.mnem = BEQ) else -- keep PC the same if BNE or BEQ occurs in EX phase.
 --  									    pc4 when StaticBranchAlwaysTaken = '0' else -- never jump
-										to_slv(unsigned(pcjumpIDPhase) + 0) when c.jump  = '1' else -- j / jal jump addr
-              							to_slv(unsigned(pcbranchIDPhase) + 4) 	when branchIdPhase     = '1' else -- branch (bne, beq) addr
-              							to_slv(unsigned(a) + 4)        			when c.jr    = '1' ; -- jr addr
+										to_slv(unsigned(pcjumpIDPhase) + 0) 	when c.jump  = '1' else -- j / jal jump addr
+              						--	to_slv(unsigned(pcbranchIDPhase) + 4) 	when branchIdPhase     = '1' else -- branch (bne, beq) addr
+              							to_slv(unsigned(a) + 4)        			when c.jr    = '1' else
+              							nextpc; -- jr addr
 
   	pc_Jump_BRAM_Adapted_PredictedAT <=	pc	when (EX.i.mnem = BNE) or (EX.i.mnem = BEQ) else -- keep PC the same if BNE or BEQ occurs in EX phase.
-										to_slv(unsigned(pcjumpIDPhase) + 0) when c.jump  = '1' else -- j / jal jump addr
+										to_slv(unsigned(pcjumpIDPhase) + 0) 	when c.jump  = '1' 	else -- j / jal jump addr
               							to_slv(unsigned(pcbranchIDPhase) + 4) 	when branchIdPhase     = '1' else -- branch (bne, beq) addr
               							to_slv(unsigned(a) + 4)        			when c.jr    = '1' ; -- jr addr
                   	
@@ -330,7 +331,13 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
   						
   						
 -- TODO Clean Up
-  EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1' or predictionError = '1') and rising_edge(clk) else
+  EX  <= Bubble when 	(stallFromCache = '1' or stallFromCPU = '1' 
+  					or 	(StaticBranchAlwaysTaken = '1' and predictionError = '1')
+  					or 	(StaticBranchAlwaysTaken = '0' and predictionError = '1')
+  					)
+  		
+  		
+  		 and rising_edge(clk) else
          (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
 --  EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1') and rising_edge(clk) else
 --         (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);

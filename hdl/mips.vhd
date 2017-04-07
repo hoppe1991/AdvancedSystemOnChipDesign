@@ -347,13 +347,13 @@ begin
   						'0';
   						
   branchTaken		<=	'1' when (a /= b) 	and i.Opc = I_BEQ.OPC	else							
-  						'1' when (a = b) 	and i.Opc = I_BEQ.OPC	else	-- TODO branchTaken must be set to '1' when ((a=b) and (i.Opc=I_BEQ.OPC)) ?
+  						'1' when (a = b) 	and i.Opc = I_BNE.OPC	else
   						'0';
   						
   predictionError2	<=	'1'	when (predictionFromBHT = '1'	and (a /= b) 	and i.Opc = I_BEQ.OPC)	else
   						'1' when (predictionFromBHT = '0'	and (a = b) 	and i.Opc = I_BEQ.OPC)	else
   						'1' when (predictionFromBHT = '1'	and (a = b) 	and i.Opc = I_BNE.OPC)	else
-  						'1' when (predictionFromBHT = '0'	and (a = b) 	and i.Opc = I_BNE.OPC)	else
+  						'1' when (predictionFromBHT = '0'	and (a /= b) 	and i.Opc = I_BNE.OPC)	else
   						'0';
   						
   predictionFromBHT2 <= predictionFromBHT when rising_edge(clk);
@@ -361,7 +361,7 @@ begin
   predictionError3	<=	'1'	when (predictionFromBHT2 = '1'	and (a /= b) 	and i.Opc = I_BEQ.OPC)	else
   						'1' when (predictionFromBHT2 = '0'	and (a = b) 	and i.Opc = I_BEQ.OPC)	else
   						'1' when (predictionFromBHT2 = '1'	and (a = b) 	and i.Opc = I_BNE.OPC)	else
-  						'1' when (predictionFromBHT2 = '0'	and (a = b) 	and i.Opc = I_BNE.OPC)	else
+  						'1' when (predictionFromBHT2 = '0'	and (a /= b) 	and i.Opc = I_BNE.OPC)	else
   						'0';
   
   -- TODO Clean Up

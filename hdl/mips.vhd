@@ -105,10 +105,10 @@ architecture struct of mips is
                   --wa          a         imm         pc4         rd2        rd2imm
                   "00000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
   -- Setting whether the static branch prediction assumes "branch always taken" (1) or "branch never taken" (0)
-  signal StaticBranchAlwaysTaken : STD_LOGIC := '0'; 
+  signal StaticBranchAlwaysTaken : STD_LOGIC := '1'; 
   signal freezingPC : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
   signal pcbranchIDPhase, pcjumpIDPhase, nextpcPredicted : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
-  signal branchIdPhase : STD_LOGIC := '0';
+  signal branchIdPhase, branchIDPhase_History: STD_LOGIC := '0';
   signal branchNotTaken, predictionError : STD_LOGIC := '0';
 
 begin
@@ -125,6 +125,8 @@ begin
 -- DEBUG signal used to find a bug in JR commands
    FOUNDJR <= '1' when (i.mnem = JR);
 -- TODO REMOVE
+
+	branchIDPhase_History <= branchIDPhase when rising_edge(clk);
 
   	-- New prediction of the next PC for branch prediction
   	nextpcPredicted    <=	pc_Jump_BRAM_Adapted_PredictedAT	when StaticBranchAlwaysTaken = '0' and predictionError = '1' 	else --normal behaviour if no branch taken
@@ -149,7 +151,7 @@ begin
 
   	pc_Jump_BRAM_Adapted_PredictedAT <=	pc	when (EX.i.mnem = BNE) or (EX.i.mnem = BEQ) else -- keep PC the same if BNE or BEQ occurs in EX phase.
 										to_slv(unsigned(pcjumpIDPhase) + 0) 	when c.jump  = '1' 	else -- j / jal jump addr
-              							to_slv(unsigned(pcbranchIDPhase) + 4) 	when branchIdPhase     = '1' else -- branch (bne, beq) addr
+              							to_slv(unsigned(pcbranchIDPhase) + 4) 	when branchIdPhase     = '1' and (branchIDPhase /= branchIDPhase_History) else -- branch (bne, beq) addr
               							to_slv(unsigned(a) + 4)        			when c.jr    = '1' ; -- jr addr
                   	
 	-- Determine the next PC in case of jump / branch in MA phase since BRAM insertion. Old treatment of the next PC before branch prediction but with bram and cache

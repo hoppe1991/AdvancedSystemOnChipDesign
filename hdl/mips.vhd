@@ -84,7 +84,10 @@ architecture struct of mips is
   signal wa,
          EX_Rd  : STD_LOGIC_VECTOR(4 downto 0) := "00000";
   signal MA_Rd  : STD_LOGIC_VECTOR(4 downto 0) := "00000";
-  signal pc, pcjump, pcbranch, nextpc, pc4, pc_Jump_BRAM_Adapted, pc_Jump_BRAM_Adapted_Predicted, a, signext, b, rd2imm, aluout,
+  signal pc, pcjump, pcbranch, nextpc, pc4, pc_Jump_BRAM_Adapted, 
+  		 pc_Jump_BRAM_Adapted_PredictedAT, 
+  		 pc_Jump_BRAM_Adapted_PredictedNT, 
+  		 a, signext, b, rd2imm, aluout,
          wd, rd, rd1, rd2, aout, WB_wd, WB_rd,
          IF_ir : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
                   
@@ -101,7 +104,8 @@ architecture struct of mips is
                   "000000", "00000", x"0000", "00" & x"000000"),
                   --wa          a         imm         pc4         rd2        rd2imm
                   "00000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
-  signal StaticBranchAlwaysTaken : STD_LOGIC := '1';
+  -- Setting whether the static branch prediction assumes "branch always taken" (1) or "branch never taken" (0)
+  signal StaticBranchAlwaysTaken : STD_LOGIC := '0'; 
   signal freezingPC : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
   signal pcbranchIDPhase, pcjumpIDPhase, nextpcPredicted : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
   signal branchIdPhase : STD_LOGIC := '0';
@@ -122,49 +126,51 @@ begin
    FOUNDJR <= '1' when (i.mnem = JR);
 -- TODO REMOVE
 
-	-- Determine the next PC in case of jump / branch in MA phase since BRAM insertion.
-  	pc_Jump_BRAM_Adapted		<=		to_slv(unsigned(MA.pcjump) + 0)   when MA.c.jump  = '1' else -- j / jal jump addr
-              							to_slv(unsigned(MA.pcbranch) + 4) when branch     = '1' else -- branch (bne, beq) addr
-              							to_slv(unsigned(MA.a) + 4)        when MA.c.jr    = '1' ; -- jr addr
+  	-- New prediction of the next PC for branch prediction
+  	nextpcPredicted    <=	nextpc							    when StaticBranchAlwaysTaken = '0' and predictionError = '0' 	else --normal behaviour if no branch taken
+  							--nextpc							    when StaticBranchAlwaysTaken = '0' and predictionError = '1' 	else
+							pc_Jump_BRAM_Adapted_PredictedNT   	when StaticBranchAlwaysTaken = '0' and c.jump  = '1' 			else -- j / jal jump addr
+		              		pc_Jump_BRAM_Adapted_PredictedNT	when StaticBranchAlwaysTaken = '0' and branchIdPhase     = '1' 	else -- branch (bne, beq) addr
+		              		pc_Jump_BRAM_Adapted_PredictedNT    when StaticBranchAlwaysTaken = '0' and c.jr    = '1' 			else -- jr addr   
+							
+							nextpc							    when StaticBranchAlwaysTaken = '1' and predictionError = '1' 	else
+  							--pc_Jump_BRAM_Adapted_Predicted 		when StaticBranchAlwaysTaken = '0' 	else -- never jump Not correct: not possible to jump anymore
+							pc_Jump_BRAM_Adapted_PredictedAT   	when StaticBranchAlwaysTaken = '1' and c.jump  = '1' 			else -- j / jal jump addr
+		              		pc_Jump_BRAM_Adapted_PredictedAT	when StaticBranchAlwaysTaken = '1' and branchIdPhase     = '1' 	else -- branch (bne, beq) addr
+		              		pc_Jump_BRAM_Adapted_PredictedAT    when StaticBranchAlwaysTaken = '1' and c.jr    = '1' 			else -- jr addr   
+		                	freezingPC;
 
-  	pc_Jump_BRAM_Adapted_Predicted	<=	pc	when (EX.i.mnem = BNE) or (EX.i.mnem = BEQ) else -- keep PC the same if BNE or BEQ occurs in EX phase.
-  									    pc4 when StaticBranchAlwaysTaken = '0' else -- never jump
+  	pc_Jump_BRAM_Adapted_PredictedNT <=	pc	when (EX.i.mnem = BNE) or (EX.i.mnem = BEQ) else -- keep PC the same if BNE or BEQ occurs in EX phase.
+--  									    pc4 when StaticBranchAlwaysTaken = '0' else -- never jump
 										to_slv(unsigned(pcjumpIDPhase) + 0) when c.jump  = '1' else -- j / jal jump addr
               							to_slv(unsigned(pcbranchIDPhase) + 4) 	when branchIdPhase     = '1' else -- branch (bne, beq) addr
               							to_slv(unsigned(a) + 4)        			when c.jr    = '1' ; -- jr addr
-  
-  -- TODO: Repeat for all commands, check for better solution    				
-  branchIdPhase		<= '1'  when 
-  							((i.Opc = I_BEQ.Opc) and (EX.i.Opc /= I_BEQ.Opc) and (MA.i.Opc /= I_BEQ.Opc)) 	or
-                       		((i.Opc = I_BNE.Opc) and (EX.i.Opc /= I_BNE.Opc) and (MA.i.Opc /= I_BNE.Opc)) 	or
-                         	((i.Opc = I_BLEZ.Opc) and (EX.i.Opc /= I_BLEZ.Opc)) or
-                         	((i.Opc = I_BLTZ.Opc) and (EX.i.Opc /= I_BLTZ.Opc)) or
-                         	((i.Opc = I_BGTZ.Opc) and (EX.i.Opc /= I_BGTZ.Opc))	else
-               				'0';
+
+  	pc_Jump_BRAM_Adapted_PredictedAT <=	pc	when (EX.i.mnem = BNE) or (EX.i.mnem = BEQ) else -- keep PC the same if BNE or BEQ occurs in EX phase.
+										to_slv(unsigned(pcjumpIDPhase) + 0) when c.jump  = '1' else -- j / jal jump addr
+              							to_slv(unsigned(pcbranchIDPhase) + 4) 	when branchIdPhase     = '1' else -- branch (bne, beq) addr
+              							to_slv(unsigned(a) + 4)        			when c.jr    = '1' ; -- jr addr
+                  	
+	-- Determine the next PC in case of jump / branch in MA phase since BRAM insertion. Old treatment of the next PC before branch prediction but with bram and cache
+
+		  nextpc	<=		to_slv(unsigned(MA.pcjump) + 0)   when MA.c.jump  = '1' else -- j / jal jump addr
+              				to_slv(unsigned(MA.pcbranch) + 4) when branch     = '1' else -- branch (bne, beq) addr
+              				to_slv(unsigned(MA.a) + 4)        when MA.c.jr    = '1' else -- jr addr
+		                	freezingPC;
 
 	-- The conditions below cause the program counter to stop increasing (freezing the PC)   
 	freezingPC		    <=  pc4		when (stallFromCache='0' and stallFromCPU = '0') else
-		                	--pc		when (IF_ir(31 downto 26) = "100011")   else --LW
-		                	--pc	    when (IF_ir(31 downto 26) = "000011") or (i.mnem = JAL) or (EX.i.mnem = JAL) or (MA.i.mnem = JAL) else --JAL
-		                	--pc	    when (IF_ir(31 downto 26) = "000101") or (i.mnem = BNE) or (EX.i.mnem = BNE) or (MA.i.mnem = BNE) else --BNE
-		                	--pc		when (IF_ir(31 downto 26) = "000100") or (i.mnem = BEQ) or (EX.i.mnem = BEQ) or (MA.i.mnem = BEQ) else --BEQ
-		                	--pc		when (IF_ir(31 downto 26) = "000010") or (i.mnem = J)   or (EX.i.mnem = J)   or (MA.i.mnem = J)   else --J
-		                	--pc		when ((IF_ir(5 downto  0) = "001000") and (IF_ir(31 downto 26) = "000000" )) or						  --JR
-		                    ---                (i.mnem = JR) or (EX.i.mnem = JR) or (MA.i.mnem = JR)  else
 		                	pc		when (stallFromCache='1' or stallFromCPU = '1') else
 		                	pc4	; -- standard case: pc + 4, take following instruction;
 		                	
-  nextpcPredicted    <=		nextpc							    when predictionError = '1'			else
-  							pc_Jump_BRAM_Adapted_Predicted 		when StaticBranchAlwaysTaken = '0' 	else -- never jump Not correct: not possible to jump anymore
-							pc_Jump_BRAM_Adapted_Predicted   	when c.jump  = '1' 					else -- j / jal jump addr
-		              		pc_Jump_BRAM_Adapted_Predicted		when branchIdPhase     = '1' 		else -- branch (bne, beq) addr
-		              		pc_Jump_BRAM_Adapted_Predicted      when c.jr    = '1' 					else -- jr addr   
-		                	freezingPC;
-                	
-		  nextpc	<=		pc_Jump_BRAM_Adapted when MA.c.jump  = '1' 				else -- j / jal jump addr				MA.pcjump
-		                	pc_Jump_BRAM_Adapted when branch     = '1' 				else -- branch (bne, beq) addr		MA.pcbranch
-		                	pc_Jump_BRAM_Adapted when MA.c.jr    = '1' 				else -- jr addr						MA.a
-		                	freezingPC;
+ 	-- Signal to recognize whether a branch command is in ID phase     				
+  branchIdPhase		<= '1'  when 
+  							((i.Opc = I_BEQ.Opc) and (EX.i.Opc /= I_BEQ.Opc) and (MA.i.Opc /= I_BEQ.Opc)) 	or
+                       		((i.Opc = I_BNE.Opc) and (EX.i.Opc /= I_BNE.Opc) and (MA.i.Opc /= I_BNE.Opc)) 	or
+                         	((i.Opc = I_BLEZ.Opc) and (EX.i.Opc /= I_BLEZ.Opc)) or	--not currently used in asm files
+                         	((i.Opc = I_BLTZ.Opc) and (EX.i.Opc /= I_BLTZ.Opc)) or	--not currently used in asm files
+                         	((i.Opc = I_BGTZ.Opc) and (EX.i.Opc /= I_BGTZ.Opc))	else--not currently used in asm files
+               				'0';
 
 	-- ------------------------------------------------------------------------------------------
 	-- Instruction cache.
@@ -316,8 +322,10 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
 -------------------- ID/EX Pipeline Register with Multiplexer Stalling----------
 -- bubble = "0000..." nop command. It will passed on at each Stalling signal
 
-  predictionError	<=	StaticBranchAlwaysTaken	when ((a /= b) 	and i.Opc = I_BEQ.OPC)	else
-  						StaticBranchAlwaysTaken	when ((a = b) 	and i.Opc = I_BNE.OPC)	else
+  predictionError	<=	'1'	when (StaticBranchAlwaysTaken = '1' and (a /= b) 	and i.Opc = I_BEQ.OPC)	else	--assumed to take branch but not taken at BEQ 
+  						'1' when (StaticBranchAlwaysTaken = '1' and (a = b) 	and i.Opc = I_BNE.OPC)	else	--assumed to take branch but not taken at BNE 
+  						'1' when (StaticBranchAlwaysTaken = '0' and (a = b) 	and i.Opc = I_BEQ.OPC)	else  	--assumed not to take branch but taken at BEQ 
+  						'1' when (StaticBranchAlwaysTaken = '0' and (a /= b) 	and i.Opc = I_BNE.OPC)	else	--assumed not to take branch but taken at BNE  						
   						'0';
   						
   						

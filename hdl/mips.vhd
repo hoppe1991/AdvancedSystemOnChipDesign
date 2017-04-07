@@ -51,36 +51,17 @@ architecture struct of mips is
 
   signal zero,
          lez,
-         FOUNDJR ,
-  --TODO REMOVE
          ltz,
          gtz,
          branch : STD_LOGIC       := '0';
-  signal c      : ControlType     := ('0','0','0','0','0','0','0','0','0','0',
-                                      '0','0','0','0','0','0',"0000",WORD);
-  signal i      : InstructionType := (UNKNOWN, "000000", "00000", "00000", "00000",  --i
-                                     "000000", "00000", x"0000", "00" & x"000000");
-  signal ID     : IDType := (x"00000000", x"00000000");
-  signal EX     : EXType := (
-                  ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
-                   '0', "0000",WORD),
-                  --Opcode,    opc       rd       rt       rs
-                  (UNKNOWN, "000000", "00000", "00000", "00000",
-                  --Funct    Shamt     Imm     BrTarget
-                  "000000", "00000", x"0000", "00" & x"000000"),
-                  --wa          a         imm         pc4         rd2        rd2imm
-                  "00000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
-  signal MA     : MAType := (
-                  ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
-                   '0',"0000",WORD),
-                  (UNKNOWN, "000000", "00000", "00000", "00000",  --i
-                  "000000", "00000", x"0000", "00" & x"000000"),
-                  "00000",x"00000000",x"00000000",x"00000000",x"00000000",
-                  x"00000000",x"00000000",x"00000000",'0','0','0','0');
-  signal WB     : WBType := (
-                  ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
-                   '0',"0000",WORD),
-                  "00000",x"00000000",x"00000000");
+  
+  signal c      : ControlType     	:= INIT_CONTROLTYPE;
+  signal i      : InstructionType 	:= INIT_INSTRUCTIONTYPE;
+  signal ID     : IDType 			:= INIT_IDTYPE;
+  signal EX     : EXType 			:= INIT_EXTYPE;
+  signal MA     : MAType 			:= INIT_MATYPE;
+  signal WB     : WBType 			:= INIT_WBTYPE;
+  
   signal wa,
          EX_Rd  : STD_LOGIC_VECTOR(4 downto 0) := "00000";
   signal MA_Rd  : STD_LOGIC_VECTOR(4 downto 0) := "00000";
@@ -94,18 +75,10 @@ architecture struct of mips is
   signal forwardA,
          forwardB : ForwardType := FromREG;
   signal WB_Opc  ,WB_Func   : STD_LOGIC_VECTOR(5 downto 0) := "000000";
-
-  signal Bubble     : EXType := (
-                  ('0','0','0','0','0','0','0','0','0','0','0','0','0','0','0',
-                   '0', "0000",WORD),
-                  --Opcode,    opc       rd       rt       rs
-                  (NOP, "000000", "00000", "00000", "00000",
-                  --Funct    Shamt     Imm     BrTarget
-                  "000000", "00000", x"0000", "00" & x"000000"),
-                  --wa          a         imm         pc4         rd2        rd2imm
-                  "00000",x"00000000",x"00000000",x"00000000",x"00000000",x"00000000");
+                  
+                  
   -- Setting whether the static branch prediction assumes "branch always taken" (1) or "branch never taken" (0)
-  signal StaticBranchAlwaysTaken : STD_LOGIC := '0'; 
+  signal StaticBranchAlwaysTaken : STD_LOGIC := '1'; 
   signal freezingPC : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
   signal pcbranchIDPhase, pcjumpIDPhase, nextpcPredicted : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
   signal branchIdPhase : STD_LOGIC := '0';
@@ -122,9 +95,6 @@ begin
   pc        <= nextpcPredicted when rising_edge(clk);
   pc4       <= to_slv(unsigned(pc) + 4) ;
 
--- DEBUG signal used to find a bug in JR commands
-   FOUNDJR <= '1' when (i.mnem = JR);
--- TODO REMOVE
 
   	-- New prediction of the next PC for branch prediction
   	nextpcPredicted    <=	pc_Jump_BRAM_Adapted_PredictedAT	when StaticBranchAlwaysTaken = '0' and predictionError = '1' 	else --normal behaviour if no branch taken

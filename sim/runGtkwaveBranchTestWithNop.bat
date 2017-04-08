@@ -1,0 +1,1 @@
+gtkwave branchTestWithNop.ghw branchTestwithNop.gtkw

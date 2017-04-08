@@ -31,7 +31,8 @@ architecture behave of regfile is
   signal reg: ramtype := (others => ZERO32);
   
 begin
-  
+	
+	
   process(clk) begin
     if EDGE=FALLING then
       if falling_edge(clk) then

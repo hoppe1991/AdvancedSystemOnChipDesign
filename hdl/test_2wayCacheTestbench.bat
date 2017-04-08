@@ -1,0 +1,1 @@
+run_ghdl_task4_2wayCacheTestbench_windows benchmarkDirectMappedCache

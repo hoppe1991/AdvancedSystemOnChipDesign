@@ -1,0 +1,1 @@
+run_ghdl.bat branchTestWithoutNop

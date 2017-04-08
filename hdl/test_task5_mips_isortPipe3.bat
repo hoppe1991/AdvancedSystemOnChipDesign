@@ -1,0 +1,1 @@
+run_ghdl_mipsWithInstructionCache_windows isort_pipe3

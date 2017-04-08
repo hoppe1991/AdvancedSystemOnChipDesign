@@ -3,7 +3,7 @@
 -- author   : Meyer zum Felde, P�ttjer, Hoppe
 -- company  : TUHH
 -- revision : 0.1
--- date     : 24/01/17
+-- date     : 30/03/17
 --------------------------------------------------------------------------------
 library IEEE; 
 use IEEE.STD_LOGIC_1164.all; 
@@ -12,7 +12,7 @@ use IEEE.std_logic_textio.all;
 use STD.TEXTIO.ALL;
 use work.CASTS.all;
 
-entity mips_isortPipe3_tb is
+entity mips_gcd_tb is
   generic (
 
 		DFileName 			: STRING := "../dmem/isort_pipe";
@@ -23,15 +23,13 @@ entity mips_isortPipe3_tb is
    );
 end;
 
-architecture test of mips_isortPipe3_tb is
+architecture test of mips_gcd_tb is
+	
+	-- Expected ggt(3528, 3780) is 252.
+	constant expectedValue : INTEGER := 252;
 
 	-- Width of address vector.
 	constant ADDR_WIDTH     : integer  := 11;
-    
-	-- The integer array contains 10 integer values.
-    type integerArray is array (9 downto 0) of INTEGER;
-    
-    constant expectedArray : integerArray := ( 60, 50, 40, 30, 30, 25, 20, 10, 10, 5 );
 
 	-- Clock and reset signal.
 	signal clk, reset		: STD_LOGIC := '0';
@@ -56,35 +54,8 @@ architecture test of mips_isortPipe3_tb is
     
 	-- Address as correspondent integer value.
     signal selectedAddrI	: INTEGER := 0;
-
-    
-    -- Array of integers.
-  	signal writeDataArray: integerArray := (others => 0);
-
-	-- -----------------------------------------------------------------------------
-	-- Impure function shifts the integers in the array and adds the new integer
-	-- at the end of the array.
-	-- -----------------------------------------------------------------------------
-	impure function PUSH_INTEGER(int : in INTEGER) return integerArray is
-		variable a : integerArray;
-	begin
-		for I in 9 downto 1 loop
-			a(I) := writeDataArray(I-1);
-		end loop;
-		a(0) := int;
-		
-		return a;
-	end;
-	
-	procedure validateValue( currentValue : in INTEGER; expectedValue : in INTEGER ) is
-	begin
-		assert currentValue=expectedValue report "ERROR expected value is " & INTEGER'IMAGE(expectedValue) 
-			& " but current value is " & INTEGER'IMAGE(currentValue) severity FAILURE;
-	end;
-	
-	
+ 
 begin
-
 
 	-- instantiate device to be tested
   	dut: entity work.mips
@@ -114,42 +85,8 @@ begin
 	selectedAddrI 	<= to_i(selectedAddr);
 	
 	-- Converts the data word to integer value.
-	writedataI 		<= to_i(writedata) when memwrite_i='1' and memwrite='0';
+	writedataI 		<= to_i(writedata);
 	
-
-	-- -----------------------------------------------------------------------------
-  	-- Updates the integer array, which represents the last 10 data memory access 
-  	-- operations.
-	-- -----------------------------------------------------------------------------
-	updateProcess: process(memwrite_i, writeDataArray, writedataI, clk, memwrite) is
-		
-		-- ----------------------------------------------------------------------
-		-- Writes the given integer array into a txt file.
-		-- ----------------------------------------------------------------------
-		procedure print_array is		
-			variable l : LINE;
-    		file outfile         : text;
-    		variable f_status: FILE_OPEN_STATUS;
-		begin
-			file_open(f_status, outfile, "mips_isortPipe3_tb.txt", write_mode);
-			for I in writeDataArray'RANGE loop
-				write(l, INTEGER'IMAGE(writeDataArray(I)));
-				write(l, string'(";"));
-			end loop;
-			WRITELINE(outfile, l);
-			file_close(outfile);
-		end;
-	begin
-
-		if memwrite_i='1' and memwrite='0' and rising_edge(clk) then
-			writeDataArray <= PUSH_INTEGER(writedataI);	
-			--report "write data: " & INTEGER'IMAGE(writedataI);
-	    	--report "address: " & INTEGER'IMAGE(selectedAddrI); 
-	    	--print_array;
-	    	--report "----------------------------------";
-		end if;
-	end process;
-
 	-- -----------------------------------------------------------------------------
   	-- Generate reset for first two clock cycles
   	-- and check whether the list has been sorted successfully.
@@ -163,18 +100,15 @@ begin
     	reset <= '0';  
     	
     	-- Wait enough time.
-		wait for 35 us;
-		
-		-- Asserts the last 10 operations. We assume, that the assembler program
-		-- 'isort_pipe3' sorts the given 10 integer values.
-		for I in 0 to 9 loop
-			validateValue( writeDataArray(I), expectedArray(I) );
-		end loop;
-
+    	wait until memwrite_i='1' and memwrite='0'; 
+    	
+    	-- Asserts the ggt value.
+    	assert writedataI=expectedValue report "Test case fails: ggt is expected to be " 
+    		& INTEGER'IMAGE(expectedValue) & " but is actually " & INTEGER'IMAGE(writedataI) severity FAILURE;
+    	
 		-- Report whether the test runs successfully.
 		report "The test has been successfully passed.";
 		
-		  
     	wait;
 	end process;
  

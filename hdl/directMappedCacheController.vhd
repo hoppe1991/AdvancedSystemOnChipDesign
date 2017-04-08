@@ -106,6 +106,7 @@ architecture synth of directMappedCacheController is
 	-- Possible states of the controller.
   	type statetype is ( 
   		READ_DATA,      -- Indicates to read a single word from the cache line.
+  		DELAY,			-- Indicates a delay state.
   		READ_LINE,      -- Indicates to read a complete cache line.
   		WRITE_DATA,     -- Indicates to write a single word from the cache line.
   		WRITE_LINE,     -- Indicates to write a complete cache line.
@@ -174,6 +175,9 @@ architecture synth of directMappedCacheController is
 	
 	-- Cache block written to BRAM.
 	signal blockLineToBRAM : CACHE_BLOCK_LINE;
+	
+	-- Auxiliary counter.
+	signal counter : INTEGER := 0;
 	
 	-- -----------------------------------------------------------------------------------------------------------
 	-- The function converts the given cache block line to a vector.
@@ -270,18 +274,24 @@ architecture synth of directMappedCacheController is
 		return addr;
 		
 	end function;
+	
   	 
 -----------------------------------------------------------------------------------
 begin
 	
+	-- Update the auxiliary counter.
+	counter <= 	counter-1 when state=READ_DATA and rising_edge(clk) else
+				1		  when state=NOTHING;
+	
+	
 	-- -----------------------------------------------------------------------------
 	-- Determines the read/write mode.
 	-- -----------------------------------------------------------------------------
-	state <= READ_DATA  when wrWord='0' AND rdWord='1' AND wrCBLine='0' AND rdCBLine='0' else 
-	 	           WRITE_DATA when wrWord='1' AND rdWord='0' AND wrCBLine='0' AND rdCBLine='0' else 
-	 	           READ_LINE  when rdWord='0' and wrWord='0' AND wrCBLine='0' AND rdCBLine='1' else
-	 	           WRITE_LINE when rdWord='0' AND wrWord='0' AND wrCBLine='1' AND rdCBLine='0' else 
-	 	           NOTHING;
+	state <= 		READ_DATA  when wrWord='0' AND rdWord='1' AND wrCBLine='0' AND rdCBLine='0' else 
+	 	           	WRITE_DATA when wrWord='1' AND rdWord='0' AND wrCBLine='0' AND rdCBLine='0' else 
+	 	           	READ_LINE  when rdWord='0' and wrWord='0' AND wrCBLine='0' AND rdCBLine='1' else
+	 	           	WRITE_LINE when rdWord='0' AND wrWord='0' AND wrCBLine='1' AND rdCBLine='0' else 
+	 	           	NOTHING;
 
 	-- -----------------------------------------------------------------------------
 	-- Determine the offset, index and tag of the address signal.
@@ -334,9 +344,9 @@ begin
 	dataToBRAM <= newCacheBlockLine when state=WRITE_LINE else 
 	              TO_STD_LOGIC_VECTOR( blockLineToBRAM ) when state=WRITE_DATA;
 
-	dataCPU <= 
-			   (others=>'0') when state=READ_DATA and not(valid = '1' AND tagsAreEqual = '1') else
-			   (others=>'Z') when writeMode='1' else
+	dataCPU <= (others=>'0') when (state=READ_DATA and counter>0								) else
+			   (others=>'0') when (state=READ_DATA and not(valid = '1' AND tagsAreEqual = '1')	) else
+			   (others=>'Z') when (writeMode='1' 												) else
 			   (blockLineFromBRAM(memoryAddress.offsetAsInteger)) when state=READ_DATA else
 		       (others=>'Z');
 

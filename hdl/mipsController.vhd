@@ -117,21 +117,20 @@ begin
               							to_slv(unsigned(pcbranchIDPhase) + 4) 	when branchIdPhase     = '1' and (branchIDPhase /= branchIDPhase_History) else -- branch (bne, beq) addr
               							to_slv(unsigned(a) + 4)        			when c.jr    = '1' ; -- jr addr
             
-	-- Determine the next PC in case of jump / branch in MA phase since BRAM insertion. Old treatment of the next PC before branch prediction but with bram and cache
-
-		  nextpc	<=		to_slv(unsigned(MA.pcjump) + 0)   when MA.c.jump  = '1' else -- j / jal jump addr
-              				to_slv(unsigned(MA.pcbranch) + 4) when branch     = '1' else -- branch (bne, beq) addr
-              				to_slv(unsigned(MA.a) + 4)        when MA.c.jr    = '1' else -- jr addr
-		                	freezingPC;
-
+	-- Determine the next PC in case of jump / branch in MA phase since BRAM insertion.
+	-- Old treatment of the next PC before branch prediction but with bram and cache
+	nextpc			<=	to_slv(unsigned(MA.pcjump) + 0)   when MA.c.jump  = '1' else -- j / jal jump addr
+              			to_slv(unsigned(MA.pcbranch) + 4) when branch     = '1' else -- branch (bne, beq) addr
+              			to_slv(unsigned(MA.a) + 4)        when MA.c.jr    = '1' else -- jr addr
+		                freezingPC;
 
 	-- The conditions below cause the program counter to stop increasing (freezing the PC)   
-	freezingPC		    <=  pc4		when (stallFromCache='0' and stallFromCPU = '0') else
-		                	pc		when (stallFromCache='1' or stallFromCPU = '1') else
-		                	pc4	; -- standard case: pc + 4, take following instruction;
+	freezingPC		<=  pc4		when (stallFromCache='0' and stallFromCPU = '0') else
+		                pc		when (stallFromCache='1' or stallFromCPU = '1') else
+		                pc4	; -- standard case: pc + 4, take following instruction;
 		    
  	-- Signal to recognize whether a branch command is in ID phase     				
-  	branchIdPhase		<= '1'  when 
+  	branchIdPhase	<= '1'  when 
   							((i.Opc = I_BEQ.Opc) and (EX.i.Opc /= I_BEQ.Opc) and (MA.i.Opc /= I_BEQ.Opc)) 	or
                        		((i.Opc = I_BNE.Opc) and (EX.i.Opc /= I_BNE.Opc) and (MA.i.Opc /= I_BNE.Opc)) 	or
                          	((i.Opc = I_BLEZ.Opc) and (EX.i.Opc /= I_BLEZ.Opc)) or	--not currently used in asm files

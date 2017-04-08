@@ -8,11 +8,9 @@
 library IEEE; 
 use IEEE.STD_LOGIC_1164.all; 
 use IEEE.NUMERIC_STD.all;
-use work.CASTS.all;
-use work.global_pkg.all;
-use STD.TEXTIO.ALL;
 use IEEE.std_logic_textio.all;
-
+use STD.TEXTIO.ALL;
+use work.CASTS.all;
 
 entity mips_isortPipe3_tb is
   generic (

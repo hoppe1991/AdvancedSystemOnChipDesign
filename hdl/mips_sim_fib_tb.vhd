@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
--- filename : cacheController.vhd
--- author   : Meyer zum Felde, Pï¿½ttjer, Hoppe
+-- filename : mips_sim_fib_tb.vhd
+-- author   : Meyer zum Felde, Püttjer, Hoppe
 -- company  : TUHH
 -- revision : 0.1
 -- date     : 24/01/17
@@ -11,8 +11,12 @@ use IEEE.NUMERIC_STD.all;
 use IEEE.std_logic_textio.all;
 use STD.TEXTIO.ALL;
 use work.CASTS.all;
+use work.mipssim_pkg.all;
 
-entity mips_isortPipe3_tb is
+--------------------------------------------------------------------------------
+-- Entity of testbench.
+--------------------------------------------------------------------------------
+entity mips_sim_fib_tb is
   generic (
 
 		DFileName 			: STRING := "../dmem/isort_pipe";
@@ -23,19 +27,22 @@ entity mips_isortPipe3_tb is
    );
 end;
 
-architecture test of mips_isortPipe3_tb is
+--------------------------------------------------------------------------------
+-- Architecture of testbench.
+--------------------------------------------------------------------------------
+architecture test of mips_sim_fib_tb is
+	
+	-- Filename containing intermediate results.
+	constant OUTPUT_FILENAME	: STRING := "mips_fib.txt";
 	
 	-- Width of address vector.
 	constant ADDR_WIDTH     : integer  := 11;
     
-	-- The integer array contains 10 integer values.
-    type integerArray is array (10 downto 0) of INTEGER;
-    
-    constant expectedIndex : integerArray := ( 10,  9,  8,  7,  6,  5,  4,  3,  2,  1, 0 );
-    constant expectedArray : integerArray := ( 60, 50, 40, 30, 30, 25, 20, 10, 10,  5, 0 );
+    constant expectedIndex : integerArray11 := ( 0, 1, 2, 3, 4, 5,  6,  7,  8,  9, 10,  11 );
+    constant expectedArray : integerArray11 := ( 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 );
 
     -- Array of integers.
-  	signal writeDataArray: integerArray := (others => 0);
+  	signal writeDataArray: integerArray11 := (others => 0);
   	
 	-- Clock and reset signal.
 	signal clk, reset		: STD_LOGIC := '0';
@@ -61,37 +68,36 @@ architecture test of mips_isortPipe3_tb is
 	-- Address as correspondent integer value.
     signal selectedAddrI	: INTEGER := 0;
 
-    
-
 	-- -----------------------------------------------------------------------------
 	-- Impure function shifts the integers in the array and adds the new integer
 	-- at the end of the array.
 	-- -----------------------------------------------------------------------------
-	impure function ADD_INTEGER(int : in INTEGER; index : in INTEGER) return integerArray is
-		variable a : integerArray;
+	impure function ADD_INTEGER(int : in INTEGER; index : in INTEGER) return integerArray11 is
+		variable a : integerArray11;
 	begin
 		a := writeDataArray;
 		a(index) := int;
 		return a;
 	end;
 	
-	procedure validateValue( currentValue : in INTEGER; expectedValue : in INTEGER ) is
+	procedure validateValue( currentValue : in INTEGER; expectedValue : in INTEGER; index : in INTEGER ) is
 	begin
 		assert currentValue=expectedValue report "ERROR expected value is " & INTEGER'IMAGE(expectedValue) 
-			& " but current value is " & INTEGER'IMAGE(currentValue) severity FAILURE;
+			& " but current value is " & INTEGER'IMAGE(currentValue) & " where index is " & INTEGER'IMAGE(index) severity FAILURE;
 	end;
 	
+	-- Component of MIPS.
+	component MIPS_COMPONENT is 
+		generic ( DFileName, IFileName : STRING );
+  		port (clk , reset : in STD_LOGIC;  memwrite : out STD_LOGIC; dataadr, writedata : out STD_LOGIC_VECTOR(31 downto 0));
+ 	end component MIPS_COMPONENT;
 	
 begin
 
-
 	-- instantiate device to be tested
-  	dut: entity work.mips
-  	generic map(DFileName => DFileName, IFileName => IFileName, 
-       	TAG_FILENAME => TAG_FILENAME, DATA_FILENAME=> DATA_FILENAME, 
-       	FILE_EXTENSION => FILE_EXTENSION
-    )
-    port map(clk, reset, writedata, dataadr, memwrite);
+	dut: MIPS_COMPONENT
+       generic map(DFileName => DFileName, IFileName => IFileName)
+       port map(clk, reset, memwrite, dataadr, writedata);
 
 	-- -----------------------------------------------------------------------------
 	-- Generate clock with 10 ns period
@@ -120,33 +126,15 @@ begin
   	-- Updates the integer array, which represents the last 10 data memory access 
   	-- operations.
 	-- -----------------------------------------------------------------------------
-	updateProcess: process(memwrite_i, writeDataArray, writedataI, clk, memwrite) is
-		
-		-- ----------------------------------------------------------------------
-		-- Writes the given integer array into a txt file.
-		-- ----------------------------------------------------------------------
-		procedure print_array is		
-			variable l : LINE;
-    		file outfile         : text;
-    		variable f_status: FILE_OPEN_STATUS;
-		begin
-			file_open(f_status, outfile, "mips_isortPipe3_tb.txt", write_mode);
-			for I in writeDataArray'RANGE loop
-				write(l, INTEGER'IMAGE(writeDataArray(I)));
-				write(l, string'(";"));
-			end loop;
-			WRITELINE(outfile, l);
-			file_close(outfile);
-		end;
+	updateProcess: process(memwrite_i, clk, memwrite) is
 	begin
-
 		if memwrite_i='1' and memwrite='0' and rising_edge(clk) then
 			writeDataArray <= ADD_INTEGER( writedataI, selectedAddrI);
 			 
 			-- TODO Toggle the following comments to print messages in command line.
 --			report "write data: " & INTEGER'IMAGE(writedataI);
 --	    	report "address: " & INTEGER'IMAGE(selectedAddrI); 
---	    	print_array;
+			print_array(writeDataArray, OUTPUT_FILENAME);
 --	    	report "----------------------------------";
 		end if;
 	end process;
@@ -164,19 +152,90 @@ begin
     	reset <= '0';  
     	
     	-- Wait enough time.
-		wait for 35 us;
+		wait for 10 us;
 		
 		-- Asserts the last 10 operations. We assume, that the assembler program
 		-- 'isort_pipe3' sorts the given 10 integer values.
-		for I in 0 to 9 loop
-			validateValue( writeDataArray(expectedIndex(I)), expectedArray(expectedIndex(I)) );
+		for I in expectedIndex'RANGE loop
+			validateValue( writeDataArray(expectedIndex(I)), expectedArray(I), expectedIndex(I) );
 		end loop;
 
 		-- Report whether the test runs successfully.
 		report "The test has been successfully passed.";
 		
-		  
     	wait;
 	end process;
  
 end;
+
+
+configuration cfib5 of mips_sim_fac_tb is 
+for test
+	for dut: MIPS_COMPONENT
+	use entity work.mips(mips_task5_btb)
+	generic map(DFileName => DFileName, IFileName => IFileName)
+    port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
+end for;
+end configuration cfib5;
+
+configuration cfib4 of mips_sim_fac_tb is 
+for test
+	for dut: MIPS_COMPONENT
+	use entity work.mips(mips_task5_bht)
+		generic map(
+			DFileName      => DFileName,
+			IFileName      => IFileName,
+			TAG_FILENAME   => TAG_FILENAME,
+			DATA_FILENAME  => DATA_FILENAME,
+			FILE_EXTENSION => FILE_EXTENSION
+		)
+		port map(
+			clk       => clk,
+			reset     => reset,
+			writedata => writedata,
+			dataadr   => dataadr,
+			memwrite  => memwrite
+		);
+end for;
+end for;
+end configuration cfib4;
+
+configuration cfib3 of mips_sim_fac_tb is 
+for test
+	for dut: MIPS_COMPONENT
+	use entity work.mips(mips_task5_staticbranchprediction)
+		generic map(
+			DFileName      => DFileName,
+			IFileName      => IFileName,
+			TAG_FILENAME   => TAG_FILENAME,
+			DATA_FILENAME  => DATA_FILENAME,
+			FILE_EXTENSION => FILE_EXTENSION
+		)
+		port map(
+			clk       => clk,
+			reset     => reset,
+			writedata => writedata,
+			dataadr   => dataadr,
+			memwrite  => memwrite
+		);
+end for;
+end for;
+end configuration cfib3;
+
+configuration cfib2 of mips_sim_fac_tb is 
+for test
+	for dut: MIPS_COMPONENT
+	use entity work.mips(mips_task4_instructioncache)
+	generic map(DFileName => DFileName, IFileName => IFileName)
+    port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
+end for;
+end configuration cfib2;
+
+configuration cfib1 of mips_sim_fac_tb is 
+for test
+	for dut: MIPS_COMPONENT
+	use entity work.mips(mips_task3_pipelining)
+	generic map(DFileName => DFileName, IFileName => IFileName)
+    port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
+end for;
+end configuration cfib1;

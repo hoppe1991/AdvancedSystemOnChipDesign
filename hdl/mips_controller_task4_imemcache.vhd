@@ -12,7 +12,7 @@ use IEEE.NUMERIC_STD.all;
 use work.mips_pkg.all;
 use work.casts.all;
 
-entity mipsController is -- Pipelined MIPS processor
+entity mips_controller_task4_imemcache is -- Pipelined MIPS processor
   generic ( 
 			MEMORY_ADDRESS_WIDTH 	: INTEGER := 32;
   			DFileName 				: STRING := "../dmem/isort_pipe"
@@ -38,7 +38,7 @@ entity mipsController is -- Pipelined MIPS processor
        );
 end;
 
-architecture struct of mipsController is
+architecture struct of mips_controller_task4_imemcache is
 
 	-- Signal indicates whether to stall the pipeline.
 	signal stallFromCPU		: STD_LOGIC := '0';

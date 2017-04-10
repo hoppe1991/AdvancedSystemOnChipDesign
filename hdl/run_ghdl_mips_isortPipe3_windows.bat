@@ -1,6 +1,16 @@
 @echo off
 REM you have to specify the assembler text for the mips at the prompt!
 
+REM Define the configuration
+SET config="c1"
+
+IF "%~1"=="" (
+SET config=c1
+) ELSE (
+SET config=%1
+)
+echo "Use configuration " %config%
+
 REM Directories regarding Mars.
 SET mars="./../../../Mars4_5.jar"
 
@@ -62,7 +72,7 @@ echo ++++++++++ add files in the work design library ++++++++++
 ghdl -i -g -O3 --ieee=synopsys --workdir=%workDirectory% *.vhd
 echo.
 echo ++++++++++ analyze automatically outdated files and create an executable ++++++++++
-ghdl -m -g -O3 --ieee=synopsys --workdir=%workDirectory% mips_isortPipe3_tb
+ghdl -m -g -O3 --ieee=synopsys --workdir=%workDirectory% %config% mips_isortPipe3_tb
 echo.
 echo ++++++++++ run the executable for 15us and save all waveforms ++++++++++
-ghdl -r -g -O3 --ieee=synopsys --workdir=%workDirectory% mips_isortPipe3_tb --stop-time=40us  --wave=../sim/%asmFilename%.ghw -gDFileName=%DFileName% -gIFileName=%IFileName% -gTAG_FILENAME=%tagFilename% -gDATA_FILENAME=%dataFilename% -gFILE_EXTENSION=%fileExtension%
+ghdl -r -g -O3 --ieee=synopsys --workdir=%workDirectory% %config% mips_isortPipe3_tb --stop-time=40us  --wave=../sim/%asmFilename%.ghw -gDFileName=%DFileName% -gIFileName=%IFileName% -gTAG_FILENAME=%tagFilename% -gDATA_FILENAME=%dataFilename% -gFILE_EXTENSION=%fileExtension%

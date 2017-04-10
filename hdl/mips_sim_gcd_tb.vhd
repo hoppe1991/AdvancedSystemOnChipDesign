@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
--- filename : cacheController.vhd
--- author   : Meyer zum Felde, Pï¿½ttjer, Hoppe
+-- filename : mips_sim_gcd_tb.vhd
+-- author   : Meyer zum Felde, Püttjer, Hoppe
 -- company  : TUHH
 -- revision : 0.1
 -- date     : 30/03/17
@@ -12,9 +12,11 @@ use IEEE.std_logic_textio.all;
 use STD.TEXTIO.ALL;
 use work.CASTS.all;
 
-entity mips_gcd_tb is
+--------------------------------------------------------------------------------
+-- Interface of the testbench.
+--------------------------------------------------------------------------------
+entity mips_sim_gcd_tb is
   generic (
-
 		DFileName 			: STRING := "../dmem/isort_pipe";
         IFileName 			: STRING := "../imem/isort_pipe";
         TAG_FILENAME 		: STRING := "../imem/tagCache";
@@ -23,7 +25,10 @@ entity mips_gcd_tb is
    );
 end;
 
-architecture test of mips_gcd_tb is
+--------------------------------------------------------------------------------
+-- Architecture of the testbench.
+--------------------------------------------------------------------------------
+architecture test of mips_sim_gcd_tb is
 	
 	-- Expected ggt(3528, 3780) is 252.
 	constant expectedValue : INTEGER := 252;
@@ -55,15 +60,17 @@ architecture test of mips_gcd_tb is
 	-- Address as correspondent integer value.
     signal selectedAddrI	: INTEGER := 0;
  
+	-- Component of MIPS.
+	component MIPS_COMPONENT is 
+		generic ( DFileName, IFileName : STRING );
+  		port (clk , reset : in STD_LOGIC;  memwrite : out STD_LOGIC; dataadr, writedata : out STD_LOGIC_VECTOR(31 downto 0));
+ 	end component MIPS_COMPONENT;
 begin
 
 	-- instantiate device to be tested
-  	dut: entity work.mips
-  	generic map(DFileName => DFileName, IFileName => IFileName, 
-       	TAG_FILENAME => TAG_FILENAME, DATA_FILENAME=> DATA_FILENAME, 
-       	FILE_EXTENSION => FILE_EXTENSION
-    )
-    port map(clk, reset, writedata, dataadr, memwrite);
+	dut: MIPS_COMPONENT
+       generic map(DFileName => DFileName, IFileName => IFileName)
+       port map(clk, reset, memwrite, dataadr, writedata);
 
 	-- -----------------------------------------------------------------------------
 	-- Generate clock with 10 ns period
@@ -113,3 +120,74 @@ begin
 	end process;
  
 end;
+
+configuration cgcd5 of mips_sim_fac_tb is 
+for test
+	for dut: MIPS_COMPONENT
+	use entity work.mips(mips_task5_btb)
+	generic map(DFileName => DFileName, IFileName => IFileName)
+    port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
+end for;
+end configuration cgcd5;
+
+configuration cgcd4 of mips_sim_fac_tb is 
+for test
+	for dut: MIPS_COMPONENT
+	use entity work.mips(mips_task5_bht)
+		generic map(
+			DFileName      => DFileName,
+			IFileName      => IFileName,
+			TAG_FILENAME   => TAG_FILENAME,
+			DATA_FILENAME  => DATA_FILENAME,
+			FILE_EXTENSION => FILE_EXTENSION
+		)
+		port map(
+			clk       => clk,
+			reset     => reset,
+			writedata => writedata,
+			dataadr   => dataadr,
+			memwrite  => memwrite
+		);
+end for;
+end for;
+end configuration cgcd4;
+
+configuration cgcd3 of mips_sim_fac_tb is 
+for test
+	for dut: MIPS_COMPONENT
+	use entity work.mips(mips_task5_staticbranchprediction)
+		generic map(
+			DFileName      => DFileName,
+			IFileName      => IFileName,
+			TAG_FILENAME   => TAG_FILENAME,
+			DATA_FILENAME  => DATA_FILENAME,
+			FILE_EXTENSION => FILE_EXTENSION
+		)
+		port map(
+			clk       => clk,
+			reset     => reset,
+			writedata => writedata,
+			dataadr   => dataadr,
+			memwrite  => memwrite
+		);
+end for;
+end for;
+end configuration cgcd3;
+
+configuration cgcd2 of mips_sim_fac_tb is 
+for test
+	for dut: MIPS_COMPONENT
+	use entity work.mips(mips_task4_instructioncache)
+	generic map(DFileName => DFileName, IFileName => IFileName)
+    port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
+end for;
+end configuration cgcd2;
+
+configuration cgcd1 of mips_sim_fac_tb is 
+for test
+	for dut: MIPS_COMPONENT
+	use entity work.mips(mips_task3_pipelining)
+	generic map(DFileName => DFileName, IFileName => IFileName)
+    port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
+end for;
+end configuration cgcd1;

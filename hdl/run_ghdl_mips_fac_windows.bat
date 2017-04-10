@@ -2,29 +2,30 @@
 REM you have to specify the assembler text for the mips at the prompt!
 
 REM Define the configuration
-SET config=c1
+SET config="c1"
 
 IF "%~1"=="" (
-echo usage: run_ghdl.bat path/asm-file-without-extension
-GOTO :eof
-)
-IF "%~2"=="" (
+SET config=c1
 ) ELSE (
-SET config=%2
+SET config=%1
 )
-
+echo "Use configuration " %config%
 
 REM Directories regarding Mars.
 SET mars="./../../../Mars4_5.jar"
 
-REM Set generic variables for 2-way associative cache.
-SET tagFilename="../imem/tag%1"
-SET dataFilename="../imem/data%1"
-SET fileExtension=".imem"
-SET ghwFilename="mipsWithInstructionCache"
+REM Set the assembler name.
+SET asmFilename=fac
+
+REM Define the working directory.
 SET workDirectory="work"
-SET DFileName=""../dmem/%1""
-SET IFileName=""../imem/%1""
+
+REM Set generic variables for 2-way associative cache.
+SET tagFilename="../imem/tag%asmFilename%"
+SET dataFilename="../imem/data%asmFilename%"
+SET fileExtension=".imem"
+SET DFileName=""../dmem/%asmFilename%""
+SET IFileName=""../imem/%asmFilename%""
 
 echo.
 echo ++++++++++ Create work folder +++++++++++++++++++++++++++++++++
@@ -41,8 +42,8 @@ if not exist %workDirectory% (
 
 echo.
 echo ++++++++++ assemble the MIPS program (imem and dmem) ++++++++++
-java -jar %mars% a dump .text HexText ../imem/%1.imem ../asm/%1.asm
-java -jar %mars% a dump .data HexText ../dmem/%1.dmem ../asm/%1.asm
+java -jar %mars% a dump .text HexText ../imem/%asmFilename%.imem ../asm/%asmFilename%.asm
+java -jar %mars% a dump .data HexText ../dmem/%asmFilename%.dmem ../asm/%asmFilename%.asm
 
 echo.
 echo ++++++++++ check syntax of the vhdl file gates.vhd ++++++++++
@@ -65,16 +66,13 @@ echo.
 echo ++++++++++ run the executable ++++++++++
 ghdl -r -g -O3 --ieee=synopsys --workdir=%workDirectory% creatorOfCacheFiles -gTag_Filename=%tagFilename% -gData_Filename=%dataFilename% -gFILE_EXTENSION=%fileExtension%
 
- 
- 
+echo.
 echo ++++++++++ add files in the work design library ++++++++++
 ghdl -i -g -O3 --ieee=synopsys --workdir=%workDirectory% *.vhd
-echo. 
-echo ++++++++++ add files in the work design library ++++++++++
-ghdl -m -g -O3 --ieee=synopsys --workdir=%workDirectory% %config% mips_with_instructionCache_tb
-echo. 
-echo ++++++++++ create an executable for the testbench ++++++++++
-ghdl -e -g -O3 --ieee=synopsys --workdir=%workDirectory% %config% mips_with_instructionCache_tb
+echo.
+echo ++++++++++ analyze automatically outdated files and create an executable ++++++++++
+ghdl -m -g -O3 --ieee=synopsys --workdir=%workDirectory% %config%
 echo.
 echo ++++++++++ run the executable for 15us and save all waveforms ++++++++++
-ghdl -r -g -O3 --ieee=synopsys --workdir=%workDirectory% %config% mips_with_instructionCache_tb --stop-time=40us  --wave=../sim/%1.ghw -gDFileName=%DFileName% -gIFileName=%IFileName% -gTAG_FILENAME=%tagFilename% -gDATA_FILENAME=%dataFilename% -gFILE_EXTENSION=%fileExtension%
+echo %tagFilename%
+ghdl -r -g -O3 --ieee=synopsys --workdir=%workDirectory% %config% --stop-time=40us --wave=../sim/%asmFilename%.ghw -gDFileName=%DFileName% -gIFileName=%IFileName% -gTAG_FILENAME=%tagFilename% -gDATA_FILENAME=%dataFilename% -gFILE_EXTENSION=%fileExtension%

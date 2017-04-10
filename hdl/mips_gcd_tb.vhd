@@ -100,7 +100,7 @@ begin
     	reset <= '0';  
     	
     	-- Wait enough time.
-    	wait until memwrite_i='1' and memwrite='0'; 
+    	wait until memwrite_i='1' and memwrite='0';
     	
     	-- Asserts the ggt value.
     	assert writedataI=expectedValue report "Test case fails: ggt is expected to be " 

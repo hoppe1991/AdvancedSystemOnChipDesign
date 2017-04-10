@@ -340,13 +340,14 @@ begin
 
 	blockLineToBRAM <= SET_BLOCK_LINE( blockLineFromBRAM, dataCPU, memoryAddress.offsetAsInteger ) when state=WRITE_DATA else
 					   blockLineFromBRAM;
-	blockLineFromBRAM <=  TO_CACHE_BLOCK_LINE( dataFromBRAM );
+	blockLineFromBRAM <= blockLineFromBRAM when state=READ_DATA and counter > 0 else
+		 				 TO_CACHE_BLOCK_LINE( dataFromBRAM );
 	dataToBRAM <= newCacheBlockLine when state=WRITE_LINE else 
 	              TO_STD_LOGIC_VECTOR( blockLineToBRAM ) when state=WRITE_DATA;
 
-	dataCPU <= (others=>'0') when (state=READ_DATA and counter>0								) else
-			   (others=>'0') when (state=READ_DATA and not(valid = '1' AND tagsAreEqual = '1')	) else
+	dataCPU <= (others=>'0') when (state=READ_DATA and not(valid = '1' AND tagsAreEqual = '1')	) else
 			   (others=>'Z') when (writeMode='1' 												) else
+			   (others=>'0') when (state=READ_DATA and counter>0) else
 			   (blockLineFromBRAM(memoryAddress.offsetAsInteger)) when state=READ_DATA else
 		       (others=>'Z');
 

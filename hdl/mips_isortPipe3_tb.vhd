@@ -24,15 +24,19 @@ entity mips_isortPipe3_tb is
 end;
 
 architecture test of mips_isortPipe3_tb is
-
+	
 	-- Width of address vector.
 	constant ADDR_WIDTH     : integer  := 11;
     
 	-- The integer array contains 10 integer values.
-    type integerArray is array (9 downto 0) of INTEGER;
+    type integerArray is array (10 downto 0) of INTEGER;
     
-    constant expectedArray : integerArray := ( 60, 50, 40, 30, 30, 25, 20, 10, 10, 5 );
+    constant expectedIndex : integerArray := ( 10,  9,  8,  7,  6,  5,  4,  3,  2,  1, 0 );
+    constant expectedArray : integerArray := ( 60, 50, 40, 30, 30, 25, 20, 10, 10,  5, 0 );
 
+    -- Array of integers.
+  	signal writeDataArray: integerArray := (others => 0);
+  	
 	-- Clock and reset signal.
 	signal clk, reset		: STD_LOGIC := '0';
 	
@@ -58,21 +62,16 @@ architecture test of mips_isortPipe3_tb is
     signal selectedAddrI	: INTEGER := 0;
 
     
-    -- Array of integers.
-  	signal writeDataArray: integerArray := (others => 0);
 
 	-- -----------------------------------------------------------------------------
 	-- Impure function shifts the integers in the array and adds the new integer
 	-- at the end of the array.
 	-- -----------------------------------------------------------------------------
-	impure function PUSH_INTEGER(int : in INTEGER) return integerArray is
+	impure function ADD_INTEGER(int : in INTEGER; index : in INTEGER) return integerArray is
 		variable a : integerArray;
 	begin
-		for I in 9 downto 1 loop
-			a(I) := writeDataArray(I-1);
-		end loop;
-		a(0) := int;
-		
+		a := writeDataArray;
+		a(index) := int;
 		return a;
 	end;
 	
@@ -111,7 +110,7 @@ begin
 	selectedAddr	<= dataadr(ADDR_WIDTH+1 downto 2) when memwrite_i='1' and memwrite='0';
 	
 	-- Convert the address to integer value.
-	selectedAddrI 	<= to_i(selectedAddr);
+	selectedAddrI 	<= to_i(selectedAddr) when memwrite_i='1' and memwrite='0';
 	
 	-- Converts the data word to integer value.
 	writedataI 		<= to_i(writedata) when memwrite_i='1' and memwrite='0';
@@ -142,11 +141,13 @@ begin
 	begin
 
 		if memwrite_i='1' and memwrite='0' and rising_edge(clk) then
-			writeDataArray <= PUSH_INTEGER(writedataI);	
-			--report "write data: " & INTEGER'IMAGE(writedataI);
-	    	--report "address: " & INTEGER'IMAGE(selectedAddrI); 
-	    	--print_array;
-	    	--report "----------------------------------";
+			writeDataArray <= ADD_INTEGER( writedataI, selectedAddrI);
+			 
+			-- TODO Toggle the following comments to print messages in command line.
+--			report "write data: " & INTEGER'IMAGE(writedataI);
+--	    	report "address: " & INTEGER'IMAGE(selectedAddrI); 
+--	    	print_array;
+--	    	report "----------------------------------";
 		end if;
 	end process;
 
@@ -168,7 +169,7 @@ begin
 		-- Asserts the last 10 operations. We assume, that the assembler program
 		-- 'isort_pipe3' sorts the given 10 integer values.
 		for I in 0 to 9 loop
-			validateValue( writeDataArray(I), expectedArray(I) );
+			validateValue( writeDataArray(expectedIndex(I)), expectedArray(expectedIndex(I)) );
 		end loop;
 
 		-- Report whether the test runs successfully.

@@ -2,10 +2,10 @@
 REM you have to specify the assembler text for the mips at the prompt!
 
 REM Define the configuration
-SET config="c1"
+SET config=cisort3
 
 IF "%~1"=="" (
-SET config=c1
+SET config=cisort3
 ) ELSE (
 SET config=%1
 )

@@ -63,6 +63,9 @@ architecture test of mips_sim_isortPipe3_tb is
 	-- Register indicates whether the CPU writes into data memory.
 	signal memwrite_i 		: STD_LOGIC := '0';
 	
+	-- Register indicates whether the CPU writes into data memory.
+	signal memwrite_ii 		: STD_LOGIC := '0';
+	
 	-- Address of data word which is written by CPU into data memory.
     signal selectedAddr 	: STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0) := (others=>'0');
     
@@ -92,8 +95,22 @@ architecture test of mips_sim_isortPipe3_tb is
 		generic ( DFileName, IFileName : STRING );
   		port (clk , reset : in STD_LOGIC;  memwrite : out STD_LOGIC; dataadr, writedata : out STD_LOGIC_VECTOR(31 downto 0));
  	end component MIPS_COMPONENT;
+ 	
+ 	-- Define component containing the ID of configuration.
+ 	component TESTBENCH_CONFIG is
+ 		generic ( CONFIG_ID : INTEGER );
+ 		port ( usedConfigID : out INTEGER );
+ 	end component TESTBENCH_CONFIG;
+ 	
+ 	-- Identifies the used configuration for test bench.
+ 	signal usedConfigID : INTEGER := 1;
 	
 begin
+
+	-- Used configuration for testbench.
+	con: TESTBENCH_CONFIG
+		generic map(CONFIG_ID => 1)
+		port map (usedConfigID);
 
 	-- instantiate device to be tested
 	dut: MIPS_COMPONENT
@@ -111,16 +128,20 @@ begin
   	end process;
 
 	-- Register the control signal.
-	memwrite_i 		<= memwrite when rising_edge(clk);
+	memwrite_i 		<= memwrite   when rising_edge(clk);
+	memwrite_ii		<= memwrite_i when rising_edge(clk);
 	
-	-- Select the address word. 
-	selectedAddr	<= dataadr(ADDR_WIDTH+1 downto 2) when memwrite_i='1' and memwrite='0';
+	-- Select the address word. Config1 is used for testing MIPS with only pipelining and BRAM.
+	selectedAddr	<= dataadr(ADDR_WIDTH+1 downto 2) when memwrite_ii='1' and memwrite_i ='0' and memwrite='0' and (usedConfigID=1) else
+				       dataadr(ADDR_WIDTH+1 downto 2) when memwrite_i='1' and memwrite='0' ;
 	
 	-- Convert the address to integer value.
-	selectedAddrI 	<= to_i(selectedAddr) when memwrite_i='1' and memwrite='0';
+	selectedAddrI 	<= to_i(selectedAddr) when memwrite_ii='1' and memwrite_i ='0' and memwrite='0' and usedConfigID=1 else
+ 					   to_i(selectedAddr) when memwrite_i='1' and memwrite='0';
 	
 	-- Converts the data word to integer value.
-	writedataI 		<= to_i(writedata) when memwrite_i='1' and memwrite='0';
+	writedataI 		<= to_i(writedata) when memwrite_ii='1' and memwrite_i ='0' and memwrite='0' and usedConfigID=1 else
+					   to_i(writedata) when memwrite_i='1' and memwrite='0';
 	
 
 	-- -----------------------------------------------------------------------------
@@ -131,14 +152,27 @@ begin
 		
 	begin
 
-		if memwrite_i='1' and memwrite='0' and rising_edge(clk) then
-			writeDataArray <= ADD_INTEGER( writedataI, selectedAddrI);
+		if (usedConfigID=1) then
+			if memwrite_ii='1' and memwrite_i ='0' and memwrite='0' and rising_edge(clk) then
+				writeDataArray <= ADD_INTEGER( writedataI, selectedAddrI);
 			 
-			-- TODO Toggle the following comments to print messages in command line.
---			report "write data: " & INTEGER'IMAGE(writedataI);
---	    	report "address: " & INTEGER'IMAGE(selectedAddrI); 
-			print_array(writeDataArray, OUTPUT_FILENAME);
---	    	report "----------------------------------";
+				-- TODO Toggle the following comments to print messages in command line.
+	--			report "write data: " & INTEGER'IMAGE(writedataI);
+	--	    	report "address: " & INTEGER'IMAGE(selectedAddrI); 
+	--			print_array(writeDataArray, OUTPUT_FILENAME);
+	--	    	report "----------------------------------";
+			end if;
+			
+		else
+			if memwrite_i='1' and memwrite='0' and rising_edge(clk) then
+				writeDataArray <= ADD_INTEGER( writedataI, selectedAddrI);
+				 
+				-- TODO Toggle the following comments to print messages in command line.
+	--			report "write data: " & INTEGER'IMAGE(writedataI);
+	--	    	report "address: " & INTEGER'IMAGE(selectedAddrI); 
+	--			print_array(writeDataArray, OUTPUT_FILENAME);
+	--	    	report "----------------------------------";
+			end if;
 		end if;
 	end process;
 
@@ -172,19 +206,37 @@ begin
  
 end;
 
-configuration cisort5 of mips_sim_fac_tb is 
+configuration cisort5 of mips_sim_isortPipe3_tb is 
 for test
+	for con: TESTBENCH_CONFIG
+		use entity work.testbench_configuration
+		generic map(CONFIG_ID => 5)
+		port map(USED_CONFIG => usedConfigID);
+	end for;
+
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task5_btb)
-	generic map(DFileName => DFileName, IFileName => IFileName)
+	use entity work.mips(mips_arc_task5_btb)
+	generic map(
+			DFileName      => DFileName,
+			IFileName      => IFileName,
+			TAG_FILENAME   => TAG_FILENAME,
+			DATA_FILENAME  => DATA_FILENAME,
+			FILE_EXTENSION => FILE_EXTENSION)
     port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
 end for;
 end configuration cisort5;
 
-configuration cisort4 of mips_sim_fac_tb is 
+configuration cisort4 of mips_sim_isortPipe3_tb is 
 for test
+
+	for con: TESTBENCH_CONFIG
+		use entity work.testbench_configuration
+		generic map(CONFIG_ID => 4)
+		port map(USED_CONFIG => usedConfigID);
+	end for;
+
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task5_bht)
+	use entity work.mips(mips_arc_task5_bht)
 		generic map(
 			DFileName      => DFileName,
 			IFileName      => IFileName,
@@ -203,10 +255,17 @@ end for;
 end for;
 end configuration cisort4;
 
-configuration cisort3 of mips_sim_fac_tb is 
+configuration cisort3 of mips_sim_isortPipe3_tb is 
 for test
+
+	for con: TESTBENCH_CONFIG
+		use entity work.testbench_configuration
+		generic map(CONFIG_ID => 3)
+		port map(USED_CONFIG => usedConfigID);
+	end for;
+
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task5_staticbranchprediction)
+	use entity work.mips(mips_arc_task5_staticbranchprediction)
 		generic map(
 			DFileName      => DFileName,
 			IFileName      => IFileName,
@@ -225,20 +284,43 @@ end for;
 end for;
 end configuration cisort3;
 
-configuration cisort2 of mips_sim_fac_tb is 
+configuration cisort2 of mips_sim_isortPipe3_tb is 
 for test
+
+	for con: TESTBENCH_CONFIG
+		use entity work.testbench_configuration
+		generic map(CONFIG_ID => 2)
+		port map(USED_CONFIG => usedConfigID);
+	end for;
+
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task4_instructioncache)
-	generic map(DFileName => DFileName, IFileName => IFileName)
-    port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
+	use entity work.mips(mips_arc_task4_instructioncache)
+	generic map(
+			DFileName      => DFileName,
+			IFileName      => IFileName,
+			TAG_FILENAME   => TAG_FILENAME,
+			DATA_FILENAME  => DATA_FILENAME,
+			FILE_EXTENSION => FILE_EXTENSION)
+    port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);
+    end for;
 end for;
 end configuration cisort2;
 
-configuration cisort1 of mips_sim_fac_tb is 
+configuration cisort1 of mips_sim_isortPipe3_tb is 
 for test
+	for con: TESTBENCH_CONFIG
+		use entity work.testbench_configuration
+		generic map(CONFIG_ID => 1)
+		port map(USED_CONFIG => usedConfigID);
+	end for;
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task3_pipelining)
-	generic map(DFileName => DFileName, IFileName => IFileName)
+	use entity work.mips(mips_arc_task3_pipelining)
+	generic map(
+			DFileName      => DFileName,
+			IFileName      => IFileName,
+			TAG_FILENAME   => TAG_FILENAME,
+			DATA_FILENAME  => DATA_FILENAME,
+			FILE_EXTENSION => FILE_EXTENSION)
     port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
 end for;
 end configuration cisort1;

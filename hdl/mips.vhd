@@ -13,7 +13,7 @@ use work.casts.all;
 use work.global_pkg.all;
 
 ---------------------------------------------------------------------------------
--- Interface of mips.
+-- Interface of MIPS.
 ---------------------------------------------------------------------------------
 entity mips is
   generic ( DFileName 			: STRING := "../dmem/isort_pipe";

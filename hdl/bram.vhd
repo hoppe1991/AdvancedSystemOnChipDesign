@@ -32,7 +32,8 @@ end;
 
 architecture synth of bram is
 
-  type MemType is array(0 to (2**ADDR-1)) of STD_LOGIC_VECTOR(DATA-1 downto 0);
+	constant memTypeLength : INTEGER := 2**ADDR-1;
+  type MemType is array(0 to memTypeLength) of STD_LOGIC_VECTOR(DATA-1 downto 0);
 
   impure function InitRamFromFile (RamFileName : in string) return MemType is
     file RamFile         : text is in RamFileName;

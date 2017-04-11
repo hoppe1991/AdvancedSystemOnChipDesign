@@ -27,7 +27,8 @@ end;
 
 architecture behave of regfile is
 
-  type ramtype is array (2**ADDR_WIDTH-1 downto 0) of STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
+	constant ramTypeLength : INTEGER := 2**ADDR_WIDTH-1;
+  type ramtype is array (ramTypeLength downto 0) of STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0);
   signal reg: ramtype := (others => ZERO32);
   
 begin

@@ -1,10 +1,11 @@
 --------------------------------------------------------------------------------
--- filename : mips_task5_staticbranchprediction.vhd
+-- filename : mips_arc_task4_instructioncache.vhd
 -- author   : Meyer zum Felde, Püttjer, Hoppe
 -- company  : TUHH
 -- revision : 0.1
 -- date     : 24/01/17
 --------------------------------------------------------------------------------
+
 library IEEE;
 use IEEE.STD_LOGIC_1164.all;
 use IEEE.NUMERIC_STD.all;
@@ -15,11 +16,10 @@ use work.global_pkg.all;
 
 --------------------------------------------------------------------------------
 -- Architecture of MIPS defines the pipelined MIPS (see task sheet 3) with
--- instruction cache (see task sheet 4) and static branch 
--- prediction (see task sheet 5).
+-- instruction cache (see task sheet 4), but without branch prediction.
 --------------------------------------------------------------------------------
-architecture mips_task5_staticbranchprediction of mips is
-
+architecture mips_arc_task4_instructioncache of mips is
+ 
 	-- Signals regarding instruction cache.
 	constant MEMORY_ADDRESS_WIDTH	: INTEGER := 32;
 	constant DATA_WIDTH 			: INTEGER := 32;
@@ -34,7 +34,7 @@ architecture mips_task5_staticbranchprediction of mips is
 	-- 
 	signal stallFromCache : STD_LOGIC := '0';
 	
-	--
+	-- PC given by CPU.
 	signal pc : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
 	
 	--
@@ -45,28 +45,27 @@ architecture mips_task5_staticbranchprediction of mips is
 	signal addrMEM      : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');	
 	signal rdMEM, wrMEM : STD_LOGIC := '0';
 	signal dataMEM		: STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
+	
 begin
 	
 	-- ------------------------------------------------------------------------------------------
-	-- Controller of MIPS.
+	-- This entity controls the behavior of the MIPS.
 	-- ------------------------------------------------------------------------------------------
-	mipsContr: entity work.mips_controller_task5_staticpredict
+	mipsContr: entity work.mips_controller_task4_imemcache
 		generic map(
-			MEMORY_ADDRESS_WIDTH 	=> MEMORY_ADDRESS_WIDTH,
-			DFileName     			=> DFileName
+			DFileName            => DFileName,
+			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH
 		)
 		port map(
 			clk            => clk,
 			writedata      => writedata,
 			dataadr        => dataadr,
 			memwrite       => memwrite,
-			hitCounter     => hitCounter,
-			missCounter    => missCounter,
 			stallFromCache => stallFromCache,
-			IF_ir		   => IF_ir,
-			pcToCache	   => pc
+			pcToCache      => pc,
+			IF_ir          => IF_ir
 		);
-  
+	
 	-- ------------------------------------------------------------------------------------------
 	-- Instruction cache.
 	-- ------------------------------------------------------------------------------------------
@@ -99,9 +98,9 @@ begin
 		);
 
 	-- ------------------------------------------------------------------------------------------
-	-- Main memory unit.
+	-- Create main memory.
 	-- ------------------------------------------------------------------------------------------
-	MMU : entity work.mainMemory
+	mainMemoryController : entity work.mainMemory
 		generic map(
 			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH,
 			BLOCKSIZE            => BLOCKSIZE,
@@ -119,5 +118,5 @@ begin
 			dataMEM  	=> dataMEM,
 			reset       => reset
 		);
-		
-end mips_task5_staticbranchprediction;
+	
+end mips_arc_task4_instructioncache;

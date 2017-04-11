@@ -169,19 +169,23 @@ begin
 end;
 
 
-configuration cfib5 of mips_sim_fac_tb is 
+configuration cfib5 of mips_sim_fib_tb is 
 for test
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task5_btb)
-	generic map(DFileName => DFileName, IFileName => IFileName)
+	use entity work.mips(mips_arc_task5_btb)
+	generic map(DFileName      => DFileName,
+			IFileName      => IFileName,
+			TAG_FILENAME   => TAG_FILENAME,
+			DATA_FILENAME  => DATA_FILENAME,
+			FILE_EXTENSION => FILE_EXTENSION)
     port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
 end for;
 end configuration cfib5;
 
-configuration cfib4 of mips_sim_fac_tb is 
+configuration cfib4 of mips_sim_fib_tb is 
 for test
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task5_bht)
+	use entity work.mips(mips_arc_task5_bht)
 		generic map(
 			DFileName      => DFileName,
 			IFileName      => IFileName,
@@ -200,10 +204,10 @@ end for;
 end for;
 end configuration cfib4;
 
-configuration cfib3 of mips_sim_fac_tb is 
+configuration cfib3 of mips_sim_fib_tb is 
 for test
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task5_staticbranchprediction)
+	use entity work.mips(mips_arc_task5_staticbranchprediction)
 		generic map(
 			DFileName      => DFileName,
 			IFileName      => IFileName,
@@ -222,20 +226,28 @@ end for;
 end for;
 end configuration cfib3;
 
-configuration cfib2 of mips_sim_fac_tb is 
+configuration cfib2 of mips_sim_fib_tb is 
 for test
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task4_instructioncache)
-	generic map(DFileName => DFileName, IFileName => IFileName)
+	use entity work.mips(mips_arc_task4_instructioncache)
+	generic map(DFileName      => DFileName,
+			IFileName      => IFileName,
+			TAG_FILENAME   => TAG_FILENAME,
+			DATA_FILENAME  => DATA_FILENAME,
+			FILE_EXTENSION => FILE_EXTENSION)
     port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
 end for;
 end configuration cfib2;
 
-configuration cfib1 of mips_sim_fac_tb is 
+configuration cfib1 of mips_sim_fib_tb is 
 for test
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task3_pipelining)
-	generic map(DFileName => DFileName, IFileName => IFileName)
+	use entity work.mips(mips_arc_task3_pipelining)
+	generic map(DFileName      => DFileName,
+			IFileName      => IFileName,
+			TAG_FILENAME   => TAG_FILENAME,
+			DATA_FILENAME  => DATA_FILENAME,
+			FILE_EXTENSION => FILE_EXTENSION)
     port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
 end for;
 end configuration cfib1;

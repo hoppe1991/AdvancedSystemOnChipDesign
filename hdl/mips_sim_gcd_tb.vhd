@@ -89,10 +89,10 @@ begin
 	selectedAddr	<= dataadr(ADDR_WIDTH+1 downto 2) when memwrite_i='1' and memwrite='0';
 	
 	-- Convert the address to integer value.
-	selectedAddrI 	<= to_i(selectedAddr);
+	selectedAddrI 	<= to_i(selectedAddr) when memwrite_i='1' and memwrite='0';
 	
 	-- Converts the data word to integer value.
-	writedataI 		<= to_i(writedata);
+	writedataI 		<= to_i(writedata) when memwrite_i='1' and memwrite='0';
 	
 	-- -----------------------------------------------------------------------------
   	-- Generate reset for first two clock cycles
@@ -108,6 +108,7 @@ begin
     	
     	-- Wait enough time.
     	wait until memwrite_i='1' and memwrite='0';
+    	wait for 20 us;
     	
     	-- Asserts the ggt value.
     	assert writedataI=expectedValue report "Test case fails: ggt is expected to be " 
@@ -121,19 +122,23 @@ begin
  
 end;
 
-configuration cgcd5 of mips_sim_fac_tb is 
+configuration cgcd5 of mips_sim_gcd_tb is 
 for test
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task5_btb)
-	generic map(DFileName => DFileName, IFileName => IFileName)
+	use entity work.mips(mips_arc_task5_btb)
+	generic map(DFileName      => DFileName,
+			IFileName      => IFileName,
+			TAG_FILENAME   => TAG_FILENAME,
+			DATA_FILENAME  => DATA_FILENAME,
+			FILE_EXTENSION => FILE_EXTENSION)
     port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
 end for;
 end configuration cgcd5;
 
-configuration cgcd4 of mips_sim_fac_tb is 
+configuration cgcd4 of mips_sim_gcd_tb is 
 for test
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task5_bht)
+	use entity work.mips(mips_arc_task5_bht)
 		generic map(
 			DFileName      => DFileName,
 			IFileName      => IFileName,
@@ -152,10 +157,10 @@ end for;
 end for;
 end configuration cgcd4;
 
-configuration cgcd3 of mips_sim_fac_tb is 
+configuration cgcd3 of mips_sim_gcd_tb is 
 for test
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task5_staticbranchprediction)
+	use entity work.mips(mips_arc_task5_staticbranchprediction)
 		generic map(
 			DFileName      => DFileName,
 			IFileName      => IFileName,
@@ -174,20 +179,28 @@ end for;
 end for;
 end configuration cgcd3;
 
-configuration cgcd2 of mips_sim_fac_tb is 
+configuration cgcd2 of mips_sim_gcd_tb is 
 for test
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task4_instructioncache)
-	generic map(DFileName => DFileName, IFileName => IFileName)
+	use entity work.mips(mips_arc_task4_instructioncache)
+	generic map(DFileName      => DFileName,
+			IFileName      => IFileName,
+			TAG_FILENAME   => TAG_FILENAME,
+			DATA_FILENAME  => DATA_FILENAME,
+			FILE_EXTENSION => FILE_EXTENSION)
     port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
 end for;
 end configuration cgcd2;
 
-configuration cgcd1 of mips_sim_fac_tb is 
+configuration cgcd1 of mips_sim_gcd_tb is 
 for test
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task3_pipelining)
-	generic map(DFileName => DFileName, IFileName => IFileName)
+	use entity work.mips(mips_arc_task3_pipelining)
+	generic map(DFileName      => DFileName,
+			IFileName      => IFileName,
+			TAG_FILENAME   => TAG_FILENAME,
+			DATA_FILENAME  => DATA_FILENAME,
+			FILE_EXTENSION => FILE_EXTENSION)
     port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
 end for;
 end configuration cgcd1;

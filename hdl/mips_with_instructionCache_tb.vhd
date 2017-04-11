@@ -64,7 +64,7 @@ end;
 configuration c5 of mips_with_instructionCache_tb is 
 for test
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task5_btb)
+	use entity work.mips(mips_arc_task5_btb)
 	generic map(DFileName => DFileName, IFileName => IFileName)
     port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
 end for;
@@ -73,7 +73,7 @@ end configuration c5;
 configuration c4 of mips_with_instructionCache_tb is 
 for test
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task5_bht)
+	use entity work.mips(mips_arc_task5_bht)
 		generic map(
 			DFileName      => DFileName,
 			IFileName      => IFileName,
@@ -95,7 +95,7 @@ end configuration c4;
 configuration c3 of mips_with_instructionCache_tb is 
 for test
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task5_staticbranchprediction)
+	use entity work.mips(mips_arc_task5_staticbranchprediction)
 		generic map(
 			DFileName      => DFileName,
 			IFileName      => IFileName,
@@ -117,7 +117,7 @@ end configuration c3;
 configuration c2 of mips_with_instructionCache_tb is 
 for test
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task4_instructioncache)
+	use entity work.mips(mips_arc_task4_instructioncache)
 	generic map(DFileName => DFileName, IFileName => IFileName)
     port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
 end for;
@@ -126,7 +126,7 @@ end configuration c2;
 configuration c1 of mips_with_instructionCache_tb is 
 for test
 	for dut: MIPS_COMPONENT
-	use entity work.mips(mips_task3_pipelining)
+	use entity work.mips(mips_arc_task3_pipelining)
 	generic map(DFileName => DFileName, IFileName => IFileName)
     port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
 end for;

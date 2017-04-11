@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
--- filename : mips_task5_btb.vhd
+-- filename : mips_arc_task5_btb.vhd
 -- author   : Meyer zum Felde, Püttjer, Hoppe
 -- company  : TUHH
 -- revision : 0.1
@@ -17,7 +17,7 @@ use work.global_pkg.all;
 -- Architecture of MIPS defines the pipelined MIPS (see task sheet 3) with
 -- instruction cache (see task sheet 4) and BTB (see task sheet 5).
 --------------------------------------------------------------------------------
-architecture mips_task5_btb of mips is
+architecture mips_arc_task5_btb of mips is
 
 	-- TODO
 
@@ -25,4 +25,4 @@ begin
 	
 	-- TODO
 
-end mips_task5_btb;
+end mips_arc_task5_btb;

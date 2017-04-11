@@ -37,9 +37,10 @@ package body CASTS is
   end;   
 
   function TO_STR(ARG: in STD_LOGIC_VECTOR) return STRING is
-    variable S : STRING (ARG'length-1 downto 1) := (others => NUL);
+  	variable S : STRING (ARG'length-1 downto 1) := (others => NUL);
+  	constant L : INTEGER := ARG'length-1;
   begin
-        for i in ARG'length-1 downto 1 loop
+        for i in L downto 1 loop
           S(i) := STD_LOGIC'image(ARG((i-1)))(2);
         end loop;
     return S;

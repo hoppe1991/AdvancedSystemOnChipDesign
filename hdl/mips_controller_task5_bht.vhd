@@ -227,13 +227,16 @@ begin
 -- The following logic looks for all kinds of jump commands and orders 3 stalls.
 -- TODO EX.MemRead is equal to EX.c.mem2reg ?
 				
-	stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1') 						
+	stallFromCPU <= 	--'0' when (branchIdPhase = '1' or branchIDPhase_History = '1')  and predictionError = '0' and rising_edge(clk) else
+	
+	
+	'1' when  		((EX.c.mem2reg = '1') 						
       and (ForwardA = fromALUe                                            or ForwardB = fromALUe))            
-      or ((EX.i.Opc = I_BEQ.OPC)                                          or (MA.i.Opc = I_BEQ.OPC)     or  (WB_Opc = I_BEQ.OPC))           --ok
-      or ((EX.i.Opc = I_BNE.OPC)                                          or (MA.i.Opc = I_BNE.OPC)     or  (WB_Opc = I_BNE.OPC))           --ok
-      or ((EX.i.Opc = I_BLEZ.OPC)                                         or (MA.i.Opc = I_BLEZ.OPC))          
-      or (((EX.i.Opc = I_BLTZ.OPC)      and (EX.i.rt = I_BLTZ.rt))        or ((MA.i.Opc = I_BLTZ.OPC)   and (MA.i.rt = I_BLTZ.rt)))  
-      or ((EX.i.Opc = I_BGTZ.OPC)                                         or (MA.i.Opc = I_BGTZ.OPC))           
+ --     or ((EX.i.Opc = I_BEQ.OPC)                                          or (MA.i.Opc = I_BEQ.OPC)     or  (WB_Opc = I_BEQ.OPC))           --ok
+ --     or ((EX.i.Opc = I_BNE.OPC)                                          or (MA.i.Opc = I_BNE.OPC)     or  (WB_Opc = I_BNE.OPC))           --ok
+ --     or ((EX.i.Opc = I_BLEZ.OPC)                                         or (MA.i.Opc = I_BLEZ.OPC))          
+ --     or (((EX.i.Opc = I_BLTZ.OPC)      and (EX.i.rt = I_BLTZ.rt))        or ((MA.i.Opc = I_BLTZ.OPC)   and (MA.i.rt = I_BLTZ.rt)))  
+ --     or ((EX.i.Opc = I_BGTZ.OPC)                                         or (MA.i.Opc = I_BGTZ.OPC))           
       or ((EX.i.Opc = I_J.OPC)                                            or (MA.i.Opc = I_J.OPC)       or  (WB_Opc = I_J.OPC))             --ok
       or ((EX.i.Opc = I_JAL.OPC)                                          or (MA.i.Opc = I_JAL.OPC)     or  (WB_Opc = I_JAL.OPC))  
       or (((EX.i.Opc = I_JALR.OPC)      and (EX.i.funct = I_JALR.funct))  or ((MA.i.Opc = I_JALR.OPC)   and (MA.i.funct = I_JALR.funct)))    
@@ -243,12 +246,13 @@ begin
 -- Some commands have duplicate opc therefore additional information like (funct) is needed. 
 -- Supervisor said, only implement most important commands
 	 else '0' when   	(ForwardA /= fromALUe)    		and (ForwardB /= fromALUe) 			and (MA.i.Opc = I_LW.OPC) else
-		  '0' when  	(EX.i.Opc /= I_BEQ.OPC)   		and (MA.i.Opc /= I_BEQ.OPC) 
-				 	and (EX.i.Opc /= I_BNE.OPC)   		and (MA.i.Opc /= I_BNE.OPC) 
-					and (EX.i.Opc /= I_BLEZ.OPC)  		and (MA.i.Opc /= I_BLEZ.OPC) 
-					and (EX.i.Opc /= I_BLTZ.OPC)  		and (MA.i.Opc /= I_BLTZ.OPC) 
-					and (EX.i.Opc /= I_BGTZ.OPC)  		and (MA.i.Opc /= I_BGTZ.OPC) 
-					and (EX.i.Opc /= I_J.OPC)     		and (MA.i.Opc /= I_J.OPC) 
+		  '0' when  --	(EX.i.Opc /= I_BEQ.OPC)   		and (MA.i.Opc /= I_BEQ.OPC) 
+				-- 	and (EX.i.Opc /= I_BNE.OPC)   		and (MA.i.Opc /= I_BNE.OPC) 
+				--	and (EX.i.Opc /= I_BLEZ.OPC)  		and (MA.i.Opc /= I_BLEZ.OPC) 
+				--	and (EX.i.Opc /= I_BLTZ.OPC)  		and (MA.i.Opc /= I_BLTZ.OPC) 
+				--	and (EX.i.Opc /= I_BGTZ.OPC)  		and (MA.i.Opc /= I_BGTZ.OPC) 
+				--	and 
+						(EX.i.Opc /= I_J.OPC)     		and (MA.i.Opc /= I_J.OPC) 
 					and (EX.i.Opc /= I_JAL.OPC)   		and (MA.i.Opc /= I_JAL.OPC) 
 					and (EX.i.funct /= I_JALR.funct)  	and (MA.i.funct /= I_JALR.funct)
 					and (EX.i.funct /= I_JR.funct)    	and (MA.i.funct /= I_JR.funct)      

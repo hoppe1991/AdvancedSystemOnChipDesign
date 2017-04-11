@@ -19,6 +19,9 @@ use work.global_pkg.all;
 --------------------------------------------------------------------------------
 architecture mips_arc_task5_bht of mips is
 
+	-- Number of entries in BHT.
+	constant BHT_ENTRIES 			: INTEGER := 32;
+	
 	-- Signals regarding instruction cache.
 	constant MEMORY_ADDRESS_WIDTH	: INTEGER := 32;
 	constant DATA_WIDTH 			: INTEGER := 32;
@@ -45,7 +48,15 @@ architecture mips_arc_task5_bht of mips is
 	signal rdMEM, wrMEM : STD_LOGIC := '0';
 	signal dataMEM		: STD_LOGIC_VECTOR(BLOCKSIZE * DATA_WIDTH - 1 downto 0);
 	
-
+	-- Branch prediction calculated from BHT.
+    signal predictionFromBHT : STD_LOGIC := '0';
+    
+    -- Signal indicates whether the branch is taken or not.
+    signal branchTaken : STD_LOGIC := '0';
+    
+    -- Signal indicates whether the BHT should be rewritten.
+    signal writeEnableBHT : STD_LOGIC := '0';
+     
 begin
 	
 	
@@ -55,23 +66,40 @@ begin
 	mipsContr: entity work.mips_controller_task5_bht
 		generic map(
 			DFileName            => DFileName,
-			IFileName            => IFileName,
-			TAG_FILENAME         => TAG_FILENAME,
-			DATA_FILENAME        => DATA_FILENAME,
-			FILE_EXTENSION       => FILE_EXTENSION,
 			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH
 		)
 		port map(
-			clk            => clk,
-			reset          => reset,
-			writedata      => writedata,
-			dataadr        => dataadr,
-			memwrite       => memwrite,
-			stallFromCache => stallFromCache,
-			pcToCache      => pc,
-			IF_ir          => IF_ir
+			clk            		=> clk,
+			reset          		=> reset,
+			writedata      		=> writedata,
+			dataadr        		=> dataadr,
+			memwrite       		=> memwrite,
+			stallFromCache 		=> stallFromCache,
+			pcToCache      		=> pc,
+			IF_ir          		=> IF_ir,
+			branchTaken			=> branchTaken,
+			writeEnableBHT		=> writeEnableBHT,	
+			predictionFromBHT	=> predictionFromBHT
 		);
 	
+	-- ----------------------------------------------------------------------
+	-- Branch History Table (BHT) predicts whether a branch instruction
+	-- will be TAKEN or NOT TAKEN.
+	-- ----------------------------------------------------------------------
+	branchHistoryTable: entity work.BHT
+		generic map(
+			BHT_ENTRIES          => BHT_ENTRIES,
+			EDGE                 => FALLING,				-- RAISING
+			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH
+		)
+		port map(
+			clk				=> clk,
+			reset           => reset,
+			instructionPC	=> pc,
+			prediction		=> predictionFromBHT,
+			branchTaken		=> branchTaken,
+			writeEnable		=> writeEnableBHT
+		);
 	
 	-- ------------------------------------------------------------------------------------------
 	-- Instruction cache.

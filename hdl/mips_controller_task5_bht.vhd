@@ -8,16 +8,11 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.all;
 use IEEE.NUMERIC_STD.all;
-
 use work.mips_pkg.all;
 use work.casts.all;
 
 entity mips_controller_task5_bht is -- Pipelined MIPS processor
     generic ( DFileName 			: STRING := "../dmem/isort_pipe";
-            IFileName 				: STRING := "../imem/isort_pipe";
-	        TAG_FILENAME 			: STRING := "../imem/tagCache";
-			DATA_FILENAME			: STRING := "../imem/dataCache";
-			FILE_EXTENSION			: STRING := ".imem";
 			MEMORY_ADDRESS_WIDTH	: INTEGER := 32-- Width of memory address.
             );
   port ( clk, reset        : in  STD_LOGIC;
@@ -31,22 +26,26 @@ entity mips_controller_task5_bht is -- Pipelined MIPS processor
          pcToCache			: out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
          
          -- Instruction to be read from or written to instruction cache.
-         IF_ir 				: inout STD_LOGIC_VECTOR(31 downto 0)
-      
+         IF_ir 				: inout STD_LOGIC_VECTOR(31 downto 0);
+         
+         -- Branch prediction calculated from BHT.
+         predictionFromBHT	: in STD_LOGIC := '0';
+         
+         -- Signal indicates whether the branch is taken or not.
+         branchTaken : out STD_LOGIC := '0';
+         
+         -- Signal indicates whether the BHT should be rewritten.
+         writeEnableBHT : out STD_LOGIC := '0'
        );
 end;
 
 architecture struct of mips_controller_task5_bht is
  
-	-- Number of entries in BHT.
-	constant BHT_ENTRIES 			: INTEGER := 32;
-	 
   	signal stallFromCPU		: STD_LOGIC := '0';
 	--signal stallCPU 		: STD_LOGIC := '0';
 	
 	signal zero,
            lez,
-           FOUNDJR , --TODO REMOVE
            ltz,
            gtz,
            branch : STD_LOGIC       := '0';
@@ -68,46 +67,28 @@ architecture struct of mips_controller_task5_bht is
            forwardB : ForwardType := FromREG;
 	signal WB_Opc  ,WB_Func   : STD_LOGIC_VECTOR(5 downto 0) := "000000";
 
-  	signal StaticBranchAlwaysTaken : STD_LOGIC := '1';
+  	signal StaticBranchAlwaysTaken : STD_LOGIC := '0';
   	signal pcbranchIDPhase, pcjumpIDPhase, nextpcPredicted : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
   	signal branchIdPhase, branchIDPhase_History : STD_LOGIC := '0';
   	--TODO Remove debug signals
-  	signal branchNotTaken, branchTaken, predictionError, predictionError2, predictionError3 : STD_LOGIC := '0';
+  	signal branchNotTaken, predictionError, predictionError2, predictionError3 : STD_LOGIC := '0';
 
-  	signal predictionFromBHT : STD_LOGIC := '0';
   	signal predictionFromBHT2 : STD_LOGIC := '0';
-  	signal writeEnableBHT    : STD_LOGIC := '0';
   	signal readyToWriteBHT	: STD_LOGIC := '0';
+  	
+  	signal writeEnableBHT_i	: STD_LOGIC := '0';
+  	
 begin
 	
 	-- TODO Correct?
 	-- Write into BHT whenever a branch command is fetched and decoded
-	writeEnableBHT <=	'1'	when i.Opc = I_BEQ.OPC	and readyToWriteBHT = '1'	and stallFromCPU = '0'	else
+	writeEnableBHT_i <=	'1'	when i.Opc = I_BEQ.OPC	and readyToWriteBHT = '1'	and stallFromCPU = '0'	else
   						'1' when i.Opc = I_BNE.OPC	and readyToWriteBHT	= '1'	and stallFromCPU = '0'	else
   						'0';
   	
   	-- Allow 1 write cycle for each branch instruction					
 	readyToWriteBHT	<=	'1' when	pc /= oldPc				and rising_edge(clk) else
-						'0'	when	writeEnableBHT = '1'	and rising_edge(clk);
-
-	-- ----------------------------------------------------------------------
-	-- Branch History Table (BHT) predicts whether a branch instruction
-	-- will be TAKEN or NOT TAKEN.
-	-- ----------------------------------------------------------------------
-	branchHistoryTable: entity work.BHT
-		generic map(
-			BHT_ENTRIES          => BHT_ENTRIES,
-			EDGE                 => FALLING,				-- RAISING
-			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH
-		)
-		port map(
-			clk				=> clk,
-			reset           => reset,
-			instructionPC	=> pc,
-			prediction		=> predictionFromBHT,
-			branchTaken		=> branchTaken,
-			writeEnable		=> writeEnableBHT
-		);
+						'0'	when	writeEnableBHT_i = '1'	and rising_edge(clk);
 	
 	-- Determine whether to stall the CPU or not.
 	--stallCPU <= stallFromCache ;--or stallFromCPU;
@@ -177,18 +158,6 @@ begin
                          	((i.Opc = I_BGTZ.Opc) and (EX.i.Opc /= I_BGTZ.Opc))	else--not currently used in asm files
                				'0';
    	end block;
-
-
- 
-  -- TODO: Repeat for all commands, check for better solution
-  -- Detect that a branch command was fetched and is currently in only in the ID-Phase    				
-  branchIdPhase		<= '1'  when 
-  							((i.Opc = I_BEQ.Opc) and (EX.i.Opc /= I_BEQ.Opc) and (MA.i.Opc /= I_BEQ.Opc)) 	or
-                       		((i.Opc = I_BNE.Opc) and (EX.i.Opc /= I_BNE.Opc) and (MA.i.Opc /= I_BNE.Opc)) 	or
-                         	((i.Opc = I_BLEZ.Opc) and (EX.i.Opc /= I_BLEZ.Opc)) or
-                         	((i.Opc = I_BLTZ.Opc) and (EX.i.Opc /= I_BLTZ.Opc)) or
-                         	((i.Opc = I_BGTZ.Opc) and (EX.i.Opc /= I_BGTZ.Opc))	else
-               				'0';
 
 --  imem:        entity work.bram  generic map ( INIT =>  (IFileName & ".imem"))
 --               port map (clk, '0', pc(11 downto 2), (others=>'0'), IF_ir);
@@ -375,8 +344,10 @@ begin
                WB.aout when WB.c.mem2reg = '0' and WB.c.link = '0' else -- from ALU
                WB.pc4;                                                  -- ret. Addr
 
-  writedata <= wd;
-  dataadr   <= aout;
-  memwrite  <= c.memwr;
+  writedata 		<= wd;
+  dataadr   		<= aout;
+  memwrite  		<= c.memwr;
+  pcToCache			<= pc;
+  writeEnableBHT	<= writeEnableBHT_i;
 
 end;

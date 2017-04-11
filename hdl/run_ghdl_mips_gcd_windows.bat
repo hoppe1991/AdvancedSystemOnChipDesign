@@ -2,10 +2,8 @@
 REM you have to specify the assembler text for the mips at the prompt!
 
 REM Define the configuration
-SET config="c1"
-
 IF "%~1"=="" (
-SET config=c1
+SET config=cgcd3
 ) ELSE (
 SET config=%1
 )

@@ -82,9 +82,9 @@ begin
 
 -------------------- Instruction Fetch Phase (IF) -----------------------------
 	
-pcLogic: block
+	pcLogic: block
 	-- 
-begin
+	begin
 	
 	-- pc        <= nextpc when rising_edge(clk);
 	pc        <= nextpcPredicted when rising_edge(clk);

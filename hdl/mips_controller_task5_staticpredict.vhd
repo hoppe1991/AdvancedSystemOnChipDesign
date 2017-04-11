@@ -82,6 +82,10 @@ begin
 
 -------------------- Instruction Fetch Phase (IF) -----------------------------
 	
+pcLogic: block
+	-- 
+begin
+	
 	-- pc        <= nextpc when rising_edge(clk);
 	pc        <= nextpcPredicted when rising_edge(clk);
   	pc4       <= to_slv(unsigned(pc) + 4) ;
@@ -137,6 +141,8 @@ begin
                          	((i.Opc = I_BLTZ.Opc) and (EX.i.Opc /= I_BLTZ.Opc)) or	--not currently used in asm files
                          	((i.Opc = I_BGTZ.Opc) and (EX.i.Opc /= I_BGTZ.Opc))	else--not currently used in asm files
                				'0';
+               				
+            end block;
 
 -------------------- IF/ID Pipeline Register -----------------------------------
                                                  

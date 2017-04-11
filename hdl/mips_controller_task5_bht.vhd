@@ -13,19 +13,16 @@ use work.mips_pkg.all;
 use work.casts.all;
 
 entity mips_controller_task5_bht is -- Pipelined MIPS processor
-  generic ( 
-			MEMORY_ADDRESS_WIDTH 	: INTEGER := 32;
-  			DFileName 				: STRING := "../dmem/isort_pipe"
+    generic ( DFileName 			: STRING := "../dmem/isort_pipe";
+            IFileName 				: STRING := "../imem/isort_pipe";
+	        TAG_FILENAME 			: STRING := "../imem/tagCache";
+			DATA_FILENAME			: STRING := "../imem/dataCache";
+			FILE_EXTENSION			: STRING := ".imem";
+			MEMORY_ADDRESS_WIDTH	: INTEGER := 32-- Width of memory address.
             );
-  port ( clk        		: in  STD_LOGIC;
-         writedata, dataadr	: out STD_LOGIC_VECTOR(31 downto 0);
-         memwrite          	: out STD_LOGIC;
-         
-         -- Hit counter counts the number of occurrences of cache hits.
-         hitCounter			: in INTEGER;
-         
-         -- Hit counter counts the number of occurrences of cache misses.
-         missCounter		: in INTEGER;
+  port ( clk, reset        : in  STD_LOGIC;
+         writedata, dataadr: out STD_LOGIC_VECTOR(31 downto 0);
+         memwrite          : out STD_LOGIC;
          
          -- Indicates whether the instruction cache stalls ('1') the CPU or not ('0').
          stallFromCache		: in STD_LOGIC;
@@ -35,52 +32,94 @@ entity mips_controller_task5_bht is -- Pipelined MIPS processor
          
          -- Instruction to be read from or written to instruction cache.
          IF_ir 				: inout STD_LOGIC_VECTOR(31 downto 0)
+      
        );
 end;
 
 architecture struct of mips_controller_task5_bht is
-
-	-- Signal indicates whether to stall the pipeline.
-	signal stallFromCPU		: STD_LOGIC := '0';
+ 
+	-- Number of entries in BHT.
+	constant BHT_ENTRIES 			: INTEGER := 32;
+	 
+  	signal stallFromCPU		: STD_LOGIC := '0';
+	--signal stallCPU 		: STD_LOGIC := '0';
 	
 	signal zero,
-         	lez,
-         	ltz,
-         	gtz,
-         	branch : STD_LOGIC       := '0';
-
-	signal c      : ControlType     := INIT_CONTROLTYPE;
-  	signal i      : InstructionType	:= INIT_INSTRUCTIONTYPE;
+           lez,
+           FOUNDJR , --TODO REMOVE
+           ltz,
+           gtz,
+           branch : STD_LOGIC       := '0';
+     
+    signal c      : ControlType     := INIT_CONTROLTYPE;
+  	signal i      : InstructionType := INIT_INSTRUCTIONTYPE;
   	signal ID     : IDType 			:= INIT_IDTYPE;
   	signal EX     : EXType 			:= INIT_EXTYPE;
   	signal MA     : MAType 			:= INIT_MATYPE;
   	signal WB     : WBType 			:= INIT_WBTYPE;
-  	
-  	signal wa,
-  			EX_Rd  : STD_LOGIC_VECTOR(4 downto 0) := (others=>'0');
-  	signal MA_Rd  : STD_LOGIC_VECTOR(4 downto 0) := (others=>'0');
-  	signal pc, pcjump, pcbranch, nextpc, pc4, pc_Jump_BRAM_Adapted, 
-  		 pc_Jump_BRAM_Adapted_PredictedAT, 
-  		 pc_Jump_BRAM_Adapted_PredictedNT, 
-  		 a, signext, b, rd2imm, aluout,
-         wd, rd, rd1, rd2, aout, WB_wd, WB_rd : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
+	
+	signal wa	  : STD_LOGIC_VECTOR(4 downto 0) := "00000";
+  	signal pc, pcjump, pcbranch, nextpc, oldPc, pc4, a, signext, b, rd2imm, aluout,
+           wd, rd, rd1, rd2, aout, WB_wd, WB_rd,
+           pc_Jump_BRAM_Adapted_PredictedNT,
+           pc_Jump_BRAM_Adapted_PredictedAT,
+           freezingPC : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
+    signal forwardA,
+           forwardB : ForwardType := FromREG;
+	signal WB_Opc  ,WB_Func   : STD_LOGIC_VECTOR(5 downto 0) := "000000";
 
-	signal forwardA, forwardB : ForwardType := FromREG;
-  	signal WB_Opc, WB_Func   : STD_LOGIC_VECTOR(5 downto 0) := (others=>'0');
-
-	-- Setting whether the static branch prediction assumes "branch always taken" (1) or "branch never taken" (0)
-  	signal StaticBranchAlwaysTaken : STD_LOGIC := '0'; 
-  	signal freezingPC : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
+  	signal StaticBranchAlwaysTaken : STD_LOGIC := '1';
   	signal pcbranchIDPhase, pcjumpIDPhase, nextpcPredicted : STD_LOGIC_VECTOR(31 downto 0) := ZERO32;
-  	signal branchIdPhase, branchIDPhase_History: STD_LOGIC := '0';
-  	signal branchNotTaken, predictionError : STD_LOGIC := '0';
-  	
-begin
+  	signal branchIdPhase, branchIDPhase_History : STD_LOGIC := '0';
+  	--TODO Remove debug signals
+  	signal branchNotTaken, branchTaken, predictionError, predictionError2, predictionError3 : STD_LOGIC := '0';
 
+  	signal predictionFromBHT : STD_LOGIC := '0';
+  	signal predictionFromBHT2 : STD_LOGIC := '0';
+  	signal writeEnableBHT    : STD_LOGIC := '0';
+  	signal readyToWriteBHT	: STD_LOGIC := '0';
+begin
+	
+	-- TODO Correct?
+	-- Write into BHT whenever a branch command is fetched and decoded
+	writeEnableBHT <=	'1'	when i.Opc = I_BEQ.OPC	and readyToWriteBHT = '1'	and stallFromCPU = '0'	else
+  						'1' when i.Opc = I_BNE.OPC	and readyToWriteBHT	= '1'	and stallFromCPU = '0'	else
+  						'0';
+  	
+  	-- Allow 1 write cycle for each branch instruction					
+	readyToWriteBHT	<=	'1' when	pc /= oldPc				and rising_edge(clk) else
+						'0'	when	writeEnableBHT = '1'	and rising_edge(clk);
+
+	-- ----------------------------------------------------------------------
+	-- Branch History Table (BHT) predicts whether a branch instruction
+	-- will be TAKEN or NOT TAKEN.
+	-- ----------------------------------------------------------------------
+	branchHistoryTable: entity work.BHT
+		generic map(
+			BHT_ENTRIES          => BHT_ENTRIES,
+			EDGE                 => FALLING,				-- RAISING
+			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH
+		)
+		port map(
+			clk				=> clk,
+			reset           => reset,
+			instructionPC	=> pc,
+			prediction		=> predictionFromBHT,
+			branchTaken		=> branchTaken,
+			writeEnable		=> writeEnableBHT
+		);
+	
 	-- Determine whether to stall the CPU or not.
 	--stallCPU <= stallFromCache ;--or stallFromCPU;
 
 -------------------- Instruction Fetch Phase (IF) -----------------------------
+
+	-- TODO Is this signal logic necessary?
+  	oldPc		<= pc when rising_edge(clk);
+
+	pcLogic: block
+	-- 
+	begin
 	
 	-- pc        <= nextpc when rising_edge(clk);
 	pc        <= nextpcPredicted when rising_edge(clk);
@@ -137,10 +176,26 @@ begin
                          	((i.Opc = I_BLTZ.Opc) and (EX.i.Opc /= I_BLTZ.Opc)) or	--not currently used in asm files
                          	((i.Opc = I_BGTZ.Opc) and (EX.i.Opc /= I_BGTZ.Opc))	else--not currently used in asm files
                				'0';
+   	end block;
+
+
+ 
+  -- TODO: Repeat for all commands, check for better solution
+  -- Detect that a branch command was fetched and is currently in only in the ID-Phase    				
+  branchIdPhase		<= '1'  when 
+  							((i.Opc = I_BEQ.Opc) and (EX.i.Opc /= I_BEQ.Opc) and (MA.i.Opc /= I_BEQ.Opc)) 	or
+                       		((i.Opc = I_BNE.Opc) and (EX.i.Opc /= I_BNE.Opc) and (MA.i.Opc /= I_BNE.Opc)) 	or
+                         	((i.Opc = I_BLEZ.Opc) and (EX.i.Opc /= I_BLEZ.Opc)) or
+                         	((i.Opc = I_BLTZ.Opc) and (EX.i.Opc /= I_BLTZ.Opc)) or
+                         	((i.Opc = I_BGTZ.Opc) and (EX.i.Opc /= I_BGTZ.Opc))	else
+               				'0';
+
+--  imem:        entity work.bram  generic map ( INIT =>  (IFileName & ".imem"))
+--               port map (clk, '0', pc(11 downto 2), (others=>'0'), IF_ir);
 
 -------------------- IF/ID Pipeline Register -----------------------------------
                                                  
-	ID        <=  (IF_ir, pc) when rising_edge(clk);			   
+  ID        <=  (IF_ir, pc) when rising_edge(clk);			   
     
 -------------------- Instruction Decode and register fetch (ID) ----------------
 
@@ -178,30 +233,29 @@ begin
         wd  when (ForwardB = fromMEM);
 
 -------------------- Hazard Detection and Forward Logic ------------------------
+	ForwardA <= fromALUe when ( i.Rs /= "00000" and i.Rs = EX.wa and EX.c.regwr = '1' ) else
+            	fromALUm when ( i.Rs /= "00000" and i.Rs = MA.wa and MA.c.regwr = '1' ) else
+            	fromMEM  when ( i.Rs /= "00000" and i.Rs = WB.wa and WB.c.regwr = '1' ) else
+            	fromReg;
 
-ForwardA <= fromALUe when ( i.Rs /= "00000" and i.Rs = EX.wa and EX.c.regwr = '1' ) else
-            fromALUm when ( i.Rs /= "00000" and i.Rs = MA.wa and MA.c.regwr = '1' ) else
-            fromMEM  when ( i.Rs /= "00000" and i.Rs = WB.wa and WB.c.regwr = '1' ) else
-            fromReg;
-
-ForwardB <= fromALUe when ( i.Rt /= "00000" and i.Rt = EX.wa and EX.c.regwr = '1' ) else
-            fromALUm when ( i.Rt /= "00000" and i.Rt = MA.wa and MA.c.regwr = '1' ) else
-            fromMEM  when ( i.Rt /= "00000" and i.Rt = WB.wa and WB.c.regwr = '1' ) else
-            fromReg;
+	ForwardB <= fromALUe when ( i.Rt /= "00000" and i.Rt = EX.wa and EX.c.regwr = '1' ) else
+            	fromALUm when ( i.Rt /= "00000" and i.Rt = MA.wa and MA.c.regwr = '1' ) else
+            	fromMEM  when ( i.Rt /= "00000" and i.Rt = WB.wa and WB.c.regwr = '1' ) else
+            	fromReg;
 
 -- Explanation aim is to detect data dependencies by checking registers of consequent commands:
 -- if ( (EX.MemRead == 1) // Detect Load in EX stage
 -- and (ForwardA==1 or ForwardB==1)) then Stall // RAW Hazard
 -- PC needs to be frozen and nops inserted as is instructed by the Stall_disablePC signal below.
 
---TODO place in correct part in mips_pkg, it doesnt actually belong here			
-WB_Opc <= 	MA.i.Opc when rising_edge(clk);
-WB_Func <= 	MA.i.funct when rising_edge(clk);
+	--TODO place in correct part in mips_pkg, it doesnt actually belong here			
+	WB_Opc  <= 	MA.i.Opc when rising_edge(clk);
+	WB_Func <= 	MA.i.funct when rising_edge(clk);
 
 -- The following logic looks for all kinds of jump commands and orders 3 stalls.
 -- TODO EX.MemRead is equal to EX.c.mem2reg ?
 				
-stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1') 						
+	stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1') 						
       and (ForwardA = fromALUe                                            or ForwardB = fromALUe))            
       or ((EX.i.Opc = I_BEQ.OPC)                                          or (MA.i.Opc = I_BEQ.OPC)     or  (WB_Opc = I_BEQ.OPC))           --ok
       or ((EX.i.Opc = I_BNE.OPC)                                          or (MA.i.Opc = I_BNE.OPC)     or  (WB_Opc = I_BNE.OPC))           --ok
@@ -212,45 +266,57 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
       or ((EX.i.Opc = I_JAL.OPC)                                          or (MA.i.Opc = I_JAL.OPC)     or  (WB_Opc = I_JAL.OPC))  
       or (((EX.i.Opc = I_JALR.OPC)      and (EX.i.funct = I_JALR.funct))  or ((MA.i.Opc = I_JALR.OPC)   and (MA.i.funct = I_JALR.funct)))    
       or (((EX.i.Opc = I_JR.OPC)        and (EX.i.funct = I_JR.funct))    or ((MA.i.Opc = I_JR.OPC)     and (MA.i.funct = I_JR.funct))	
-	    or ((WB_Opc = I_JR.OPC) 			    and WB_Func = I_JR.funct))		--TODO replace using mips_PKG WB_func, WB_Opc do not belong here
+	  or ((WB_Opc = I_JR.OPC) 			and WB_Func = I_JR.funct))		--TODO replace using mips_PKG WB_func, WB_Opc do not belong here
               
 -- Some commands have duplicate opc therefore additional information like (funct) is needed. 
 -- Supervisor said, only implement most important commands
-
-		else	'0' when   	(ForwardA /= fromALUe)    and (ForwardB /= fromALUe) and (MA.i.Opc = I_LW.OPC) else
-				  '0' when  	(EX.i.Opc /= I_BEQ.OPC)   and (MA.i.Opc /= I_BEQ.OPC) 
-						  and (EX.i.Opc /= I_BNE.OPC)   		and (MA.i.Opc /= I_BNE.OPC) 
-						  and (EX.i.Opc /= I_BLEZ.OPC)  		and (MA.i.Opc /= I_BLEZ.OPC) 
-						  and (EX.i.Opc /= I_BLTZ.OPC)  		and (MA.i.Opc /= I_BLTZ.OPC) 
-						  and (EX.i.Opc /= I_BGTZ.OPC)  		and (MA.i.Opc /= I_BGTZ.OPC) 
-						  and (EX.i.Opc /= I_J.OPC)     		and (MA.i.Opc /= I_J.OPC) 
-						  and (EX.i.Opc /= I_JAL.OPC)   		and (MA.i.Opc /= I_JAL.OPC) 
-						  and (EX.i.funct /= I_JALR.funct)  and (MA.i.funct /= I_JALR.funct)
-						  and (EX.i.funct /= I_JR.funct)    and (MA.i.funct /= I_JR.funct)      
-						  and rising_edge(clk);
+	 else '0' when   	(ForwardA /= fromALUe)    		and (ForwardB /= fromALUe) 			and (MA.i.Opc = I_LW.OPC) else
+		  '0' when  	(EX.i.Opc /= I_BEQ.OPC)   		and (MA.i.Opc /= I_BEQ.OPC) 
+				 	and (EX.i.Opc /= I_BNE.OPC)   		and (MA.i.Opc /= I_BNE.OPC) 
+					and (EX.i.Opc /= I_BLEZ.OPC)  		and (MA.i.Opc /= I_BLEZ.OPC) 
+					and (EX.i.Opc /= I_BLTZ.OPC)  		and (MA.i.Opc /= I_BLTZ.OPC) 
+					and (EX.i.Opc /= I_BGTZ.OPC)  		and (MA.i.Opc /= I_BGTZ.OPC) 
+					and (EX.i.Opc /= I_J.OPC)     		and (MA.i.Opc /= I_J.OPC) 
+					and (EX.i.Opc /= I_JAL.OPC)   		and (MA.i.Opc /= I_JAL.OPC) 
+					and (EX.i.funct /= I_JALR.funct)  	and (MA.i.funct /= I_JALR.funct)
+					and (EX.i.funct /= I_JR.funct)    	and (MA.i.funct /= I_JR.funct)      
+					and rising_edge(clk);
 
 -------------------- ID/EX Pipeline Register with Multiplexer Stalling----------
 -- bubble = "0000..." nop command. It will passed on at each Stalling signal
 
+-- TODO Debug and verify working implementation of predectionError and branchTaken signals
+ 
   predictionError	<=	'1'	when (StaticBranchAlwaysTaken = '1' and (a /= b) 	and i.Opc = I_BEQ.OPC)	else	--assumed to take branch but not taken at BEQ 
   						'1' when (StaticBranchAlwaysTaken = '1' and (a = b) 	and i.Opc = I_BNE.OPC)	else	--assumed to take branch but not taken at BNE 
   						'1' when (StaticBranchAlwaysTaken = '0' and (a = b) 	and i.Opc = I_BEQ.OPC)	else  	--assumed not to take branch but taken at BEQ 
   						'1' when (StaticBranchAlwaysTaken = '0' and (a /= b) 	and i.Opc = I_BNE.OPC)	else	--assumed not to take branch but taken at BNE  						
   						'0';
+  			
+  branchTaken		<=	'1' when (a = b) 	and i.Opc = I_BEQ.OPC	else							
+  						'1' when (a /= b) 	and i.Opc = I_BNE.OPC	else
+  						'0';
   						
+  predictionError2	<=	'1'	when (predictionFromBHT = '1'	and (a /= b) 	and i.Opc = I_BEQ.OPC)	else
+  						'1' when (predictionFromBHT = '0'	and (a = b) 	and i.Opc = I_BEQ.OPC)	else
+  						'1' when (predictionFromBHT = '1'	and (a = b) 	and i.Opc = I_BNE.OPC)	else
+  						'1' when (predictionFromBHT = '0'	and (a /= b) 	and i.Opc = I_BNE.OPC)	else
+  						'0';
   						
--- TODO Clean Up
-  EX  <= Bubble when 	(stallFromCache = '1' or stallFromCPU = '1' 
-  					or 	(StaticBranchAlwaysTaken = '1' and predictionError = '1')
-  					or 	(StaticBranchAlwaysTaken = '0' and predictionError = '1')
-  					)
-  		
-  		
-  		 and rising_edge(clk) else
+  predictionFromBHT2 <= predictionFromBHT when rising_edge(clk);
+  
+  predictionError3	<=	'1'	when (predictionFromBHT2 = '1'	and (a /= b) 	and i.Opc = I_BEQ.OPC)	else
+  						'1' when (predictionFromBHT2 = '0'	and (a = b) 	and i.Opc = I_BEQ.OPC)	else
+  						'1' when (predictionFromBHT2 = '1'	and (a = b) 	and i.Opc = I_BNE.OPC)	else
+  						'1' when (predictionFromBHT2 = '0'	and (a /= b) 	and i.Opc = I_BNE.OPC)	else
+  						'0';
+  
+  -- TODO Clean Up
+  EX  <= Bubble when (stallFromCache='1' or stallFromCPU='1' or predictionError='1') and rising_edge(clk) else
          (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
---  EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1') and rising_edge(clk) else
---         (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
---  EX        <= (c, i, wa, a, b, signext, ID.pc4, rd2) when rising_edge(clk);
+  --  EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1') and rising_edge(clk) else
+  --         (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
+  --  EX        <= (c, i, wa, a, b, signext, ID.pc4, rd2) when rising_edge(clk);
 
 -------------------- Execution Phase (EX) --------------------------------------
 
@@ -278,13 +344,16 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
   wd        <= MA.rd2; --b;
   aout      <= MA.aluout;
 
+-- TODO Are the signals branch and branchNotTaken still needed?
+-- A branch command was fetched and in MA-Phase a jump-decision is made.
   branch    <= '1'  when (MA.i.Opc = I_BEQ.Opc  and     MA.zero = '1') or
                          (MA.i.Opc = I_BNE.Opc  and not MA.zero = '1') or
                          (MA.i.Opc = I_BLEZ.Opc and     MA.lez  = '1') or
                          (MA.i.Opc = I_BLTZ.Opc and     MA.ltz  = '1') or
                          (MA.i.Opc = I_BGTZ.Opc and     MA.gtz  = '1') else
                '0';
-               
+
+-- A branch command was fetched and in MA-Phase a jump-decision is made.               
   branchNotTaken    <= '1'  when (MA.i.Opc = I_BEQ.Opc  and     MA.zero = '0') or
                          	(MA.i.Opc = I_BNE.Opc  		and not MA.zero = '0') or
                          	(MA.i.Opc = I_BLEZ.Opc 		and     MA.lez  = '0') or
@@ -309,5 +378,5 @@ stallFromCPU <= 	'1' when  		((EX.c.mem2reg = '1')
   writedata <= wd;
   dataadr   <= aout;
   memwrite  <= c.memwr;
-  pcToCache <= pc;
+
 end;

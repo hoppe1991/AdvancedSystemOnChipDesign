@@ -10,21 +10,7 @@ use IEEE.STD_LOGIC_1164.all;
 use IEEE.NUMERIC_STD.all;
 
 use work.mips_pkg.all;
-use work.casts.all;
----------------------------------------------------------------------------------
--- filename: mips.vhd
--- author  : Wolfgang Brandt
--- company : TUHH, Institute of embedded systems
--- revision: 0.1
--- date    : 26/11/15
----------------------------------------------------------------------------------
-
-library IEEE;
-use IEEE.STD_LOGIC_1164.all;
-use IEEE.NUMERIC_STD.all;
-
-use work.mips_pkg.all;
-use work.casts.all;
+use work.casts.all; 
 
 entity mips_controller_task4_imemcache is -- Pipelined MIPS processor
   generic ( DFileName 			: STRING := "../dmem/isort_pipe";

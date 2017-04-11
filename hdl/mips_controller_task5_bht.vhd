@@ -80,6 +80,9 @@ architecture struct of mips_controller_task5_bht is
   	
 begin
 	
+	StaticBranchAlwaysTaken <= '1' when (predictionFromBHT='1') else
+							   '0' when (predictionFromBHT='0') ;
+	
 	-- TODO Correct?
 	-- Write into BHT whenever a branch command is fetched and decoded
 	writeEnableBHT_i <=	'1'	when i.Opc = I_BEQ.OPC	and readyToWriteBHT = '1'	and stallFromCPU = '0'	else

@@ -49,13 +49,7 @@ entity mips_controller_task5_btb is -- Pipelined MIPS processor
         -- Signal indicates whether the predicted program counter from BTB is valid ('1') or not ('0').
         -- TODO How does the MIPS use this signal?
         predictedPCIsValidFromBTB : in STD_LOGIC := '0';
-         
-		-- Signal
-		addressWriteID : out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
-  		
-  		-- Signal 
-  		addressWriteEX : out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
-  		
+        
   		-- Signlal 
   		dataWriteID	: out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
  		
@@ -133,18 +127,27 @@ begin
 
 	-- -----------------------------------------------------------
 	-- Logic to compute the words given to BTB.
+	--
+	-- The BTB is read at the IF stage for prediction and 
+	-- written in either ID stage (jump) or EX stage (branch).
 	-- -----------------------------------------------------------
 	btbLogic: block
 	
 	begin 
 		-- TODO Update the logic of these signals.
 		-- TODO Is is possible to place this signal logic into entity of BTB?
-		addressWriteID	<= (others=>'0');
-		addressWriteEX	<=(others=>'0');
-  		dataWriteID		<= (others=>'0');
-  		dataWriteEX	 	<= (others=>'0');
- 		writeEnableID  	<= '0';
-  		writeEnableEX 	<= '0';
+		dataWriteID		<= pcJumpIDPhase;
+ 		writeEnableID  	<= '1' when (i.Opc=I_J.Opc    and i.Shamt=I_J.Shamt    and i.Funct=I_J.Funct) else
+ 						   '1' when (i.Opc=I_JAL.Opc  and i.Shamt=I_JAL.Shamt  and i.Funct=I_JAL.Funct) else
+ 						   '1' when (i.Opc=I_JALR.Opc and i.Shamt=I_JALR.Shamt and i.Funct=I_JALR.Funct) else
+ 						   '1' when (i.Opc=I_JR.Opc   and i.Shamt=I_JR.Shamt   and i.Funct=I_JR.Funct) else
+ 						   '0';
+ 		
+		dataWriteEX	 	<= EX.pc4; -- TODO ???
+  		writeEnableEX 	<= '1' when (EX.i.Opc=I_BEQ.Opc) else
+  						   '1' when (EX.i.Opc=I_BNE.OPC) else
+  						   '0';
+  		
 	end block;
 	
 	-- TODO Is this signal logic necessary?

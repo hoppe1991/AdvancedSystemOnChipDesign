@@ -5,6 +5,13 @@ val:   .word   4
        nop
        lw     $a0  val        # load value to $a0
        nop
+       jal fac
+       nop
+       nop
+       nop
+       lui  $1, 0x1001     # lw   $7, len     addr = 0x10010000
+       sw $v0, 4($1)
+end:	j end
 fac:   bne    $a0, $zero, gen # if $a0<>0, goto generic case
        ori    $v0, $zero, 1   # else set result $v0 = 1
        jr     $ra             # return

@@ -1,0 +1,1 @@
+gtkwave twoWayCacheTestbench.ghw twoWayCacheTestbench_settings.gtkw

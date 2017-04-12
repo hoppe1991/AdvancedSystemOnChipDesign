@@ -1,0 +1,8 @@
+.data
+29005572
+.text
+	addi $t1, $zero, 0	# a = 0
+	j L1
+L1:	# nop
+	addi $t2, $zero, 5	# b = 5
+	addi $t3, $zero, 7	# c = 7

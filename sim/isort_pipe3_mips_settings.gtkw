@@ -1,0 +1,50 @@
+[*]
+[*] GTKWave Analyzer v3.3.78 (w)1999-2016 BSI
+[*] Sat Apr 08 13:40:13 2017
+[*]
+[dumpfile] "C:\Users\carst\Documents\AdvancedSystemOnChipDesign\Workspace\AdvancedSystemOnChipDesign\sim\isort_pipe3.ghw"
+[dumpfile_mtime] "Sat Apr 08 13:37:02 2017"
+[dumpfile_size] 1629706
+[savefile] "C:\Users\carst\Documents\AdvancedSystemOnChipDesign\Workspace\AdvancedSystemOnChipDesign\sim\isort_pipe3_mips_settings.gtkw"
+[timestart] 17894300000
+[size] 1920 1017
+[pos] -1 -1
+*-25.000000 17950000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.mips_isortpipe3_tb.
+[treeopen] top.mips_isortpipe3_tb.dut.
+[treeopen] top.mips_isortpipe3_tb.dut.mipscontr.
+[treeopen] top.mips_isortpipe3_tb.dut.mipscontr.ex.
+[sst_width] 340
+[signals_width] 511
+[sst_expanded] 1
+[sst_vpaned_height] 301
+@28
+top.mips_isortpipe3_tb.memwrite
+top.mips_isortpipe3_tb.memwrite_i
+top.mips_isortpipe3_tb.writedatai
+@200
+-
+@28
+top.mips_isortpipe3_tb.dut.mipscontr.i.mnem
+@200
+-
+@29
+top.mips_isortpipe3_tb.dut.mipscontr.ex.i.mnem
+@200
+-
+-EX
+-
+-MA
+-
+-WA
+-
+-Direct Mapped Cache Controller
+-
+-IMEM Cache
+-
+-Cache Block Lines
+-
+-
+[pattern_trace] 1
+[pattern_trace] 0

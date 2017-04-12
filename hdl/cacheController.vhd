@@ -425,7 +425,8 @@ begin
 			       STD_LOGIC_VECTOR_TO_BLOCK_LINE(dataMEM) when state=READ and readyMEM='1';
 	
 	-- Data CPU output.
-	dataCPU <= myBlockLine(addressCPU.offsetAsInteger) when (state=READ and readyMEM='1') else --state=TOCACHE2
+	dataCPU <= --(others=>'0') when (state=CHECK2 and auxiliaryCounter>0) else
+				myBlockLine(addressCPU.offsetAsInteger) when (state=READ and readyMEM='1') else --state=TOCACHE2
 			   (others=>'Z') when (state=IDLE and wrCPU='1' and rdCPU='0') else
 			   (others=>'Z') when (state=IDLE and rdCPU='1' and wrCPU='0') else
 			   dataCPU when (state=IDLE and rdCPU='0' and wrCPU='0') else

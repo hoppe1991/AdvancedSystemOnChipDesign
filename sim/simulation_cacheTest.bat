@@ -1,0 +1,1 @@
+gtkwave cacheTestbench.ghw cacheTestSettings.gtkw

@@ -20,7 +20,12 @@ architecture test of mips_testbench is
   signal writedata, dataadr   : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
   signal clk, reset,  memwrite: STD_LOGIC := '0';
   --signal t                 :  STD_LOGIC_VECTOR(1 downto 0):="10";
-
+  
+	component MIPS_COMPONENT is
+		generic ( DFileName, IFileName : STRING );
+  		port (clk , reset : in STD_LOGIC;  writedata : out STD_LOGIC; dataadr, memwrite : out STD_LOGIC_VECTOR);
+ 	end component MIPS_COMPONENT;
+	
 begin
 
 --   generate_initfiles: entity work.convertMemFiles; --  generic map(
@@ -30,9 +35,9 @@ begin
   --t <= not t when rising_edge(clk);
 
   -- instantiate device to be tested
-  dut: entity work.mips
+  dut: MIPS_COMPONENT
        generic map(DFileName => DFileName, IFileName => IFileName)
-       port map(clk, reset, writedata, dataadr, memwrite);
+       port map(clk, reset, memwrite, dataadr, writedata);
 
   -- Generate clock with 10 ns period
   process begin
@@ -63,3 +68,48 @@ begin
 --    end if;
 --  end process;
 end;
+
+configuration c5 of mips_testbench is 
+for test
+	for dut: MIPS_COMPONENT
+	use entity work.mips(mips_arc_task5_btb)
+	generic map(DFileName => DFileName, IFileName => IFileName)
+    port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
+end for;
+end configuration c5;
+
+configuration c4 of mips_testbench is 
+for test
+	for dut: MIPS_COMPONENT
+	use entity work.mips(mips_arc_task5_bht)
+	generic map(DFileName => DFileName, IFileName => IFileName)
+    port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
+end for;
+end configuration c4;
+
+configuration c3 of mips_testbench is 
+for test
+	for dut: MIPS_COMPONENT
+	use entity work.mips(mips_arc_task5_staticbranchprediction)
+	generic map(DFileName => DFileName, IFileName => IFileName)
+    port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
+end for;
+end configuration c3;
+
+configuration c2 of mips_testbench is 
+for test
+	for dut: MIPS_COMPONENT
+	use entity work.mips(mips_arc_task4_instructioncache)
+	generic map(DFileName => DFileName, IFileName => IFileName)
+    port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
+end for;
+end configuration c2;
+
+configuration c1 of mips_testbench is 
+for test
+	for dut: MIPS_COMPONENT
+	use entity work.mips(mips_arc_task3_pipelining)
+	generic map(DFileName => DFileName, IFileName => IFileName)
+    port map(clk => clk, reset => reset, memwrite => memwrite, dataadr => dataadr, writedata => writedata);end for;
+end for;
+end configuration c1;

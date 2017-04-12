@@ -1,0 +1,55 @@
+[*]
+[*] GTKWave Analyzer v3.3.78 (w)1999-2016 BSI
+[*] Fri Feb 10 19:54:55 2017
+[*]
+[dumpfile] "C:\Users\carst\Documents\AdvancedSystemOnChipDesign\Workspace\AdvancedSystemOnChipDesign\sim\cacheTest.ghw"
+[dumpfile_mtime] "Fri Feb 10 19:53:55 2017"
+[dumpfile_size] 550398
+[savefile] "C:\Users\carst\Documents\AdvancedSystemOnChipDesign\Workspace\AdvancedSystemOnChipDesign\sim\cacheSettings2.gtkw"
+[timestart] 0
+[size] 1536 801
+[pos] -1 -1
+*-23.014515 17150000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.cache_tb.
+[treeopen] top.cache_tb.cache.
+[treeopen] top.cache_tb.cache.cache.
+[sst_width] 267
+[signals_width] 351
+[sst_expanded] 1
+[sst_vpaned_height] 225
+@28
+top.cache_tb.cache.nextstate
+top.cache_tb.cache.state
+@22
+#{top.cache_tb.indexv[7:0]} top.cache_tb.indexv[7] top.cache_tb.indexv[6] top.cache_tb.indexv[5] top.cache_tb.indexv[4] top.cache_tb.indexv[3] top.cache_tb.indexv[2] top.cache_tb.indexv[1] top.cache_tb.indexv[0]
+@28
+top.cache_tb.indexi
+@22
+#{top.cache_tb.offsetv[3:0]} top.cache_tb.offsetv[3] top.cache_tb.offsetv[2] top.cache_tb.offsetv[1] top.cache_tb.offsetv[0]
+@28
+top.cache_tb.offseti
+@22
+#{top.cache_tb.tagv[19:0]} top.cache_tb.tagv[19] top.cache_tb.tagv[18] top.cache_tb.tagv[17] top.cache_tb.tagv[16] top.cache_tb.tagv[15] top.cache_tb.tagv[14] top.cache_tb.tagv[13] top.cache_tb.tagv[12] top.cache_tb.tagv[11] top.cache_tb.tagv[10] top.cache_tb.tagv[9] top.cache_tb.tagv[8] top.cache_tb.tagv[7] top.cache_tb.tagv[6] top.cache_tb.tagv[5] top.cache_tb.tagv[4] top.cache_tb.tagv[3] top.cache_tb.tagv[2] top.cache_tb.tagv[1] top.cache_tb.tagv[0]
+@28
+top.cache_tb.tagi
+top.cache_tb.hitcounter
+top.cache_tb.misscounter
+top.cache_tb.rdcpu
+top.cache_tb.cache.state
+top.cache_tb.cache.nextstate
+top.cache_tb.cache.reset
+top.cache_tb.cache.clk
+top.cache_tb.cache.cache.hit
+top.cache_tb.cache.cache.valid
+top.cache_tb.cache.cache.dirty
++{top.cache_tb.wrcpu} top.cache_tb.wrcpu
+top.cache_tb.cache.cache.wrcacheblockline
+top.cache_tb.cache.cache.wr
+top.cache_tb.cache.cache.rd
+top.cache_tb.cache.wrcpu
+top.cache_tb.cache.setvalid
+@29
+top.cache_tb.cache.setdirty
+[pattern_trace] 1
+[pattern_trace] 0

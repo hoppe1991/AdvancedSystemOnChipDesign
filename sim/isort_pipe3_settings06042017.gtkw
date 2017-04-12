@@ -1,0 +1,34 @@
+[*]
+[*] GTKWave Analyzer v3.3.78 (w)1999-2016 BSI
+[*] Tue Apr 11 08:08:59 2017
+[*]
+[dumpfile] "C:\Users\carst\Documents\AdvancedSystemOnChipDesign\Workspace\AdvancedSystemOnChipDesign\sim\isort_pipe3.ghw"
+[dumpfile_mtime] "Tue Apr 11 07:58:02 2017"
+[dumpfile_size] 1545897
+[savefile] "C:\Users\carst\Documents\AdvancedSystemOnChipDesign\Workspace\AdvancedSystemOnChipDesign\sim\isort_pipe3_settings06042017.gtkw"
+[timestart] 3750000000
+[size] 1536 801
+[pos] -9 -9
+*-33.000000 20230000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.mips_isortpipe3_tb.
+[treeopen] top.mips_isortpipe3_tb.dut.
+[treeopen] top.mips_isortpipe3_tb.dut.mipscontr.
+[sst_width] 257
+[signals_width] 464
+[sst_expanded] 1
+[sst_vpaned_height] 236
+@28
+top.mips_isortpipe3_tb.clk
+top.mips_isortpipe3_tb.memwrite
+top.mips_isortpipe3_tb.writedatai
+top.mips_isortpipe3_tb.selectedaddri
+@200
+-
+-RegisterFile
+-
+-CPU
+@29
+top.mips_isortpipe3_tb.dut.mipscontr.i.mnem
+[pattern_trace] 1
+[pattern_trace] 0

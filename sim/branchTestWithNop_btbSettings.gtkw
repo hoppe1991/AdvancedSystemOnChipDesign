@@ -1,0 +1,80 @@
+[*]
+[*] GTKWave Analyzer v3.3.78 (w)1999-2016 BSI
+[*] Wed Apr 05 07:26:27 2017
+[*]
+[dumpfile] "C:\Users\carst\Documents\AdvancedSystemOnChipDesign\Workspace\AdvancedSystemOnChipDesign\sim\branchTestWithNop.ghw"
+[dumpfile_mtime] "Wed Apr 05 07:21:58 2017"
+[dumpfile_size] 989032
+[savefile] "C:\Users\carst\Documents\AdvancedSystemOnChipDesign\Workspace\AdvancedSystemOnChipDesign\sim\branchTestWithNop_btbSettings.gtkw"
+[timestart] 0
+[size] 1920 1017
+[pos] -2059 -139
+*-26.000000 259700000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.mips_with_instructioncache_tb.
+[treeopen] top.mips_with_instructioncache_tb.dut.
+[treeopen] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.
+[treeopen] top.mips_with_instructioncache_tb.dut.imemcache.
+[sst_width] 323
+[signals_width] 358
+[sst_expanded] 1
+[sst_vpaned_height] 478
+@28
+top.mips_with_instructioncache_tb.clk
+top.mips_with_instructioncache_tb.reset
+@22
+#{top.mips_with_instructioncache_tb.dut.pc[31:0]} top.mips_with_instructioncache_tb.dut.pc[31] top.mips_with_instructioncache_tb.dut.pc[30] top.mips_with_instructioncache_tb.dut.pc[29] top.mips_with_instructioncache_tb.dut.pc[28] top.mips_with_instructioncache_tb.dut.pc[27] top.mips_with_instructioncache_tb.dut.pc[26] top.mips_with_instructioncache_tb.dut.pc[25] top.mips_with_instructioncache_tb.dut.pc[24] top.mips_with_instructioncache_tb.dut.pc[23] top.mips_with_instructioncache_tb.dut.pc[22] top.mips_with_instructioncache_tb.dut.pc[21] top.mips_with_instructioncache_tb.dut.pc[20] top.mips_with_instructioncache_tb.dut.pc[19] top.mips_with_instructioncache_tb.dut.pc[18] top.mips_with_instructioncache_tb.dut.pc[17] top.mips_with_instructioncache_tb.dut.pc[16] top.mips_with_instructioncache_tb.dut.pc[15] top.mips_with_instructioncache_tb.dut.pc[14] top.mips_with_instructioncache_tb.dut.pc[13] top.mips_with_instructioncache_tb.dut.pc[12] top.mips_with_instructioncache_tb.dut.pc[11] top.mips_with_instructioncache_tb.dut.pc[10] top.mips_with_instructioncache_tb.dut.pc[9] top.mips_with_instructioncache_tb.dut.pc[8] top.mips_with_instructioncache_tb.dut.pc[7] top.mips_with_instructioncache_tb.dut.pc[6] top.mips_with_instructioncache_tb.dut.pc[5] top.mips_with_instructioncache_tb.dut.pc[4] top.mips_with_instructioncache_tb.dut.pc[3] top.mips_with_instructioncache_tb.dut.pc[2] top.mips_with_instructioncache_tb.dut.pc[1] top.mips_with_instructioncache_tb.dut.pc[0]
+@28
+top.mips_with_instructioncache_tb.dut.i.mnem
+top.mips_with_instructioncache_tb.dut.ex.i.mnem
+@200
+-
+-Instruction Cache
+@28
+top.mips_with_instructioncache_tb.dut.imemcache.stallcpu
+@22
+#{top.mips_with_instructioncache_tb.dut.imemcache.datacpu[31:0]} top.mips_with_instructioncache_tb.dut.imemcache.datacpu[31] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[30] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[29] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[28] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[27] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[26] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[25] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[24] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[23] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[22] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[21] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[20] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[19] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[18] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[17] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[16] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[15] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[14] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[13] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[12] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[11] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[10] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[9] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[8] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[7] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[6] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[5] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[4] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[3] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[2] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[1] top.mips_with_instructioncache_tb.dut.imemcache.datacpu[0]
+@29
+top.mips_with_instructioncache_tb.dut.imemcache.cache_controller.state
+@200
+-
+-BTB
+@c00022
+#{top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[31:0]} top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[31] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[30] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[29] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[28] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[27] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[26] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[25] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[24] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[23] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[22] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[21] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[20] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[19] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[18] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[17] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[16] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[15] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[14] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[13] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[12] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[11] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[10] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[9] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[8] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[7] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[6] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[5] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[4] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[3] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[2] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[1] top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[0]
+@28
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[31]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[30]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[29]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[28]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[27]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[26]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[25]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[24]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[23]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[22]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[21]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[20]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[19]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[18]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[17]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[16]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[15]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[14]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[13]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[12]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[11]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[10]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[9]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[8]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[7]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[6]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[5]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[4]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[3]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[2]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[1]
+top.mips_with_instructioncache_tb.dut.branchtargetbuffer.btbcontr.pc[0]
+@1401200
+-group_end
+[pattern_trace] 1
+[pattern_trace] 0

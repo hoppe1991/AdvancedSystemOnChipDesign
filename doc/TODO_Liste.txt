@@ -1,6 +1,19 @@
 TODO Liste
 Treffen 08.03.2017
 --------------------------------------------
+
+2017-04-11 [Projekt]	In welchen Dateien werden alle Konfigurationen im Projekt sinnvoll geschrieben?
+2017-04-11 [Projekt]	Merge Branch 'branchTask5_staticPrediction_hoppe2' zum Branch 'master'.
+2017-04-11 [Projekt]	Löschen der Dateien 'ghdl_Leo.sh', 'ghdl_Leo.sh' und 'ghdl01hendrik.sh' im Ordner 'hdl'?
+2017-04-11 [Projekt]	Löschen des Branches 'branchTask5_staticPrediction_hoppe2'?
+
+
+
+
+2017-04-06	[Doku]			Einleitung in der Dokumentation schreiben.
+
+2017-04-06	[Doku]			Zusammenfassung/Fazit in der Dokumentation schreiben.
+
 2017-03-20	[Task 4]		Was bedeutet "main memory: BlockRAM (4K x 128) with ready signal after 20 cycles"?
 
 2017-03-08	[Task 4]		Wolfgang fragen, was ist mit n-way caches gemeint?

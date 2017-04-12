@@ -1,0 +1,67 @@
+# Insertionsort
+
+            .data                                       # data segment
+
+len:        .word 10                                    # Länge der Liste
+val:        .word 20, 30, 10, 40, 50, 60, 30, 25, 10, 5 # Liste
+
+            .text                                       # Code segment
+            .globl main                                 # Globaler Name
+  
+  	   nop
+  	   nop
+  	   nop
+
+# ======================================================================================
+#	main function
+# ======================================================================================
+main:		addi $a0, $0, 4
+           	addi $a1, $0, 1
+	   	jal ack
+	   	addi $a0, $v0, 0
+
+		   
+end:       	j end 
+       
+
+# ======================================================================================
+#	ackermann fznction
+# ======================================================================================
+ack:            # ack()
+            
+		# $a0 --> n
+	    	# $a1 --> m
+	    	add $t0, $0, $a0
+	    	add $t1, $0, $a1
+	    	
+	    	subu $sp, $sp, 12 # Make a stack frame of 24 bytes
+		sw $ra, 0($sp) # Save our $ra before we call another function
+	    	sw $t0, 4($sp)
+	    	sw $t1, 8($sp)
+	    	
+while:	    	beq $t0, $zero, done
+
+if:	    	bne $t1, $zero, else
+		addi $t1, $zero, 1
+		j fi
+else:		add $a0, $0, $t0
+		addi $t2, $zero, 1
+		sub $a1, $t1, $t2
+		jal ack
+		lw $ra, 0($sp) # Reload our return address
+		lw $t0, 4($sp)
+		lw $t1, 8($sp)
+		addu $sp, $sp, 12 # Destroy our stack frame
+		add $t1, $zero, $v0
+fi:		addi $t2, $zero, 1
+		sub $t0, $t0, $t2
+		j while
+done:		
+		add $v0, $t1, 0		# return m
+		
+		lw $ra, 0($sp) # Reload our return address
+		lw $t0, 4($sp)
+		lw $t1, 8($sp)
+		addu $sp, $sp, 12 # Destroy our stack frame
+		
+		jr $ra			# return m          

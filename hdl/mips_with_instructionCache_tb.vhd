@@ -15,8 +15,8 @@ use STD.TEXTIO.ALL;
 use IEEE.std_logic_textio.all;
 
 entity mips_with_instructionCache_tb is
-  generic (DFileName : string := "../dmem/isort_pipe";
-           IFileName : string := "../imem/isort_pipe";
+  generic (DFileName 			: STRING := "../dmem/isort_pipe";
+           IFileName 			: STRING := "../imem/isort_pipe";
            TAG_FILENAME 		: STRING := "../imem/tagCache";
 		   DATA_FILENAME		: STRING := "../imem/dataCache";
 		   FILE_EXTENSION		: STRING := ".imem"

@@ -1,0 +1,72 @@
+[*]
+[*] GTKWave Analyzer v3.3.78 (w)1999-2016 BSI
+[*] Tue Apr 11 12:10:56 2017
+[*]
+[dumpfile] "C:\Users\carst\Documents\AdvancedSystemOnChipDesign\Workspace\AdvancedSystemOnChipDesign\sim\isort_pipe3.ghw"
+[dumpfile_mtime] "Tue Apr 11 12:03:14 2017"
+[dumpfile_size] 1559344
+[savefile] "C:\Users\carst\Documents\AdvancedSystemOnChipDesign\Workspace\AdvancedSystemOnChipDesign\sim\isortPipe3_settings_11-04-2017.gtkw"
+[timestart] 1194500000
+[size] 1280 657
+[pos] 1345 -191
+*-25.089998 1250000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.mips_sim_isortpipe3_tb.
+[treeopen] top.mips_sim_isortpipe3_tb.dut.
+[treeopen] top.mips_sim_isortpipe3_tb.dut.mipscontr.
+[treeopen] top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.
+[treeopen] top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg.
+[treeopen] top.mips_sim_isortpipe3_tb.dut.mipscontr.ex.
+[treeopen] top.mips_sim_isortpipe3_tb.dut.mipscontr.id.
+[treeopen] top.mips_sim_isortpipe3_tb.dut.mipscontr.ma.
+[treeopen] top.mips_sim_isortpipe3_tb.dut.mipscontr.ma.i.
+[sst_width] 309
+[signals_width] 245
+[sst_expanded] 1
+[sst_vpaned_height] 174
+@28
+top.mips_sim_isortpipe3_tb.clk
+top.mips_sim_isortpipe3_tb.usedconfigid
+top.mips_sim_isortpipe3_tb.memwrite
+top.mips_sim_isortpipe3_tb.memwrite_i
+top.mips_sim_isortpipe3_tb.memwrite_ii
+top.mips_sim_isortpipe3_tb.writedatai
+top.mips_sim_isortpipe3_tb.selectedaddri
+@200
+-
+-
+@24
+#{top.mips_sim_isortpipe3_tb.dut.if_ir[31:0]} top.mips_sim_isortpipe3_tb.dut.if_ir[31] top.mips_sim_isortpipe3_tb.dut.if_ir[30] top.mips_sim_isortpipe3_tb.dut.if_ir[29] top.mips_sim_isortpipe3_tb.dut.if_ir[28] top.mips_sim_isortpipe3_tb.dut.if_ir[27] top.mips_sim_isortpipe3_tb.dut.if_ir[26] top.mips_sim_isortpipe3_tb.dut.if_ir[25] top.mips_sim_isortpipe3_tb.dut.if_ir[24] top.mips_sim_isortpipe3_tb.dut.if_ir[23] top.mips_sim_isortpipe3_tb.dut.if_ir[22] top.mips_sim_isortpipe3_tb.dut.if_ir[21] top.mips_sim_isortpipe3_tb.dut.if_ir[20] top.mips_sim_isortpipe3_tb.dut.if_ir[19] top.mips_sim_isortpipe3_tb.dut.if_ir[18] top.mips_sim_isortpipe3_tb.dut.if_ir[17] top.mips_sim_isortpipe3_tb.dut.if_ir[16] top.mips_sim_isortpipe3_tb.dut.if_ir[15] top.mips_sim_isortpipe3_tb.dut.if_ir[14] top.mips_sim_isortpipe3_tb.dut.if_ir[13] top.mips_sim_isortpipe3_tb.dut.if_ir[12] top.mips_sim_isortpipe3_tb.dut.if_ir[11] top.mips_sim_isortpipe3_tb.dut.if_ir[10] top.mips_sim_isortpipe3_tb.dut.if_ir[9] top.mips_sim_isortpipe3_tb.dut.if_ir[8] top.mips_sim_isortpipe3_tb.dut.if_ir[7] top.mips_sim_isortpipe3_tb.dut.if_ir[6] top.mips_sim_isortpipe3_tb.dut.if_ir[5] top.mips_sim_isortpipe3_tb.dut.if_ir[4] top.mips_sim_isortpipe3_tb.dut.if_ir[3] top.mips_sim_isortpipe3_tb.dut.if_ir[2] top.mips_sim_isortpipe3_tb.dut.if_ir[1] top.mips_sim_isortpipe3_tb.dut.if_ir[0]
+@25
+#{top.mips_sim_isortpipe3_tb.dut.mipscontr.a[31:0]} top.mips_sim_isortpipe3_tb.dut.mipscontr.a[31] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[30] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[29] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[28] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[27] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[26] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[25] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[24] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[23] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[22] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[21] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[20] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[19] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[18] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[17] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[16] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[15] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[14] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[13] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[12] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[11] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[10] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[9] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[8] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[7] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[6] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[5] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[4] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[3] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[2] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[1] top.mips_sim_isortpipe3_tb.dut.mipscontr.a[0]
+@24
+#{top.mips_sim_isortpipe3_tb.dut.mipscontr.b[31:0]} top.mips_sim_isortpipe3_tb.dut.mipscontr.b[31] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[30] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[29] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[28] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[27] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[26] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[25] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[24] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[23] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[22] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[21] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[20] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[19] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[18] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[17] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[16] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[15] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[14] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[13] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[12] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[11] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[10] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[9] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[8] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[7] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[6] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[5] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[4] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[3] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[2] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[1] top.mips_sim_isortpipe3_tb.dut.mipscontr.b[0]
+@200
+-ID
+@28
+top.mips_sim_isortpipe3_tb.dut.mipscontr.i.mnem
+@200
+-EX
+@28
+top.mips_sim_isortpipe3_tb.dut.mipscontr.ex.i.mnem
+@200
+-MA
+@28
+top.mips_sim_isortpipe3_tb.dut.mipscontr.ma.i.mnem
+@200
+-BHT
+@28
+top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.writeenable
+top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.branchtaken
+top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.prediction
+top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.reset
+#{top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[0][1:0]} top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[0][1] top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[0][0]
+#{top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[1][1:0]} top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[1][1] top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[1][0]
+#{top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[2][1:0]} top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[2][1] top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[2][0]
+#{top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[3][1:0]} top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[3][1] top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[3][0]
+#{top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[4][1:0]} top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[4][1] top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[4][0]
+#{top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[5][1:0]} top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[5][1] top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[5][0]
+#{top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[13][1:0]} top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[13][1] top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[13][0]
+#{top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[14][1:0]} top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[14][1] top.mips_sim_isortpipe3_tb.dut.mipscontr.branchhistorytable.regfilebht.reg[14][0]
+[pattern_trace] 1
+[pattern_trace] 0

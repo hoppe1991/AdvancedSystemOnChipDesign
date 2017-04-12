@@ -27,7 +27,7 @@ package bht_pkg is
 	);
 
 	-- Converts the given state to vector.
-	function TO_STD_LOGIC_VECTOR(state : in STATE_SATURATION_COUNTER) return STD_LOGIC_VECTOR;
+	function TO_STD_LOGIC_VECTOR_STATE(state : in STATE_SATURATION_COUNTER) return STD_LOGIC_VECTOR;
 
 	-- Converts the given vector to state of the saturation counter.
 	function TO_STATEBHT(v : in STD_LOGIC_VECTOR(1 downto 0)) return STATE_SATURATION_COUNTER;
@@ -48,7 +48,7 @@ package body bht_pkg is
 	end function;
 
 	-- Converts the given state to vector.
-	function TO_STD_LOGIC_VECTOR(state : in STATE_SATURATION_COUNTER) return STD_LOGIC_VECTOR is
+	function TO_STD_LOGIC_VECTOR_STATE(state : in STATE_SATURATION_COUNTER) return STD_LOGIC_VECTOR is
 	begin
 		case state is
 			when STRONGLY_TAKEN => return "11";

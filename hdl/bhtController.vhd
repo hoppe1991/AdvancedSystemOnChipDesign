@@ -104,6 +104,6 @@ begin
 				   		STRONGLY_NOT_TAKEN;
 	
 	-- Determine new data word to be written into register.			   			   		
-	wd 				<= TO_STD_LOGIC_VECTOR(nextState);
+	wd 				<= TO_STD_LOGIC_VECTOR_STATE(nextState);
 	
 end behave;

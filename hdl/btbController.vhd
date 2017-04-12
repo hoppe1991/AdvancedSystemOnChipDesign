@@ -140,4 +140,17 @@ begin
 	ra2					<= pc(ADDR_WIDTH+1 downto 2);
 	
 	
+	-- If both the EX and ID stage are trying to write the table simultaneously, priority is given to the EX stage,
+	-- since the branch instruction is ahead in the pipeline. Here, the writing of the BTB for the jump instruction
+	-- is ignored which may result in minor performance degradation.
+	wa1		  			<= addressWriteEX(ADDR_WIDTH+1 downto 2) when (writeEnableEX='1') else
+						   addressWriteID(ADDR_WIDTH+1 downto 2) when (writeEnableID='1') else
+						   (others=>'0');
+    --wd1 <= 
+	--we1 <= 
+    
+    --wa2	<= 
+    --wd2 <= 
+	--we2 <= 
+	
 end behave;

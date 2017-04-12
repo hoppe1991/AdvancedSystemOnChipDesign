@@ -21,7 +21,7 @@ use work.bht_pkg.all;
 -- BHT calculates the new state of the saturation counter, if a register should
 -- be updated.
 -- -------------------------------------------------------------------------------
-entity BHTController is
+entity bhtController is
   
 	generic (	
 	
@@ -71,7 +71,7 @@ end;
 -- BHT calculates the new state of the saturation counter, if a register should
 -- be updated.
 -- -------------------------------------------------------------------------------
-architecture behave of BHTController is
+architecture behave of bhtController is
 	
 	signal previousState  : STATE_SATURATION_COUNTER 							:= WEAKLY_TAKEN;
 	signal nextState 	  : STATE_SATURATION_COUNTER 							:= WEAKLY_TAKEN;

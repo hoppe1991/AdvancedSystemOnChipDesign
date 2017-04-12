@@ -19,7 +19,7 @@ use work.casts.all;
 -- Thus, the BHT predicts for a given PC whether the instruction should be TAKEN or
 -- NOT TAKEN. Also, the BHT updates its register files in execution stage.
 -- -------------------------------------------------------------------------------------
-entity BHT is
+entity bht is
 	
   generic (
   	
@@ -62,7 +62,7 @@ end;
 -- Thus, the BHT predicts for a given PC whether the instruction should be TAKEN or
 -- NOT TAKEN. Also, the BHT updates its register files in execution stage.
 -- -------------------------------------------------------------------------------------
-architecture behave of BHT is
+architecture behave of bht is
 	
   	constant BHT_INDEXSIZE 	: INTEGER := INTEGER(CEIL(LOG2(REAL(BHT_ENTRIES))));
   	constant DATA_WIDTH 	: INTEGER := 2;

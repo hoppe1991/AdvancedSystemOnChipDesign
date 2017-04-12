@@ -157,10 +157,10 @@ begin
 				writeDataArray <= ADD_INTEGER( writedataI, selectedAddrI);
 			 
 				-- TODO Toggle the following comments to print messages in command line.
-	--			report "write data: " & INTEGER'IMAGE(writedataI);
-	--	    	report "address: " & INTEGER'IMAGE(selectedAddrI); 
-	--			print_array(writeDataArray, OUTPUT_FILENAME);
-	--	    	report "----------------------------------";
+--				report "write data: " & INTEGER'IMAGE(writedataI);
+--	    		report "address: " & INTEGER'IMAGE(selectedAddrI); 
+--				print_array(writeDataArray, OUTPUT_FILENAME);
+--	    		report "----------------------------------";
 			end if;
 			
 		else

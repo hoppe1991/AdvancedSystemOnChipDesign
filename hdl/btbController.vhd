@@ -88,9 +88,56 @@ end;
 -- The BTB is supposed to be implemented as register files.
 -- -------------------------------------------------------------------------------------
 architecture behave of btbController is
+	
+	-- A memory address contains a tag vector, target pc and a valid bit.
+	type BTB_LINE is record
+	
+		-- |     |   INDEX	 |	TAG																	   |
+		-- | 0 1 | 2 3 4 5 6 | 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 |
+		-- Address width minus five bit index of BTB two bit skipped.
+		tag    		: STD_LOGIC_VECTOR(25-1 downto 0);
+		targetPC	: STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH - 1 downto 0);
+		validBit	: STD_LOGIC;
+	end record;
+	
+	signal rd1_btbLine 		: BTB_LINE;
+	signal rd2_btbLine 		: BTB_LINE;	
+	
+	function STD_LOGIC_VECTOR_TO_BTB_LINE( vector : in STD_LOGIC_VECTOR(DATA_WIDTH-1 downto 0)) return BTB_LINE is
+		variable b : BTB_LINE;
+		
+	begin
+	
+		b.tag 		:= vector( DATA_WIDTH-1 downto 33);
+		b.targetPC 	:= vector( 32 downto 1);
+		b.validBit 	:= vector( 0 );
+			
+		return b;
+		
+	end;
 	   
 begin
 	
+	rd1_btbLine	<= STD_LOGIC_VECTOR_TO_BTB_LINE( rd1 );
+	rd2_btbLine	<= STD_LOGIC_VECTOR_TO_BTB_LINE( rd2 ); 
+	
+	
 	-- TODO Add logic of the BTB controller here.
+	
+	
+	-- Determine whether the predicted program counter is valid ('1') or not ('0').
+	predictedPCIsValid <= '1' when (rd1_btbLine.validBit='1' and rd1_btbLine.targetPC=pc(31 downto 7)) else
+						  '1' when (rd2_btbLine.validBit='1' and rd2_btbLine.targetPC=pc(31 downto 7)) else
+						  '0';
+						  
+	-- Predict the next program counter.
+	predictedPC		   <= rd1_btbLine.targetPC when rd1_btbLine.validBit='1' else
+						  rd2_btbLine.targetPC when rd2_btbLine.validBit='1' else
+						  (others=>'0');
+						  
+	-- Determine the addresses of registers to be read.
+	ra1 				<= pc(ADDR_WIDTH+1 downto 2);
+	ra2					<= pc(ADDR_WIDTH+1 downto 2);
+	
 	
 end behave;

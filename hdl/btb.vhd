@@ -24,7 +24,7 @@ entity btb is
   		BTB_ENRTIES 	: INTEGER := 16;
   		
   		-- 
-  		EDGE       		: EDGETYPE:= FALLING;
+  		EDGE       		: EDGETYPE:= RISING;		-- RISING or FALLING ?
  
  		-- Width of a memory address.       
 		MEMORY_ADDRESS_WIDTH : INTEGER := 32
@@ -66,6 +66,9 @@ entity btb is
   );
 end;
 
+-- |     |   INDEX	 |	TAG																	   |
+-- | 0 1 | 2 3 4 5 6 | 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 |
+
 -- -------------------------------------------------------------------------------------
 -- BTB is supposed to be a 2-way associative cache.
 -- -------------------------------------------------------------------------------------
@@ -75,8 +78,8 @@ architecture behave of btb is
   	constant BTB_INDEXSIZE 	: INTEGER := INTEGER(CEIL(LOG2(REAL(BTB_ENRTIES))));
   	
   	-- Width of data word stored in register file. A data word contains
-  	-- tag (32 bits), target PC (32 bits) and valid bit (1 bit).
-  	constant DATA_WIDTH 	: INTEGER := 2*MEMORY_ADDRESS_WIDTH + 1;
+  	-- tag (25 bits), target PC (32 bits) and valid bit (1 bit).
+  	constant DATA_WIDTH 	: INTEGER := 25 + 32 + 1;
   	
   	-- Width of address vector regarding the register files.
     constant ADDR_WIDTH 	: integer := BTB_INDEXSIZE;

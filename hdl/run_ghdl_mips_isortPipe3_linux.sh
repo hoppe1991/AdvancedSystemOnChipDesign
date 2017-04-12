@@ -1,17 +1,7 @@
 # you have to specify the assembler text for the mips at the prompt!
-PATHTOMARS="/home/hendrik/Downloads/Mars4_5.jar" # Hendriks path 
-ghdl="/home/hendrik/Downloads/ghdl-033/bin/ghdl" # Hendriks ghdl path 
+PATHTOMARS="$MYMARS"    #/home/hendrik/Downloads/Mars4_5.jar" # Hendriks path 
+ghdl="ghdl"   			#/home/hendrik/Downloads/ghdl-033/bin/ghdl" # Hendriks old ghdl path 
 
-
-#if [[ $# == 1]] ; then 
-
-# you have to specify the assembler text for the mips at the prompt!
-
-
-#case "$1" in
-#    1) echo 'you gave 1 Parameter' ;;
-#    *) echo 'you gave something else' ;;
-#esac
 
 # Define the configuration
 if [[ $# -eq 0 ]] ; then
@@ -22,7 +12,7 @@ fi
 echo "Use configuration " $config
 
 # Directories regarding Mars.
-mars="/home/hendrik/Downloads/Mars4_5.jar"
+mars="$PATHTOMARS"
 
 # Set the assembler name.
 asmFilename=isort_pipe3

@@ -1,21 +1,21 @@
 [*]
-[*] GTKWave Analyzer v3.3.66 (w)1999-2015 BSI
-[*] Tue Apr 11 20:57:41 2017
+[*] GTKWave Analyzer v3.3.58 (w)1999-2014 BSI
+[*] Wed Apr 12 14:03:06 2017
 [*]
 [dumpfile] "/home/hendrik/Software/AdvancedSystemOnChipDesign/sim/isort_pipe3.ghw"
-[dumpfile_mtime] "Tue Apr 11 20:42:00 2017"
+[dumpfile_mtime] "Wed Apr 12 13:29:02 2017"
 [dumpfile_size] 1542885
 [savefile] "/home/hendrik/Software/AdvancedSystemOnChipDesign/sim/isort_pipe3_settings06042017_Linux.gtkw"
-[timestart] 2251600000
-[size] 1920 1056
+[timestart] 3164800000
+[size] 1920 1052
 [pos] -1 -1
-*-27.000000 16770200000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-25.000000 3270000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.mips_sim_isortpipe3_tb.
 [treeopen] top.mips_sim_isortpipe3_tb.dut.
 [treeopen] top.mips_sim_isortpipe3_tb.dut.branchhistorytable.
+[treeopen] top.mips_sim_isortpipe3_tb.dut.branchhistorytable.bhtcontroller.
 [treeopen] top.mips_sim_isortpipe3_tb.dut.branchhistorytable.regfilebht.
-[treeopen] top.mips_sim_isortpipe3_tb.dut.branchhistorytable.regfilebht.reg.
 [treeopen] top.mips_sim_isortpipe3_tb.dut.mipscontr.
 [treeopen] top.mips_sim_isortpipe3_tb.dut.mipscontr.ctrl.
 [treeopen] top.mips_sim_isortpipe3_tb.dut.mipscontr.dmem.
@@ -26,9 +26,9 @@
 [treeopen] top.mips_sim_isortpipe3_tb.dut.mipscontr.wb.
 [treeopen] top.mips_sim_isortpipe3_tb.dut.mipscontr.wb.c.
 [sst_width] 347
-[signals_width] 462
+[signals_width] 405
 [sst_expanded] 1
-[sst_vpaned_height] 315
+[sst_vpaned_height] 645
 @200
 -CPU
 @28
@@ -71,6 +71,19 @@ top.mips_sim_isortpipe3_tb.dut.mipscontr.predictionfrombht
 top.mips_sim_isortpipe3_tb.dut.mipscontr.branchidphase
 top.mips_sim_isortpipe3_tb.dut.mipscontr.branchidphase_history
 top.mips_sim_isortpipe3_tb.dut.branchhistorytable.prediction
+@200
+-BHTController
+@28
+#{top.mips_sim_isortpipe3_tb.dut.branchhistorytable.bhtcontroller.wd[1:0]} top.mips_sim_isortpipe3_tb.dut.branchhistorytable.bhtcontroller.wd[1] top.mips_sim_isortpipe3_tb.dut.branchhistorytable.bhtcontroller.wd[0]
+@24
+#{top.mips_sim_isortpipe3_tb.dut.branchhistorytable.bhtcontroller.wa[4:0]} top.mips_sim_isortpipe3_tb.dut.branchhistorytable.bhtcontroller.wa[4] top.mips_sim_isortpipe3_tb.dut.branchhistorytable.bhtcontroller.wa[3] top.mips_sim_isortpipe3_tb.dut.branchhistorytable.bhtcontroller.wa[2] top.mips_sim_isortpipe3_tb.dut.branchhistorytable.bhtcontroller.wa[1] top.mips_sim_isortpipe3_tb.dut.branchhistorytable.bhtcontroller.wa[0]
+@28
+top.mips_sim_isortpipe3_tb.dut.branchhistorytable.writeenable
+top.mips_sim_isortpipe3_tb.dut.branchhistorytable.branchtaken
+[color] 1
+top.mips_sim_isortpipe3_tb.dut.branchhistorytable.bhtcontroller.nextstate
+[color] 1
+top.mips_sim_isortpipe3_tb.dut.branchhistorytable.bhtcontroller.previousstate
 @200
 -BHT Registers of 1.BNE 2.BNE and BEQ
 @29
@@ -118,3 +131,8 @@ top.mips_sim_isortpipe3_tb.clk
 #{top.mips_sim_isortpipe3_tb.dut.mipscontr.dmem.byte0.mem[10][7:0]} top.mips_sim_isortpipe3_tb.dut.mipscontr.dmem.byte0.mem[10][7] top.mips_sim_isortpipe3_tb.dut.mipscontr.dmem.byte0.mem[10][6] top.mips_sim_isortpipe3_tb.dut.mipscontr.dmem.byte0.mem[10][5] top.mips_sim_isortpipe3_tb.dut.mipscontr.dmem.byte0.mem[10][4] top.mips_sim_isortpipe3_tb.dut.mipscontr.dmem.byte0.mem[10][3] top.mips_sim_isortpipe3_tb.dut.mipscontr.dmem.byte0.mem[10][2] top.mips_sim_isortpipe3_tb.dut.mipscontr.dmem.byte0.mem[10][1] top.mips_sim_isortpipe3_tb.dut.mipscontr.dmem.byte0.mem[10][0]
 [pattern_trace] 1
 [pattern_trace] 0
+!100000@@
+?"BEQ
+@29
+top.mips_sim_isortpipe3_tb.dut.mipscontr.i.mnem
+!!

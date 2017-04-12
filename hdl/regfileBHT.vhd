@@ -48,7 +48,7 @@ end;
 architecture behave of regfileBHT is
 	
 	-- Initial state of saturation counter.
-	constant initialState : STATE_SATURATION_COUNTER := WEAKLY_TAKEN;
+	constant initialState : STATE_SATURATION_COUNTER := WEAKLY_TAKEN; 	--Standard is: WEAKLY_TAKEN; 
 	
 	-- Initializes the initial value of register.	
 	function INIT_ZERO return STD_LOGIC_VECTOR;

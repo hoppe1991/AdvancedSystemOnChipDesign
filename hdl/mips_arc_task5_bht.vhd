@@ -89,7 +89,7 @@ begin
 	branchHistoryTable: entity work.BHT
 		generic map(
 			BHT_ENTRIES          => BHT_ENTRIES,
-			EDGE                 => FALLING,				-- RAISING
+			EDGE                 => RISING,				-- RAISING
 			MEMORY_ADDRESS_WIDTH => MEMORY_ADDRESS_WIDTH
 		)
 		port map(

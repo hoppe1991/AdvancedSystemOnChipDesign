@@ -14,3 +14,32 @@ After having answered different questions at different stages of the development
 
 TODO in order to test test run MYMARS Varable needs to be adapted either using path variable or inside the 4 run_ghdl_mips_[ isortpipe3 | gcd | fib | fac ]_[linux.sh | windows.bat]
 
+Configurations names and their meaning
+
+cisort1 mips with pipelining and stalling and forwarding implemented
+cisort2 mips with pipelining stalling etc. + instruction cache
+cisort3 mips with previous properties + static branch prediction (always or never taken)
+cisort4 mips with previous properties + Branch History Table
+cisort5 mips with previous properties + Branch Target Buffer
+
+\begin{table}[h]
+\resizebox{1\textwidth}{!}{\begin{minipage}{\textwidth}
+\begin{tabular}{ l l l l l }
+ \hline
+ Test program & Configuration c1 & Configuration c2 & Configuration c3 & Configuration c4 \\ \hline
+
+ FAC	 	& 80\% & 88.57\% & 72.73\% \\
+ FIB 	& 70\% & 88.57\% & 72.73\% \\
+ GCD 	& 90\% & 91.43\% & 69.70\% \\
+ ISORT\_PIPE3 & 90\% & 94.29\% &75.76\% \\
+	\hline
+\end{tabular}
+\caption[Table caption text]{of successful prediction using BHT in isort\_pipe}
+\label{tab5-1}
+\end{minipage} }
+\end{table}
+
+
+
+
+

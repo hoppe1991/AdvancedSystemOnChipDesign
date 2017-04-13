@@ -752,7 +752,7 @@ begin
 		end loop;
 		
 		
-		report "wait for some clock cycles.";
+		-- report "wait for some clock cycles.";
 		wait until rising_edge(clk);
 		wait until rising_edge(clk);
 		wait until rising_edge(clk);
@@ -872,7 +872,7 @@ begin
 		end loop;
 		
 		-- Wait some clock cycles.
-		report "wait for some clock cycles.";
+		-- report "wait for some clock cycles.";
 		wait until rising_edge(clk);
 		wait until rising_edge(clk);
 		wait until rising_edge(clk);
@@ -1100,7 +1100,7 @@ begin
 		end loop;
 		
 		-- Wait some clock cycles.
-		report "wait some clock cycles.";
+		-- report "wait some clock cycles.";
 		wait until rising_edge(clk);
 		wait until rising_edge(clk);
 		dataCPU <= (others=>'Z');
@@ -1161,7 +1161,7 @@ begin
 		tag_integer := 0;
 		offset_integer := 0;
 		
-		report "[test11] Write new data into cache."; -- TODO Remove this line.
+		-- report "[test11] Write new data into cache.";
 		-- Loop over all cache block lines and write the first time.
 		for L in 0 to ADDRESSWIDTH-1 loop
 		
@@ -1202,7 +1202,7 @@ begin
 			expected_missCounter := expected_missCounter + 1;
 			VALIDATE_SIGNALS( stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);
 		end loop;
-		report "[test11] Write new data into cache finished."; -- TODO Remove this line.
+		-- report "[test11] Write new data into cache finished."; -- TODO Remove this line.
 		
 		-- Wait some clock cycles.
 		wait until rising_edge(clk);
@@ -1210,7 +1210,7 @@ begin
 		dataCPU <= (others=>'Z');
 		wait until rising_edge(clk);
 		
-		report "[test11] Read data from main memory into cache."; -- TODO Remove this line.
+		-- report "[test11] Read data from main memory into cache."; -- TODO Remove this line.
 		-- Read block lines with other tag values.
 		for L in 0 to ADDRESSWIDTH-1 loop
 		
@@ -1249,10 +1249,10 @@ begin
 			expected_missCounter 	:= expected_missCounter;
 			VALIDATE_SIGNALS( stallCPU, expected_stallCPU, missCounter, expected_missCounter, hitCounter, expected_hitCounter);			
 		end loop;
-		report "[test11] Read data from main memory into cache finished."; -- TODO Remove this line.
+		-- report "[test11] Read data from main memory into cache finished."; -- TODO Remove this line.
 		
 		
-		report "[test11] Read data from main memory into cache."; -- TODO Remove this line.
+		-- report "[test11] Read data from main memory into cache."; -- TODO Remove this line.
 		dataCPU <= (others=>'Z');
 		-- Loop over all cache block lines and write the second time.
 		for L in 0 to ADDRESSWIDTH-1 loop
@@ -1292,7 +1292,7 @@ begin
 			-- Compare data words.
 			VALIDATE_SIGNAL( "dataCPU", dataCPU, expectedDataCPU );
 		end loop;
-		report "[test11] Read data from main memory into cache finished."; -- TODO Remove this line.
+		-- report "[test11] Read data from main memory into cache finished."; -- TODO Remove this line.
 		PRINT_TEST_END(testCaseIndex);
 
 		report "Validation finished." severity FAILURE;

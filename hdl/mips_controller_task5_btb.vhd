@@ -105,6 +105,9 @@ architecture struct of mips_controller_task5_btb is
   	
   	signal writeEnableBHT_i	: STD_LOGIC := '0';
   	
+  	signal dontStallFromBTB : STD_LOGIC := '0';
+  	signal counter : INTEGER := 0;
+  	
 begin
 	
 	StaticBranchAlwaysTaken <= '1' when (predictionFromBHT='1') else
@@ -134,6 +137,9 @@ begin
 	btbLogic: block
 	
 	begin 
+		
+		
+		
 		-- TODO Update the logic of these signals.
 		-- TODO Is is possible to place this signal logic into entity of BTB?
 		
@@ -291,42 +297,37 @@ begin
 
 	--TODO place in correct part in mips_pkg, it doesnt actually belong here			
 	WB_Opc  <= 	MA.i.Opc when rising_edge(clk);
-	WB_Func <= 	MA.i.funct when rising_edge(clk);
+	WB_Func <= 	MA.i.funct when rising_edge(clk); --TODO replace using mips_PKG WB_func, WB_Opc do not belong here
 
 -- The following logic looks for all kinds of jump commands and orders 3 stalls.
 -- TODO EX.MemRead is equal to EX.c.mem2reg ?
 				
+	counter			 <= 2 when (targetPCIsValidFromBTB='1' and IF_ir(31 downto 26)=I_J.Opc) else
+					    -- 1 when (targetPCIsValidFromBTB='1' and IF_ir(31 downto 26)=I_JAL.Opc) else
+					    counter - 1 when rising_edge(clk) and counter > 0;
+					    
+	dontStallFromBTB <= '0' when (targetPCIsValidFromBTB='1' and IF_ir(31 downto 26)=I_J.Opc) else
+						'1' when (counter=0);
+				
+				
 	stallFromCPU <= 	--'0' when (branchIdPhase = '1' or branchIDPhase_History = '1')  and predictionError = '0' and rising_edge(clk) else
 		
+		'0' when ( dontStallFromBTB='1' ) else 
 		'1' when ( (EX.c.mem2reg = '1') and (ForwardA = fromALUe or ForwardB = fromALUe) ) else
-		'1' when ( (EX.i.Opc = I_J.OPC)                                       or (MA.i.Opc = I_J.OPC)       or  (WB_Opc = I_J.OPC)				) else
-      	'1' when ( (EX.i.Opc = I_JAL.OPC)                                     or (MA.i.Opc = I_JAL.OPC)     or  (WB_Opc = I_JAL.OPC)			) else
+		'1' when ( ((EX.i.Opc = I_J.OPC) or (MA.i.Opc = I_J.OPC)) and dontStallFromBTB='0'	) else
+      	'1' when (  (EX.i.Opc = I_JAL.OPC)                                     or (MA.i.Opc = I_JAL.OPC)     or  (WB_Opc = I_JAL.OPC)			) else
       	'1' when ( ((EX.i.Opc = I_JALR.OPC)	and (EX.i.funct = I_JALR.funct))  or ((MA.i.Opc = I_JALR.OPC)   and (MA.i.funct = I_JALR.funct))	) else
         '1' when ( ((EX.i.Opc = I_JR.OPC)   and (EX.i.funct = I_JR.funct))    or ((MA.i.Opc = I_JR.OPC)     and (MA.i.funct = I_JR.funct))		) else
-	    '1' when ( (WB_Opc = I_JR.OPC) 		and (WB_Func = I_JR.funct)																			) else		--TODO replace using mips_PKG WB_func, WB_Opc do not belong here
-              
-              
- --     or ((EX.i.Opc = I_BEQ.OPC)                                          or (MA.i.Opc = I_BEQ.OPC)     or  (WB_Opc = I_BEQ.OPC))           --ok
- --     or ((EX.i.Opc = I_BNE.OPC)                                          or (MA.i.Opc = I_BNE.OPC)     or  (WB_Opc = I_BNE.OPC))           --ok
- --     or ((EX.i.Opc = I_BLEZ.OPC)                                         or (MA.i.Opc = I_BLEZ.OPC))          
- --     or (((EX.i.Opc = I_BLTZ.OPC)      and (EX.i.rt = I_BLTZ.rt))        or ((MA.i.Opc = I_BLTZ.OPC)   and (MA.i.rt = I_BLTZ.rt)))  
- --     or ((EX.i.Opc = I_BGTZ.OPC)                                         or (MA.i.Opc = I_BGTZ.OPC))
-              
-              
--- Some commands have duplicate opc therefore additional information like (funct) is needed. 
--- Supervisor said, only implement most important commands
-	  '0' when   	(ForwardA /= fromALUe)    		and (ForwardB /= fromALUe) 			and (MA.i.Opc = I_LW.OPC) else
-		  '0' when  --	(EX.i.Opc /= I_BEQ.OPC)   		and (MA.i.Opc /= I_BEQ.OPC) 
-				-- 	and (EX.i.Opc /= I_BNE.OPC)   		and (MA.i.Opc /= I_BNE.OPC) 
-				--	and (EX.i.Opc /= I_BLEZ.OPC)  		and (MA.i.Opc /= I_BLEZ.OPC) 
-				--	and (EX.i.Opc /= I_BLTZ.OPC)  		and (MA.i.Opc /= I_BLTZ.OPC) 
-				--	and (EX.i.Opc /= I_BGTZ.OPC)  		and (MA.i.Opc /= I_BGTZ.OPC) 
-				--	and 
-						(EX.i.Opc /= I_J.OPC)     		and (MA.i.Opc /= I_J.OPC) 
-					and (EX.i.Opc /= I_JAL.OPC)   		and (MA.i.Opc /= I_JAL.OPC) 
-					and (EX.i.funct /= I_JALR.funct)  	and (MA.i.funct /= I_JALR.funct)
-					and (EX.i.funct /= I_JR.funct)    	and (MA.i.funct /= I_JR.funct)      
-					and rising_edge(clk);
+	    '1' when ( (WB_Opc = I_JR.OPC) 		and (WB_Func = I_JR.funct)																			) else		
+	    
+		-- Some commands have duplicate opc therefore additional information like (funct) is needed. 
+		-- Supervisor said, only implement most important commands
+	  	'0' when  (ForwardA /= fromALUe)    		and (ForwardB /= fromALUe) 			and (MA.i.Opc = I_LW.OPC) else
+		'0' when  ((EX.i.Opc /= I_J.OPC)     		and (MA.i.Opc /= I_J.OPC) 
+		       and (EX.i.Opc /= I_JAL.OPC)   		and (MA.i.Opc /= I_JAL.OPC) 
+			   and (EX.i.funct /= I_JALR.funct)  	and (MA.i.funct /= I_JALR.funct)
+			   and (EX.i.funct /= I_JR.funct)    	and (MA.i.funct /= I_JR.funct)      
+			   and rising_edge(clk));
 
 -------------------- ID/EX Pipeline Register with Multiplexer Stalling----------
 -- bubble = "0000..." nop command. It will passed on at each Stalling signal

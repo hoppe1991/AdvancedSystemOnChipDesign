@@ -63,12 +63,18 @@ The interesting thing is if we compare values for changed input like Intitial st
 \end{table}
 
 
+
+After creating a running Static branch prediction in the previous task it was afterwards possible to give this branch prediction dynamic inputs. Since static always taken as well as static never taken were modes that could be selected.  Figure \ref{fig5-1} on page \pageref{fig5-1} shows how the prediction of a branch command is compared to the real result and influences the program flow. The vertical red line shows the state of a falling edge at which the variable a and b are compared whether they are equal or not equal in the ID phase. Hald a clock cycle later the result is at hand. Since the Prediction from the BHT says the branch is not taken and the values of a and b are equal to each other and we have a BNE (branch when not equal) command we see that the system will not perform a branch jump. The area of a distance of half a clock cycle to the right of the vertical red marker is not of importance for our logic since it reads out the prediction error of the next PC, instructed by the yellow signal at the top of the screenshot because it will be read at a later state. The read signals show that its BHT status has switched from weakly not taken into strongly not taken.
+
 \begin{figure}
 	\centering
 	\includegraphics[width=1\textwidth, height=10cm, keepaspectratio]{pictures/BHT_BranchNotTakenPred0Err0}
 	\caption{Behaviour of BHT without prediction error}
 	\label{fig5-1}
 \end{figure}
+
+Figure \ref{fig5-2} on page \pageref{fig5-2} shows a situation where the BHT predicts that the Branch command BEQ will not be taken but actually it will be taken. Its BHT status switches from weakly not taken to weakly taken.
+
 
 \begin{figure}
 	\centering
@@ -81,6 +87,24 @@ The interesting thing is if we compare values for changed input like Intitial st
 
 
 \subsection{Dynamic Branch Prediction using BTB}
+We wanted to let our mips use a Branch Target Buffer which keeps track of all taken branches and their target Program Counters. In figure \ref{fig5-3} on page \pageref{fig5-3} we can see how a jump command is executed for the first time and its target is saved into the BTB. In figure \ref{fig5-4} on page \pageref{fig5-4} we can see how the process of another jump command which is processed later on is increased in speed because the command has been taken a previous time and the BTB still remembers which target adress it was using. The BTB can be read combinatorically whereas the writing process of writing into the BTB is clock cycle dependant.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=1\textwidth, height=10cm, keepaspectratio]{pictures/BTB_FirstJump}
+	\caption{GTKWAVE Screenshot of BTB saving a jump's target at a falling edge}
+	\label{fig5-3}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=1\textwidth, height=10cm, keepaspectratio]{pictures/BTB_SecondJump}
+	\caption{GTKWAVE Screenshot of a jump predicted from BTB}
+	\label{fig5-4}
+\end{figure}
+
+
+
 
 \subsection{Lessons Learned}
 Wnile doing the work of this section another problem occured. Since we were three people using three different OS one of our computers was not able to accept a correct Eclipse Sigasi Certificate on an emulated Linux machine running on a physical Macbook. The workaround at hand was to implement the code on the Mac OS, upload the code using github and pulling the modified  state on the virtual Linux machine. Tests were run in the virtual box but the coding had to be done on the physical OS. This was a bit of a slow down factor since each change of code caused a push and pull action for this team member. We recommend again to use the same OS on all systems and the same Development Software on all machines. For our case we needed some workarounds.

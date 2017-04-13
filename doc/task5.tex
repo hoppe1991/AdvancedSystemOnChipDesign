@@ -83,7 +83,17 @@ Figure \ref{fig5-2} on page \pageref{fig5-2} shows a situation where the BHT pre
 	\label{fig5-2}
 \end{figure}
 
-
+\newpage
+The RTL schematic is shown in figure \ref{fig:rtlBHT}. It is essential that the BHT contains one register file \textit{regFileBHT} and a appropriate controller \textit{bhtController}. The register file contains for each branch instruction the saturation bit which determines whether the branch instruction should be taken or should be not taken. The controller instance manages the accesses between the register file and the CPU. Thus, the BHT returns a prediction bit which indicates whether the branch is taken or not taken. Therfor, the CPU has to pass the current pc value to the BTB controller. If a branch prediction was incorrect, then the CPU has to inform the BTB by setting the signal \textit{writeEnable} and \textit{branchTaken}. These two signals identicate that the correspondent register should be rewritten with the state of the saturation counter. The next state of the saturation counter depends on the current state and of the state of the input signal \textit{branchTaken} which shows whether the last branch has been taken or not. The associated implementation of the BHT is given in file \textit{bht.vhd} and \textit{bhtController.vhd}.
+\begin{figure}[h!]
+\begin{minipage}{0.4\textwidth} 
+	\centering
+	\caption{RTL Schematic of BHT}
+	\label{fig:rtlBHT}
+   	\includepdf[pages=-]{pictures/bht_schematic.pdf}
+\end{minipage}
+\end{figure}
+\newpage
 
 
 \subsection{Dynamic Branch Prediction using BTB}
@@ -91,20 +101,33 @@ We wanted to let our mips use a Branch Target Buffer which keeps track of all ta
 
 \begin{figure}
 	\centering
-	\includegraphics[width=1\textwidth, height=10cm, keepaspectratio]{pictures/BTB_FirstJump}
+	\includegraphics[width=1\textwidth, height=6cm, keepaspectratio]{pictures/BTB_FirstJump}
 	\caption{GTKWAVE Screenshot of BTB saving a jump's target at a falling edge}
 	\label{fig5-3}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[h!]
 	\centering
-	\includegraphics[width=1\textwidth, height=10cm, keepaspectratio]{pictures/BTB_SecondJump}
+	\includegraphics[width=1\textwidth, height=6cm, keepaspectratio]{pictures/BTB_SecondJump}
 	\caption{GTKWAVE Screenshot of a jump predicted from BTB}
 	\label{fig5-4}
 \end{figure}
 
+\newpage
+The implementation of the BTB is given in file \textit{btb.vhd}. The correspondent RTL schematic is illustrated in figure \ref{fig:rtlBTB}. As you can see the BTB contains of one BTB controller and two register files since the BTB should be implemented by register files as a two way associative cache. The BTB controller realizes the behavior of the BTB. So this controller has to read both register files if a target pc should be determined. Also, the BTB controller must rewrite the correspondent register file in ID stage (jump) or in EX stage (branch). The implementation of the BTB and its BTB controller is given in file \textit{btb.vhd} and \textit{btbController.vhd}.
+
+\begin{figure}[h!]
+\begin{minipage}[t]{0.5\textwidth} 
+	\centering
+   	\includepdf[pages=-]{pictures/btb_schematic.pdf}
+	\caption{RTL Schematic of BTB}
+	\label{fig:rtlBTB}
+\end{minipage}
+\end{figure}
+\newpage
+ 
 
 
 
 \subsection{Lessons Learned}
-Wnile doing the work of this section another problem occured. Since we were three people using three different OS one of our computers was not able to accept a correct Eclipse Sigasi Certificate on an emulated Linux machine running on a physical Macbook. The workaround at hand was to implement the code on the Mac OS, upload the code using github and pulling the modified  state on the virtual Linux machine. Tests were run in the virtual box but the coding had to be done on the physical OS. This was a bit of a slow down factor since each change of code caused a push and pull action for this team member. We recommend again to use the same OS on all systems and the same Development Software on all machines. For our case we needed some workarounds.
+While doing the work of this section another problem occured. Since we were three people using three different OS one of our computers was not able to accept a correct Eclipse Sigasi Certificate on an emulated Linux machine running on a physical Macbook. The workaround at hand was to implement the code on the Mac OS, upload the code using github and pulling the modified  state on the virtual Linux machine. Tests were run in the virtual box but the coding had to be done on the physical OS. This was a bit of a slow down factor since each change of code caused a push and pull action for this team member. We recommend again to use the same OS on all systems and the same Development Software on all machines. For our case we needed some workarounds.

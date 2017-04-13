@@ -126,7 +126,7 @@ The output \textit{data2CPU} declares that the correspondent data word is transf
 \subsubsection{Description of the inputs}
 The input \textit{wrCPURequest} and \textit{rdCPURequest} represents whether the CPU wants to read or write the cache. Therefore, either the signal \textit{wrCPU} or the signal \textit{rdCPU} is set to '1' to indicate the CPU request. If both signals are '1' then the controller will ignores the request because it cannot read and write the cache at the same time.
 The input signal \textit{hit} indicates whether a cache hit occurs. The cache hit only appears if the correspondent cache block line is valid and the tags in this cache block line and the tag from the current CPU address are equal. Otherwise, a cache miss is incurred. In this case, we distinguish between three cases. On the one hand, the cache block line could be invalid. Then, the input signal \textit{lineIsDurty} is set to '1'. On the other hand, the cache block line could be invalid and the input signal \textit{lineIsInvalid} is fulfilled. The last case is that the cache block line is valid and unmodifed w.r.t. the main memory. This is represented by the control signal \textit{lineIsNotDirty}.
-The input signal \textit{readyMEM} identifies whether the main memory finished a read or write operation. Therefore, this signal is set to '0' if the main memory is still operating. Otherwise, it is set to '1' if the main memory is ready and has already finished the operation.
+The input signal \textit{readyMEM} identifies whether the main memory finished a read or write operation. Therefore, this signal is set to '0' if the main memory is still operating. Otherwise, it is set to '1' if the main memory has already finished the operation.
 
 \newpage
 \begin{landscape}
@@ -298,13 +298,27 @@ There are already valid data words in the cache block line. Also, the data words
 
 \newpage
 \subsection{Design a 2-way associative Data Cache incl. Controller}
-TODO
-
+In the following step a two way set associative cache is implemented in file \textit{twoWayAssociativeCache}. The corresponding interface of the entity is shown in figure \ref{fig:twoWayCacheInterface}. Similar to the directed mapped cache the two way set associative cache is connected with the CPU and with the main memory. Therefore, the input ports \textit{rdCPU} and \textit{wrCPU} controls that the cache is read or written by the CPU. the correspondent \textit{addrCPU} is the address of the word which should be read or written. The signal \textit{dataCPU} contains the data word which should be written into cache or read from cache. While the cache is working it indicates via the signal \textit{stallCPU} whether it is ready or not. Respectively, the CPU must be stall when the cache is just working. Also, the two way cache is connected to the main memory. The cache could either read or write the main memory. Thus, the two control signals \textit{rdMEM} and \textit{wrMEM} are used. The two signals \textit{addrMEM} and \textit{dataToMEM} represents the correspondent address and data word which is read or written to main memory. The in port \textit{readyMEM} indicates when read or write operation to the main memory has been finished.
+\begin{figure}
+	\centering
+	\includegraphics[scale=.8]{pictures/twoWaySetAssociativeCache.JPG}
+	\caption{2 way associative cache}
+	\label{fig:twoWayCacheInterface}
+\end{figure}
+In figure \ref{fig:rtl2wayCache} the RTL schematic of the 2-way associative cache is illustrated. As you can see the cache consists of one controller and two direct mapped caches. Here, the two direct mapped caches stores the correspondent entries of the whole cache. The provided cache controller determines which of the two direct mapped caches should be used for the next operation. It is possible to choose between the LRU or a random strategy. The implementation of the controller is given in file \textit{twoWayAssociativeCacheController.vhd}.\\
+In command line you can execute the batch script run \textit{\_ghdl\_task4\_2wayCacheTestbench\_windows.bat} with a name of an assembler program. This script will simulate the correspondent testbench.
+\newpage
+\begin{figure}[h!]
+   	\includepdf[pages=-]{pictures/twoWayschematic.pdf}
+	\centering
+	\caption{RTL Schematic of 2-way associative cache}
+	\label{fig:rtl2wayCache}
+\end{figure}
 \newpage
 \subsection{Replace the Instruction Memory of the MIPS CPU with the Cache}
 \label{sec:replaceInstructionMemory}
 Finally, we integrate the direct mapped cache into the MIPS CPU. Thus, we replace the instruction memory with the cache. We rewrite the MIPS code to generate the one entity of the cache as the instruction cache. Also, we remove the code lines with the instruction memory. These changes are shown in \ref{mipsWithInstructionCache}. Anymore, we connect the correspondent input and output ports if the cache entity. The input port \textit{rdCPU} and \textit{wrCPU} are constantly set to '0' and '1' since the MIPS always reads the instruction cache and does not change the instructions. The output port \textit{dataCPU} represents the data word which should be read from cache or to be written into cache. Thus, it is connected to the signal \textit{IF\_ir}. The additional signal \textit{stallFromCache} indicates whether the CPU must be stalled. Therefore, this signal is connected to the output port \textit{stallCPU}.\\
-The result of the simulation run is shown in figure \ref{fig:mipsWithInstrCache}. The CPU reads the next instruction word from the instruction cache by specifiying the current program counter. Therefore, the control signal \textit{rdCPU} is always set to '1'. This signal orders the instruction cache to return the corresponding instruction word. Then the instruction cache switch its state from \textit{IDLE} to state \textit{CHECK2}, since it have to check whether the inquired instruction word is already stored in the cache or not. This figure represents the case that the asked instruction word is already located in the cache. Therefore, the hit counter will be incremented by value one.
+The result of the simulation run is shown in figure \ref{fig:mipsWithInstrCache}. The CPU reads the next instruction word from the instruction cache by specifiying the current program counter. Therefore, the control signal \textit{rdCPU} is always set to '1'. This signal orders the instruction cache to return the corresponding instruction word. Then the instruction cache switch its state from \textit{IDLE} to state \textit{CHECK2}, since it have to check whether the inquired instruction word is already stored in the cache or not. This figure represents the case that the asked instruction word is already located in the cache. Therefore, the hit counter will be incremented by value one. Furthermore, the pipeline is stalled from the instruction cache while it is in checking state. Thus, the \textit{nop} instruction is inserted into the pipeline while the instruction cache is in state \textit{CHECK2}.
 
 
 \begin{figure}

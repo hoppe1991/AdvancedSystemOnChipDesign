@@ -36,26 +36,20 @@ entity mips_controller_task5_btb is -- Pipelined MIPS processor
         predictionFromBHT	: in STD_LOGIC := '0';
         
         -- Signal indicates whether the branch is taken or not.
-        branchTaken : out STD_LOGIC := '0';
+        branchTaken 		: out STD_LOGIC := '0';
         
         -- Signal indicates whether the BHT should be rewritten.
-        writeEnableBHT : out STD_LOGIC := '0';
+        writeEnableBHT 		: out STD_LOGIC := '0';
         
         
         -- New program counter predicted by BTB.
         -- TODO How does the MIPS use this signal?
-        predictedPCFromBTB	: STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
+        targetPCFromBTB	: STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
         
         -- Signal indicates whether the predicted program counter from BTB is valid ('1') or not ('0').
         -- TODO How does the MIPS use this signal?
-        predictedPCIsValidFromBTB : in STD_LOGIC := '0';
-         
-		-- Signal
-		addressWriteID : out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
-  		
-  		-- Signal 
-  		addressWriteEX : out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
-  		
+        targetPCIsValidFromBTB : in STD_LOGIC := '0';
+        
   		-- Signlal 
   		dataWriteID	: out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
  		
@@ -111,6 +105,9 @@ architecture struct of mips_controller_task5_btb is
   	
   	signal writeEnableBHT_i	: STD_LOGIC := '0';
   	
+  	signal dontStallFromBTB : STD_LOGIC := '0';
+  	signal counter : INTEGER := 0;
+  	
 begin
 	
 	StaticBranchAlwaysTaken <= '1' when (predictionFromBHT='1') else
@@ -133,18 +130,31 @@ begin
 
 	-- -----------------------------------------------------------
 	-- Logic to compute the words given to BTB.
+	--
+	-- The BTB is read at the IF stage for prediction and 
+	-- written in either ID stage (jump) or EX stage (branch).
 	-- -----------------------------------------------------------
 	btbLogic: block
 	
 	begin 
+		
+		
+		
 		-- TODO Update the logic of these signals.
 		-- TODO Is is possible to place this signal logic into entity of BTB?
-		addressWriteID	<= (others=>'0');
-		addressWriteEX	<=(others=>'0');
-  		dataWriteID		<= (others=>'0');
-  		dataWriteEX	 	<= (others=>'0');
- 		writeEnableID  	<= '0';
-  		writeEnableEX 	<= '0';
+		
+		dataWriteID		<= pcJumpIDPhase;
+ 		writeEnableID  	<= '1' when (i.Opc=I_J.Opc 								and EX.i.Opc/=I_J.Opc									) else
+ 						   '1' when (i.Opc=I_JAL.Opc							and EX.i.Opc/=I_JAL.Opc									) else
+ 						   '1' when (i.Opc=I_JALR.Opc and i.Funct=I_JALR.Funct	and EX.i.Opc/=I_JALR.Opc and EX.i.Funct/=I_JALR.Funct	) else
+ 						   '1' when (i.Opc=I_JR.Opc   and i.Funct=I_JR.Funct	and EX.i.Opc/=I_JR.Opc   and EX.i.Funct=I_JR.Funct		) else
+ 						   '0';
+
+		dataWriteEX	 	<= pc_Jump_BRAM_Adapted_PredictedAT;
+  		writeEnableEX 	<= '1' when ((EX.a  = EX.b)  and EX.i.Opc = I_BEQ.Opc) else
+						   '1' when ((EX.a /= EX.b) and EX.i.Opc = I_BNE.Opc) else
+							'0';
+  		
 	end block;
 	
 	-- TODO Is this signal logic necessary?
@@ -156,6 +166,16 @@ begin
 	pcLogic: block
 	begin
 	
+	-- i.Opc       <= instructionWord (31 downto 26);
+ -- 		i.Rs        <= instructionWord (25 downto 21);
+ -- i.Rt        <= instructionWord (20 downto 16);
+ -- i.Rd        <= instructionWord (15 downto 11);
+ -- i.shamt     <= instructionWord (10 downto  6);
+--  i.Funct     <= instructionWord ( 5 downto  0);    
+--  i.Imm       <= instructionWord (15 downto  0);
+ -- i.BrTarget  <= instructionWord (25 downto  0);   
+	
+	
 	-- pc        <= nextpc when rising_edge(clk);
 	pc        <= nextpcPredicted when rising_edge(clk);
   	pc4       <= to_slv(unsigned(pc) + 4) ;
@@ -164,7 +184,11 @@ begin
 	branchIDPhase_History <= branchIDPhase when rising_edge(clk);
 	
   	-- New prediction of the next PC for branch prediction
-  	nextpcPredicted    <=	pc_Jump_BRAM_Adapted_PredictedAT	when StaticBranchAlwaysTaken = '0' and predictionError = '1' 	else --normal behaviour if no branch taken
+  	nextpcPredicted    <=	
+  							targetPCFromBTB when targetPCIsValidFromBTB='1' and IF_ir(31 downto 26)=I_J.Opc else
+  							--targetPCFromBTB when targetPCIsValidFromBTB='1' and branchIdPhase='1' else
+  	
+  							pc_Jump_BRAM_Adapted_PredictedAT	when StaticBranchAlwaysTaken = '0' and predictionError = '1' 	else --normal behaviour if no branch taken
   							--nextpc							    when StaticBranchAlwaysTaken = '0' and predictionError = '1' 	else
 							pc_Jump_BRAM_Adapted_PredictedNT   	when StaticBranchAlwaysTaken = '0' and c.jump  = '1' 			else -- j / jal jump addr
 		              		pc_Jump_BRAM_Adapted_PredictedNT	when StaticBranchAlwaysTaken = '0' and branchIdPhase     = '1' 	else -- branch (bne, beq) addr
@@ -212,7 +236,7 @@ begin
                          	((i.Opc = I_BGTZ.Opc) and (EX.i.Opc /= I_BGTZ.Opc))	else--not currently used in asm files
                				'0';
    	end block;
-
+   	
 --  imem:        entity work.bram  generic map ( INIT =>  (IFileName & ".imem"))
 --               port map (clk, '0', pc(11 downto 2), (others=>'0'), IF_ir);
 
@@ -273,41 +297,37 @@ begin
 
 	--TODO place in correct part in mips_pkg, it doesnt actually belong here			
 	WB_Opc  <= 	MA.i.Opc when rising_edge(clk);
-	WB_Func <= 	MA.i.funct when rising_edge(clk);
+	WB_Func <= 	MA.i.funct when rising_edge(clk); --TODO replace using mips_PKG WB_func, WB_Opc do not belong here
 
 -- The following logic looks for all kinds of jump commands and orders 3 stalls.
 -- TODO EX.MemRead is equal to EX.c.mem2reg ?
 				
+	counter			 <= 2 when (targetPCIsValidFromBTB='1' and IF_ir(31 downto 26)=I_J.Opc) else
+					    -- 1 when (targetPCIsValidFromBTB='1' and IF_ir(31 downto 26)=I_JAL.Opc) else
+					    counter - 1 when rising_edge(clk) and counter > 0;
+					    
+	dontStallFromBTB <= '0' when (targetPCIsValidFromBTB='1' and IF_ir(31 downto 26)=I_J.Opc) else
+						'1' when (counter=0);
+				
+				
 	stallFromCPU <= 	--'0' when (branchIdPhase = '1' or branchIDPhase_History = '1')  and predictionError = '0' and rising_edge(clk) else
-	
-	
-	'1' when  		((EX.c.mem2reg = '1') 						
-      and (ForwardA = fromALUe                                            or ForwardB = fromALUe))            
- --     or ((EX.i.Opc = I_BEQ.OPC)                                          or (MA.i.Opc = I_BEQ.OPC)     or  (WB_Opc = I_BEQ.OPC))           --ok
- --     or ((EX.i.Opc = I_BNE.OPC)                                          or (MA.i.Opc = I_BNE.OPC)     or  (WB_Opc = I_BNE.OPC))           --ok
- --     or ((EX.i.Opc = I_BLEZ.OPC)                                         or (MA.i.Opc = I_BLEZ.OPC))          
- --     or (((EX.i.Opc = I_BLTZ.OPC)      and (EX.i.rt = I_BLTZ.rt))        or ((MA.i.Opc = I_BLTZ.OPC)   and (MA.i.rt = I_BLTZ.rt)))  
- --     or ((EX.i.Opc = I_BGTZ.OPC)                                         or (MA.i.Opc = I_BGTZ.OPC))           
-      or ((EX.i.Opc = I_J.OPC)                                            or (MA.i.Opc = I_J.OPC)       or  (WB_Opc = I_J.OPC))             --ok
-      or ((EX.i.Opc = I_JAL.OPC)                                          or (MA.i.Opc = I_JAL.OPC)     or  (WB_Opc = I_JAL.OPC))  
-      or (((EX.i.Opc = I_JALR.OPC)      and (EX.i.funct = I_JALR.funct))  or ((MA.i.Opc = I_JALR.OPC)   and (MA.i.funct = I_JALR.funct)))    
-      or (((EX.i.Opc = I_JR.OPC)        and (EX.i.funct = I_JR.funct))    or ((MA.i.Opc = I_JR.OPC)     and (MA.i.funct = I_JR.funct))	
-	  or ((WB_Opc = I_JR.OPC) 			and WB_Func = I_JR.funct))		--TODO replace using mips_PKG WB_func, WB_Opc do not belong here
-              
--- Some commands have duplicate opc therefore additional information like (funct) is needed. 
--- Supervisor said, only implement most important commands
-	 else '0' when   	(ForwardA /= fromALUe)    		and (ForwardB /= fromALUe) 			and (MA.i.Opc = I_LW.OPC) else
-		  '0' when  --	(EX.i.Opc /= I_BEQ.OPC)   		and (MA.i.Opc /= I_BEQ.OPC) 
-				-- 	and (EX.i.Opc /= I_BNE.OPC)   		and (MA.i.Opc /= I_BNE.OPC) 
-				--	and (EX.i.Opc /= I_BLEZ.OPC)  		and (MA.i.Opc /= I_BLEZ.OPC) 
-				--	and (EX.i.Opc /= I_BLTZ.OPC)  		and (MA.i.Opc /= I_BLTZ.OPC) 
-				--	and (EX.i.Opc /= I_BGTZ.OPC)  		and (MA.i.Opc /= I_BGTZ.OPC) 
-				--	and 
-						(EX.i.Opc /= I_J.OPC)     		and (MA.i.Opc /= I_J.OPC) 
-					and (EX.i.Opc /= I_JAL.OPC)   		and (MA.i.Opc /= I_JAL.OPC) 
-					and (EX.i.funct /= I_JALR.funct)  	and (MA.i.funct /= I_JALR.funct)
-					and (EX.i.funct /= I_JR.funct)    	and (MA.i.funct /= I_JR.funct)      
-					and rising_edge(clk);
+		
+		'0' when ( dontStallFromBTB='1' ) else 
+		'1' when ( (EX.c.mem2reg = '1') and (ForwardA = fromALUe or ForwardB = fromALUe) ) else
+		'1' when ( ((EX.i.Opc = I_J.OPC) or (MA.i.Opc = I_J.OPC)) and dontStallFromBTB='0'	) else
+      	'1' when (  (EX.i.Opc = I_JAL.OPC)                                     or (MA.i.Opc = I_JAL.OPC)     or  (WB_Opc = I_JAL.OPC)			) else
+      	'1' when ( ((EX.i.Opc = I_JALR.OPC)	and (EX.i.funct = I_JALR.funct))  or ((MA.i.Opc = I_JALR.OPC)   and (MA.i.funct = I_JALR.funct))	) else
+        '1' when ( ((EX.i.Opc = I_JR.OPC)   and (EX.i.funct = I_JR.funct))    or ((MA.i.Opc = I_JR.OPC)     and (MA.i.funct = I_JR.funct))		) else
+	    '1' when ( (WB_Opc = I_JR.OPC) 		and (WB_Func = I_JR.funct)																			) else		
+	    
+		-- Some commands have duplicate opc therefore additional information like (funct) is needed. 
+		-- Supervisor said, only implement most important commands
+	  	'0' when  (ForwardA /= fromALUe)    		and (ForwardB /= fromALUe) 			and (MA.i.Opc = I_LW.OPC) else
+		'0' when  ((EX.i.Opc /= I_J.OPC)     		and (MA.i.Opc /= I_J.OPC) 
+		       and (EX.i.Opc /= I_JAL.OPC)   		and (MA.i.Opc /= I_JAL.OPC) 
+			   and (EX.i.funct /= I_JALR.funct)  	and (MA.i.funct /= I_JALR.funct)
+			   and (EX.i.funct /= I_JR.funct)    	and (MA.i.funct /= I_JR.funct)      
+			   and rising_edge(clk));
 
 -------------------- ID/EX Pipeline Register with Multiplexer Stalling----------
 -- bubble = "0000..." nop command. It will passed on at each Stalling signal
@@ -339,8 +359,9 @@ begin
   						'0';
   
   -- TODO Clean Up
-  EX  <= Bubble when (stallFromCache='1' or stallFromCPU='1' or predictionError='1') and rising_edge(clk) else
-         (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
+  EX  <= 	Bubble when (stallFromCache='1' or stallFromCPU='1' or (predictionError='1' and StaticBranchAlwaysTaken='1')) and rising_edge(clk) else
+  			Bubble when (stallFromCache='1' or stallFromCPU='1' or (predictionError='0' and StaticBranchAlwaysTaken='0')) and rising_edge(clk) else
+         	(c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
   --  EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1') and rising_edge(clk) else
   --         (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
   --  EX        <= (c, i, wa, a, b, signext, ID.pc4, rd2) when rising_edge(clk);

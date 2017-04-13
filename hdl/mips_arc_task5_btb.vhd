@@ -67,14 +67,8 @@ architecture mips_arc_task5_btb of mips is
     
     
     -- New program counter predicted by BTB.
-    signal predictedPC : STD_LOGIC_VECTOR(MEMORY_ADDRESs_WIDTH-1 downto 0) := (others=>'0');
-	
-	-- Address (from ID stage9 identifies which register in BTB should be written.
-	signal addressWriteID : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
-  	
-  	-- Address (from EX stage) identifies which register in BTB should be written.
-  	signal addressWriteEX : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
-  		
+    signal targetPC : STD_LOGIC_VECTOR(MEMORY_ADDRESs_WIDTH-1 downto 0) := (others=>'0');
+
   	-- Data word (from ID stage) to be written into BTB.
 	signal dataWriteID	: STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
  	
@@ -88,7 +82,7 @@ architecture mips_arc_task5_btb of mips is
   	signal writeEnableEX  : STD_LOGIC := '0';
   	
   	-- Signal indicates whether the predicted program counter by BTB is valid ('1') or not ('0').
-  	signal predictedPCIsValid : STD_LOGIC := '0';
+  	signal targetPCIsValid : STD_LOGIC := '0';
     
      
 begin
@@ -113,10 +107,8 @@ begin
 			predictionFromBHT         => predictionFromBHT,
 			branchTaken               => branchTaken,
 			writeEnableBHT            => writeEnableBHT,
-			predictedPCFromBTB        => predictedPC,
-			predictedPCIsValidFromBTB => predictedPCIsValid,
-			addressWriteID            => addressWriteID,
-			addressWriteEX            => addressWriteEX,
+			targetPCFromBTB           => targetPC,
+			targetPCIsValidFromBTB    => targetPCIsValid,
 			dataWriteID               => dataWriteID,
 			dataWriteEX               => dataWriteEX,
 			writeEnableID             => writeEnableID,
@@ -138,14 +130,12 @@ begin
 			pc               	=> pc,
 			
 			-- TODO Connect the ports with the correct signals.
-			addressWriteID   	=> addressWriteID,	
 			writeEnableID    	=> writeEnableID,
 			dataWriteID      	=> dataWriteID,
-			addressWriteEX   	=> addressWriteEX,
 			writeEnableEX    	=> writeEnableEX,
 			dataWriteEX      	=> dataWriteEX,
-			predictedPC      	=> predictedPC,
-			predictedPCIsValid	=> predictedPCIsValid
+			targetPC      	    => targetPC,
+			targetPCIsValid	    => targetPCIsValid
 		);
 
 
@@ -220,9 +210,4 @@ begin
 			dataMEM  	=> dataMEM,
 			reset       => reset
 		);
-
-
-
-
-
 end mips_arc_task5_btb;

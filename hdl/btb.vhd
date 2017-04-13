@@ -41,17 +41,11 @@ entity btb is
   		-- Current program counter given by CPU.
   		pc				: in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
   		
-  		--
-  		addressWriteID	: in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
-  		
   		-- 
   		writeEnableID	: in STD_LOGIC;
   		
   		-- 
   		dataWriteID		: in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
-  		
-  		
-  		addressWriteEX	: in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
   		
   		writeEnableEX	: in STD_LOGIC;
   		
@@ -59,10 +53,10 @@ entity btb is
   		
   		
   		-- Predicted program counter.
-  		predictedPC		: out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
+  		targetPC		: out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
   		
   		-- Signal indicates whether the predicted program counter is valid ('1') or not ('0').
-  		predictedPCIsValid : out STD_LOGIC
+  		targetPCIsValid : out STD_LOGIC
   );
 end;
 
@@ -114,14 +108,12 @@ begin
 			clk              => clk,
 			reset            => reset,
 			pc               => pc,
-			addressWriteID   => addressWriteID,
 			writeEnableID    => writeEnableID,
 			dataWriteID      => dataWriteID,
-			addressWriteEX   => addressWriteEX,
 			writeEnableEX    => writeEnableEX,
 			dataWriteEX      => dataWriteEX,
-			predictedPC      => predictedPC,
-			predictedPCIsValid => predictedPCIsValid,
+			targetPC      	 => targetPC,
+			targetPCIsValid  => targetPCIsValid,
 			ra1              => ra1,
 			rd1              => rd1,
 			wa1              => wa1,

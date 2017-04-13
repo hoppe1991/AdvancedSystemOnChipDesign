@@ -57,10 +57,10 @@ entity btbController is
   		
   		
   		-- Predicted program counter.
-  		predictedPC		: out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
+  		targetPC		: out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
   		
   		-- Signal indicates whether the predicted program counter is valid ('1') or not ('0').
-  		predictedPCIsValid : out STD_LOGIC;
+  		targetPCIsValid : out STD_LOGIC;
   		
   		-- Ports regarding first register file.
     	ra1 : out STD_LOGIC_VECTOR(ADDR_WIDTH-1 downto 0);
@@ -129,10 +129,11 @@ architecture behave of btbController is
 	signal wd_btbLine		: BTB_LINE := INIT_BTB_LINE;
 	
 	-- Selected register file index.
-	signal selRegFileID    : INTEGER := 0;
+	signal selRegFileID_IF : INTEGER := 0;
 	signal selRegFileID_ID : INTEGER := 0;
 	signal selRegFileID_EX : INTEGER := 0;
 	
+	-- Program counter of ID and EX stage.
 	signal pc_ID		   : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
 	signal pc_EX		   : STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0) := (others=>'0');
 	
@@ -182,7 +183,8 @@ architecture behave of btbController is
 	-- ---------------------------------------------------------------------------------------------------------------
 	-- Returns a new BTB_LINE.
 	-- ---------------------------------------------------------------------------------------------------------------
-	function CREATE_BTB_LINE( pcValue : in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
+	function CREATE_BTB_LINE( 
+		pcValue : in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
 		targetPCValue : in STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
 		validBit : in STD_LOGIC
 	) return BTB_LINE is
@@ -206,26 +208,26 @@ begin
 	rd1_btbLine	<= STD_LOGIC_VECTOR_TO_BTB_LINE( rd1 );
 	rd2_btbLine	<= STD_LOGIC_VECTOR_TO_BTB_LINE( rd2 ); 
 	
-	useBit <= 1 when (rd1_btbLine.validBit='1' and rd1_btbLine.targetPC=pcTag and useBit=2) else
-		   	  2 when (rd1_btbLine.validBit='1' and rd1_btbLine.targetPC=pcTag and useBit=1) else
-		   	  1;
+	-- Determine which register file should be used.
+	useBit <= 1 when (rd1_btbLine.validBit='1' and rd1_btbLine.targetPC=pcTag and rising_edge(clk)) else
+		   	  2 when (rd2_btbLine.validBit='1' and rd2_btbLine.targetPC=pcTag and rising_edge(clk)) else
+		   	  1 when (rd1_btbLine.validBit='0' and rd2_btbLine.validBit='1' and rd2_btbLine.targetPC/=pcTag and rising_edge(clk)) else
+		   	  2 when (rd2_btbLine.validBit='0' and rd1_btbLine.validBit='1' and rd1_btbLine.targetPC/=pcTag and rising_edge(clk)) else
+		   	  1 when (useBit=2 and writeEnableID='0' and writeEnableEX='0' and rising_edge(clk)) else
+		   	  2 when (useBit=1 and writeEnableID='0' and writeEnableEX='0' and rising_edge(clk));
 	
 	-- TODO Is this signal logic is correct?
-	selRegFileID <= 1 when (rd1_btbLine.validBit='1' and rd1_btbLine.targetPC=pcTag) else
-					2 when (rd2_btbLine.validBit='1' and rd2_btbLine.targetPC=pcTag) else
-					useBit;
-					
-	selRegFileID_ID <= selRegFileID    when rising_edge(clk);
-	selRegFileID_EX <= selRegFileID_ID when rising_edge(clk);
-							
-	
+	selRegFileID_IF <= useBit;				
+	selRegFileID_ID <= selRegFileID_IF  when rising_edge(clk);
+	selRegFileID_EX <= selRegFileID_ID  when rising_edge(clk);
+						
 	-- Determine whether the predicted program counter is valid ('1') or not ('0').
-	predictedPCIsValid <= '1' when (rd1_btbLine.validBit='1' and rd1_btbLine.targetPC=pcTag) else
-						  '1' when (rd2_btbLine.validBit='1' and rd2_btbLine.targetPC=pcTag) else
-						  '0';
+	targetPCIsValid 	<= 	'1' when (rd1_btbLine.validBit='1' and rd1_btbLine.tag=pcTag) else
+						  	'1' when (rd2_btbLine.validBit='1' and rd2_btbLine.tag=pcTag) else
+						  	'0';
 						  
 	-- Predict the next program counter.
-	predictedPC		   <= rd1_btbLine.targetPC when rd1_btbLine.validBit='1' else
+	targetPC		   <= rd1_btbLine.targetPC when rd1_btbLine.validBit='1' else
 						  rd2_btbLine.targetPC when rd2_btbLine.validBit='1' else
 						  (others=>'0');
 						  
@@ -240,16 +242,16 @@ begin
 	wa1		  			<= pc_EX(ADDR_WIDTH+1 downto 2) when (writeEnableEX='1') else
 						   pc_ID(ADDR_WIDTH+1 downto 2) when (writeEnableID='1') else
 						   (others=>'0');
+						   
     wa2					<= pc_EX(ADDR_WIDTH+1 downto 2) when (writeEnableEX='1') else
 						   pc_ID(ADDR_WIDTH+1 downto 2) when (writeEnableID='1') else
 						   (others=>'0');
     
-    
-	we1 				<= '1' when (writeEnableEX='1' and selRegFileID_ID=1) else
-						   '1' when (writeEnableID='1' and selRegFileID_EX=1) else
+	we1 				<= '1' when (writeEnableEX='1' and selRegFileID_EX=1) else
+						   '1' when (writeEnableID='1' and selRegFileID_IF=1) else
 						   '0';
-    we2 				<= '1' when (writeEnableEX='1' and selRegFileID_ID=2) else
-						   '1' when (writeEnableID='1' and selRegFileID_EX=2) else
+    we2 				<= '1' when (writeEnableEX='1' and selRegFileID_EX=2) else
+						   '1' when (writeEnableID='1' and selRegFileID_IF=2) else
 						   '0';
 						   
 	wd_btbLine			<= CREATE_BTB_LINE( pc_EX, dataWriteEX, '1' ) when (writeEnableEX='1') else

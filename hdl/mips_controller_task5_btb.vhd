@@ -36,19 +36,19 @@ entity mips_controller_task5_btb is -- Pipelined MIPS processor
         predictionFromBHT	: in STD_LOGIC := '0';
         
         -- Signal indicates whether the branch is taken or not.
-        branchTaken : out STD_LOGIC := '0';
+        branchTaken 		: out STD_LOGIC := '0';
         
         -- Signal indicates whether the BHT should be rewritten.
-        writeEnableBHT : out STD_LOGIC := '0';
+        writeEnableBHT 		: out STD_LOGIC := '0';
         
         
         -- New program counter predicted by BTB.
         -- TODO How does the MIPS use this signal?
-        predictedPCFromBTB	: STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
+        targetPCFromBTB	: STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
         
         -- Signal indicates whether the predicted program counter from BTB is valid ('1') or not ('0').
         -- TODO How does the MIPS use this signal?
-        predictedPCIsValidFromBTB : in STD_LOGIC := '0';
+        targetPCIsValidFromBTB : in STD_LOGIC := '0';
         
   		-- Signlal 
   		dataWriteID	: out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
@@ -136,17 +136,18 @@ begin
 	begin 
 		-- TODO Update the logic of these signals.
 		-- TODO Is is possible to place this signal logic into entity of BTB?
+		
 		dataWriteID		<= pcJumpIDPhase;
- 		writeEnableID  	<= '1' when (i.Opc=I_J.Opc    and i.Shamt=I_J.Shamt    and i.Funct=I_J.Funct) else
- 						   '1' when (i.Opc=I_JAL.Opc  and i.Shamt=I_JAL.Shamt  and i.Funct=I_JAL.Funct) else
- 						   '1' when (i.Opc=I_JALR.Opc and i.Shamt=I_JALR.Shamt and i.Funct=I_JALR.Funct) else
- 						   '1' when (i.Opc=I_JR.Opc   and i.Shamt=I_JR.Shamt   and i.Funct=I_JR.Funct) else
+ 		writeEnableID  	<= '1' when (i.Opc=I_J.Opc 								and EX.i.Opc/=I_J.Opc									) else
+ 						   '1' when (i.Opc=I_JAL.Opc							and EX.i.Opc/=I_JAL.Opc									) else
+ 						   '1' when (i.Opc=I_JALR.Opc and i.Funct=I_JALR.Funct	and EX.i.Opc/=I_JALR.Opc and EX.i.Funct/=I_JALR.Funct	) else
+ 						   '1' when (i.Opc=I_JR.Opc   and i.Funct=I_JR.Funct	and EX.i.Opc/=I_JR.Opc   and EX.i.Funct=I_JR.Funct		) else
  						   '0';
- 		
-		dataWriteEX	 	<= EX.pc4; -- TODO ???
-  		writeEnableEX 	<= '1' when (EX.i.Opc=I_BEQ.Opc) else
-  						   '1' when (EX.i.Opc=I_BNE.OPC) else
-  						   '0';
+
+		dataWriteEX	 	<= pc_Jump_BRAM_Adapted_PredictedAT;
+  		writeEnableEX 	<= '1' when ((EX.a  = EX.b)  and EX.i.Opc = I_BEQ.Opc) else
+						   '1' when ((EX.a /= EX.b) and EX.i.Opc = I_BNE.Opc) else
+							'0';
   		
 	end block;
 	
@@ -167,7 +168,12 @@ begin
 	branchIDPhase_History <= branchIDPhase when rising_edge(clk);
 	
   	-- New prediction of the next PC for branch prediction
-  	nextpcPredicted    <=	pc_Jump_BRAM_Adapted_PredictedAT	when StaticBranchAlwaysTaken = '0' and predictionError = '1' 	else --normal behaviour if no branch taken
+  	nextpcPredicted    <=	
+  	
+  							--targetPCFromBTB when targetPCIsValidFromBTB='1' and branchIdPhase='1' else
+  							--targetPCFromBTB when targetPCIsValidFromBTB='1' and branchIdPhase='1' else
+  	
+  							pc_Jump_BRAM_Adapted_PredictedAT	when StaticBranchAlwaysTaken = '0' and predictionError = '1' 	else --normal behaviour if no branch taken
   							--nextpc							    when StaticBranchAlwaysTaken = '0' and predictionError = '1' 	else
 							pc_Jump_BRAM_Adapted_PredictedNT   	when StaticBranchAlwaysTaken = '0' and c.jump  = '1' 			else -- j / jal jump addr
 		              		pc_Jump_BRAM_Adapted_PredictedNT	when StaticBranchAlwaysTaken = '0' and branchIdPhase     = '1' 	else -- branch (bne, beq) addr
@@ -215,7 +221,7 @@ begin
                          	((i.Opc = I_BGTZ.Opc) and (EX.i.Opc /= I_BGTZ.Opc))	else--not currently used in asm files
                				'0';
    	end block;
-
+   	
 --  imem:        entity work.bram  generic map ( INIT =>  (IFileName & ".imem"))
 --               port map (clk, '0', pc(11 downto 2), (others=>'0'), IF_ir);
 
@@ -342,8 +348,9 @@ begin
   						'0';
   
   -- TODO Clean Up
-  EX  <= Bubble when (stallFromCache='1' or stallFromCPU='1' or predictionError='1') and rising_edge(clk) else
-         (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
+  EX  <= 	Bubble when (stallFromCache='1' or stallFromCPU='1' or (predictionError='1' and StaticBranchAlwaysTaken='1')) and rising_edge(clk) else
+  			Bubble when (stallFromCache='1' or stallFromCPU='1' or (predictionError='0' and StaticBranchAlwaysTaken='0')) and rising_edge(clk) else
+         	(c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
   --  EX  <= Bubble when (stallFromCache = '1' or stallFromCPU = '1') and rising_edge(clk) else
   --         (c, i, wa, a, b, signext, ID.pc4, rd2)  when rising_edge(clk);
   --  EX        <= (c, i, wa, a, b, signext, ID.pc4, rd2) when rising_edge(clk);

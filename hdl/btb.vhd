@@ -53,10 +53,10 @@ entity btb is
   		
   		
   		-- Predicted program counter.
-  		predictedPC		: out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
+  		targetPC		: out STD_LOGIC_VECTOR(MEMORY_ADDRESS_WIDTH-1 downto 0);
   		
   		-- Signal indicates whether the predicted program counter is valid ('1') or not ('0').
-  		predictedPCIsValid : out STD_LOGIC
+  		targetPCIsValid : out STD_LOGIC
   );
 end;
 
@@ -112,8 +112,8 @@ begin
 			dataWriteID      => dataWriteID,
 			writeEnableEX    => writeEnableEX,
 			dataWriteEX      => dataWriteEX,
-			predictedPC      => predictedPC,
-			predictedPCIsValid => predictedPCIsValid,
+			targetPC      	 => targetPC,
+			targetPCIsValid  => targetPCIsValid,
 			ra1              => ra1,
 			rd1              => rd1,
 			wa1              => wa1,

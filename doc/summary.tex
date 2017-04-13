@@ -12,32 +12,70 @@ After having answered different questions at different stages of the development
 
 
 
-TODO in order to test test run MYMARS Varable needs to be adapted either using path variable or inside the 4 run_ghdl_mips_[ isortpipe3 | gcd | fib | fac ]_[linux.sh | windows.bat]
+%TODO in order to test test run MYMARS Varable needs to be adapted either using path variable or inside the 4 run_ghdl_mips_[ isortpipe3 | gcd | fib | fac ]_[linux.sh | %windows.bat]
 
-Configurations names and their meaning
 
-cisort1 mips with pipelining and stalling and forwarding implemented
-cisort2 mips with pipelining stalling etc. + instruction cache
-cisort3 mips with previous properties + static branch prediction (always or never taken)
-cisort4 mips with previous properties + Branch History Table
-cisort5 mips with previous properties + Branch Target Buffer
+\begin{itemize}
+	\item Configuration1 is mips with pipelining, stalling and forwarding
+	\item Configuration2 is Configuration1 with instruction cache
+	\item Configuration3 is Configuration2 with static branch prediction
+	\item Configuration4 is Configuration3 with Branch History Table implemented
+	\item Configuration5 is Configuration4 with Branch Target Buffer implemented
+\end{itemize}
+
+
+
+
 
 \begin{table}[h]
-\resizebox{1\textwidth}{!}{\begin{minipage}{\textwidth}
-\begin{tabular}{ l l l l l }
- \hline
- Test program & Configuration c1 & Configuration c2 & Configuration c3 & Configuration c4 \\ \hline
+	\resizebox{1\textwidth}{!}{\begin{minipage}{\textwidth}
+			\begin{tabular}{ l l l l l l }
+				\hline
+				Test program & Config c1 & Config c2 & Config c3 & Config c4 & Config c5\\ \hline
+				
+				FAC	 	& - & OKAY & OKAY & OKAY \\
+				FIB 	& - & OKAY & OKAY & OKAY  \\
+				GCD 	& - & OKAY & OKAY & OKAY  \\
+				ISORT\_PIPE3 & OKAY & OKAY & OKAY & OKAY \\
+				\hline
+			\end{tabular}
+			\caption[Table caption text]{Table showing successful testing events}
+			\label{tab5-1}
+		\end{minipage} }
+	\end{table}
 
- FAC	 	& 80\% & 88.57\% & 72.73\% \\
- FIB 	& 70\% & 88.57\% & 72.73\% \\
- GCD 	& 90\% & 91.43\% & 69.70\% \\
- ISORT\_PIPE3 & 90\% & 94.29\% &75.76\% \\
-	\hline
-\end{tabular}
-\caption[Table caption text]{of successful prediction using BHT in isort\_pipe}
-\label{tab5-1}
-\end{minipage} }
-\end{table}
+\begin{table}[h]
+	\resizebox{1\textwidth}{!}{\begin{minipage}{\textwidth}
+			\begin{tabular}{ l l l l l l }
+				\hline
+				Test program & Config c1 & Config c2 & Config c3 & Config c4 & Config c5\\ \hline
+				
+				FAC	 	& cfac1 & cfac2 & cfac3 & cfac4 & cfac5 \\
+				FIB 	& cfib1 & cfib2 & cfib3 & cfib4 & cfib5 \\
+				GCD 	& cgcd1 & cgcd2 & cgcd3 & cgcd4 & cgcd5 \\
+				ISORT\_PIPE3 & cisort1 & cisort2 & cisort3 & cisort4 & cisort5 \\
+				\hline
+			\end{tabular}
+			\caption[Table caption text]{Table showing command parameters to call run\_ghdl\_mips\_xxx\_script}
+			\label{tab5-1}
+		\end{minipage} }
+	\end{table}
+
+The corresponding windows and linux scripts in the hdl folder to call with parameter from above are presented here.  
+\begin{itemize}
+\item  run\_ghdl\_mips\_fac\_linux.sh
+\item  run\_ghdl\_mips\_fac\_windows.bat
+\item  run\_ghdl\_mips\_fib\_linux.sh
+\item  run\_ghdl\_mips\_fib\_windows.bat
+\item  run\_ghdl\_mips\_gcd\_linux.sh
+\item  run\_ghdl\_mips\_gcd\_windows.bat
+\item  run\_ghdl\_mips\_isortPipe3\_linux.sh
+\item  run\_ghdl\_mips\_isortPipe3\_windows.bat
+\end{itemize}
+ 
+ 
+ 
+
 
 
 

@@ -245,8 +245,8 @@ After implementation of the Cache with \textit{Write Back Policy} and \textit{Wr
 	\item Main memory using a BlockRAM with ready signal.
 	\item Direct Mapped Cache with 256 blocks/lines. Each block/line has 4 words. The cache use the write back scheme. Also, byte access is possible.	
 \end{itemize}
-The testbench should verify the behavior of the cache. Therefore, we look at different test cases. In the following table \ref{tab:testCases} we describe some test cases.\\
-We have created the batch file \textit{run\_ghdl\_task4\_cacheTestbench\_windows.bat} to run the testbench with GHDL under Windows. Thus, we start the simulation by typing \textit{run\_ghdl\_task4\_cacheTestbench\_windows.bat} in the command-line user interface with a name of an assembler file. During execution of the testbench some notes are shown indicating which test case succeeds. Figure \ref{fig:simulationResult} shows that all test cases are successfully executed. Respectively, we create the script \textit{run\_ghdl\_task4\_cacheTestbench\_Linux.sh} to run the simulation under Linux. Consider, that the variables have to be updated as necessary in the scripts.\\
+The testbench should verify the behavior of the cache. Therefore, we look at different test cases. In the following table \ref{tab:testCases} we describe some test cases. All these test cases are implemented in VHDL in the file \textit{cache\_tb.vhd}.\\
+We have created the batch \\file \textit{run\_ghdl\_task4\_cacheTestbench\_windows.bat} to run the testbench with GHDL under Windows. Thus, we start the simulation by typing \textit{run\_ghdl\_task4\_cacheTestbench\_windows.bat} in the command-line user interface with a name of an assembler file. During execution of the testbench some notes are shown indicating which test case succeeds. Figure \ref{fig:simulationResult} shows that all test cases are successfully executed. Respectively, we create the \\script \textit{run\_ghdl\_task4\_cacheTestbench\_Linux.sh} to run the simulation under Linux. Consider, that the variables have to be updated as necessary in the scripts.\\
 When illustrating the simulation results in Gtkwave, the number of clock cycles needed for a cache hit and cache miss can be determined. As you can see in figure \ref{fig:simulationResultCacheHit}, circa 3 clock cycles are needed for a cache hit. In contrast the cache controller needs circa 23 clock cycles in case of a cache miss. A read operation with cache miss is represented in figure \ref{fig:simulationResultCacheMiss}.
 \begin{figure}
 	\centering
@@ -304,4 +304,13 @@ TODO
 \subsection{Replace the Instruction Memory of the MIPS CPU with the Cache}
 \label{sec:replaceInstructionMemory}
 Finally, we integrate the direct mapped cache into the MIPS CPU. Thus, we replace the instruction memory with the cache. We rewrite the MIPS code to generate the one entity of the cache as the instruction cache. Also, we remove the code lines with the instruction memory. These changes are shown in \ref{mipsWithInstructionCache}. Anymore, we connect the correspondent input and output ports if the cache entity. The input port \textit{rdCPU} and \textit{wrCPU} are constantly set to '0' and '1' since the MIPS always reads the instruction cache and does not change the instructions. The output port \textit{dataCPU} represents the data word which should be read from cache or to be written into cache. Thus, it is connected to the signal \textit{IF\_ir}. The additional signal \textit{stallFromCache} indicates whether the CPU must be stalled. Therefore, this signal is connected to the output port \textit{stallCPU}.
+\begin{figure}
+	\centering
+	\includegraphics[scale=.4]{pictures/gtkwave_result_mipsWithInstructionCache}
+	\caption{Result Simulation Gtkwave - MIPS with instruction cache}
+	\label{fig:mipsWithInstrCache}
+\end{figure}
+
+
+
 \lstinputlisting[language=VHDL,caption={Replacing the instruction memory by direct mapped cache.},label=mipsWithInstructionCache]{appendix/mipsInstructionCache.vhd}

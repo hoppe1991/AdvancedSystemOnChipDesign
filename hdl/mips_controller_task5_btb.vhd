@@ -160,6 +160,16 @@ begin
 	pcLogic: block
 	begin
 	
+	-- i.Opc       <= instructionWord (31 downto 26);
+ -- 		i.Rs        <= instructionWord (25 downto 21);
+ -- i.Rt        <= instructionWord (20 downto 16);
+ -- i.Rd        <= instructionWord (15 downto 11);
+ -- i.shamt     <= instructionWord (10 downto  6);
+--  i.Funct     <= instructionWord ( 5 downto  0);    
+--  i.Imm       <= instructionWord (15 downto  0);
+ -- i.BrTarget  <= instructionWord (25 downto  0);   
+	
+	
 	-- pc        <= nextpc when rising_edge(clk);
 	pc        <= nextpcPredicted when rising_edge(clk);
   	pc4       <= to_slv(unsigned(pc) + 4) ;
@@ -169,8 +179,7 @@ begin
 	
   	-- New prediction of the next PC for branch prediction
   	nextpcPredicted    <=	
-  	
-  							--targetPCFromBTB when targetPCIsValidFromBTB='1' and branchIdPhase='1' else
+  							targetPCFromBTB when targetPCIsValidFromBTB='1' and IF_ir(31 downto 26)=I_J.Opc else
   							--targetPCFromBTB when targetPCIsValidFromBTB='1' and branchIdPhase='1' else
   	
   							pc_Jump_BRAM_Adapted_PredictedAT	when StaticBranchAlwaysTaken = '0' and predictionError = '1' 	else --normal behaviour if no branch taken
@@ -288,24 +297,25 @@ begin
 -- TODO EX.MemRead is equal to EX.c.mem2reg ?
 				
 	stallFromCPU <= 	--'0' when (branchIdPhase = '1' or branchIDPhase_History = '1')  and predictionError = '0' and rising_edge(clk) else
-	
-	
-	'1' when  		((EX.c.mem2reg = '1') 						
-      and (ForwardA = fromALUe                                            or ForwardB = fromALUe))            
+		
+		'1' when ( (EX.c.mem2reg = '1') and (ForwardA = fromALUe or ForwardB = fromALUe) ) else
+		'1' when ( (EX.i.Opc = I_J.OPC)                                       or (MA.i.Opc = I_J.OPC)       or  (WB_Opc = I_J.OPC)				) else
+      	'1' when ( (EX.i.Opc = I_JAL.OPC)                                     or (MA.i.Opc = I_JAL.OPC)     or  (WB_Opc = I_JAL.OPC)			) else
+      	'1' when ( ((EX.i.Opc = I_JALR.OPC)	and (EX.i.funct = I_JALR.funct))  or ((MA.i.Opc = I_JALR.OPC)   and (MA.i.funct = I_JALR.funct))	) else
+        '1' when ( ((EX.i.Opc = I_JR.OPC)   and (EX.i.funct = I_JR.funct))    or ((MA.i.Opc = I_JR.OPC)     and (MA.i.funct = I_JR.funct))		) else
+	    '1' when ( (WB_Opc = I_JR.OPC) 		and (WB_Func = I_JR.funct)																			) else		--TODO replace using mips_PKG WB_func, WB_Opc do not belong here
+              
+              
  --     or ((EX.i.Opc = I_BEQ.OPC)                                          or (MA.i.Opc = I_BEQ.OPC)     or  (WB_Opc = I_BEQ.OPC))           --ok
  --     or ((EX.i.Opc = I_BNE.OPC)                                          or (MA.i.Opc = I_BNE.OPC)     or  (WB_Opc = I_BNE.OPC))           --ok
  --     or ((EX.i.Opc = I_BLEZ.OPC)                                         or (MA.i.Opc = I_BLEZ.OPC))          
  --     or (((EX.i.Opc = I_BLTZ.OPC)      and (EX.i.rt = I_BLTZ.rt))        or ((MA.i.Opc = I_BLTZ.OPC)   and (MA.i.rt = I_BLTZ.rt)))  
- --     or ((EX.i.Opc = I_BGTZ.OPC)                                         or (MA.i.Opc = I_BGTZ.OPC))           
-      or ((EX.i.Opc = I_J.OPC)                                            or (MA.i.Opc = I_J.OPC)       or  (WB_Opc = I_J.OPC))             --ok
-      or ((EX.i.Opc = I_JAL.OPC)                                          or (MA.i.Opc = I_JAL.OPC)     or  (WB_Opc = I_JAL.OPC))  
-      or (((EX.i.Opc = I_JALR.OPC)      and (EX.i.funct = I_JALR.funct))  or ((MA.i.Opc = I_JALR.OPC)   and (MA.i.funct = I_JALR.funct)))    
-      or (((EX.i.Opc = I_JR.OPC)        and (EX.i.funct = I_JR.funct))    or ((MA.i.Opc = I_JR.OPC)     and (MA.i.funct = I_JR.funct))	
-	  or ((WB_Opc = I_JR.OPC) 			and WB_Func = I_JR.funct))		--TODO replace using mips_PKG WB_func, WB_Opc do not belong here
+ --     or ((EX.i.Opc = I_BGTZ.OPC)                                         or (MA.i.Opc = I_BGTZ.OPC))
+              
               
 -- Some commands have duplicate opc therefore additional information like (funct) is needed. 
 -- Supervisor said, only implement most important commands
-	 else '0' when   	(ForwardA /= fromALUe)    		and (ForwardB /= fromALUe) 			and (MA.i.Opc = I_LW.OPC) else
+	  '0' when   	(ForwardA /= fromALUe)    		and (ForwardB /= fromALUe) 			and (MA.i.Opc = I_LW.OPC) else
 		  '0' when  --	(EX.i.Opc /= I_BEQ.OPC)   		and (MA.i.Opc /= I_BEQ.OPC) 
 				-- 	and (EX.i.Opc /= I_BNE.OPC)   		and (MA.i.Opc /= I_BNE.OPC) 
 				--	and (EX.i.Opc /= I_BLEZ.OPC)  		and (MA.i.Opc /= I_BLEZ.OPC) 

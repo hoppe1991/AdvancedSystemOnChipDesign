@@ -1,7 +1,28 @@
 % !TEX root = fce.tex
 % -----------------------------------------------------------------
 % Filename  :	introduction.tex
-% Author    :	Carsten Hoppe
-% Date		:	30. January 2017
+% Author    :	Leonard Püttjer
+% Date		:	13. April 2017
 % -----------------------------------------------------------------
-\blindtext
+
+This document describes a student project in the winter term 2016/2017 at the Hamburg University of Technology (TUHH). The task of the project was to extend and improve the functionality of a comparatively simple CPU, a 16-bit MIPS processing unit. For the development of our code we used the Sigasi-plugin for the Eclipse-editor. The VHDL code was compiled using GHDL and MARS and then simulated, visualized and debugged using GTKWave. We developed our source code on the three different operating systems:
+\begin{itemize}
+\item Windows 10 - 64 bit
+\item Ubuntu 14 - 64 bit
+\item macOS 10.12.4 - 64 bit
+\end{itemize}
+To compile our code on macOS, we used a VirutalBox with Ubuntu 15.10 - 64 bit as operating system to execute the  GHDL - script. Thus, we developed two different scripts to execute ASM - files with our MIPS - CPU, one for Windows and one for Linux.
+
+All pictures for the FSMs, simulation results and code snippets were, if not denoted different, created on our own using Word or Latex for the FSMs, screenshots of Eclipse for the code snippets and screenshots of GTKWave for simulation results.
+To accomplish the project, at first we had to familiarize ourselves with the assembler-commands of a MIPS - CPU. We used MARS to develope and test simple assembler programs, which we could later use as benchmarks to verify, that our CPU behaves as we would expect. In addition, we received further, more complex ASM - programs, which we could use to verify the functionality of our CPU.
+
+The goal of the course was to add further functionality to improve the CPU. We added the following features in the respective order:
+\begin{itemize}
+\item Implementation of pipeline stages using stalling and forwarding to resolve data hazards and structural hazards.
+\item Exchange of Distributed RAM by Block RAM
+\item Design direct mapped cache and 2-way-associative cache
+\item Implementation of a direct mapped instruction cache
+\item Static branch prediction
+\item Dynamic branch prediction using register files as a 2-bit branch history table (BHT)
+\item Branch target buffer using 2-way-associative cache to store jump/branch targets
+\end{itemize}
